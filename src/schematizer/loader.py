@@ -18,7 +18,7 @@ temporary ``.kicad_sym`` file and SKiDL's parser; that is gone.)
 
 from simp_sexp import Sexp
 
-from .ir import Circuit, NCNet, SchNet, SchPart, SchPin
+from .ir import Circuit, NCNet, SchNet, SchPart, SchPartUnit, SchPin
 
 SCHEMA_NAME = "skidl-generic-netlist"
 SCHEMA_VERSION = 1
@@ -75,9 +75,10 @@ def _make_part(comp, symbols, nets, circuit):
     # Which net each pin connects to (keyed by pin number).
     net_of_pin = {p["num"]: p.get("net") for p in comp.get("pins", [])}
 
-    # Pin geometry lives in the embedded symbol, per unit. Flatten all units'
-    # pins onto the part (single-unit IR); connect each to its net.
-    for _unit_num, unit in sorted(sym.get("units", {}).items()):
+    # Pin geometry lives in the embedded symbol, per unit. Build the pins and
+    # remember which unit each belongs to.
+    pins_by_unit = {}
+    for unit_key, unit in sorted(sym.get("units", {}).items(), key=lambda kv: kv[0]):
         for pg in unit.get("pins", []):
             pin = SchPin(
                 num=pg["num"],
@@ -87,9 +88,19 @@ def _make_part(comp, symbols, nets, circuit):
                 orientation=pg.get("orient", 0),
             )
             part.add_pins(pin)
+            pins_by_unit.setdefault(int(unit_key), []).append(pin)
             net_name = net_of_pin.get(pg["num"])
             if net_name is not None and net_name in nets:
                 pin += nets[net_name]
+
+    # A part with more than one unit (e.g. a quad op-amp) is placed as separate
+    # units sharing one reference. Single-unit parts keep ``unit`` empty so the
+    # node tree places the part itself.
+    if len(pins_by_unit) > 1:
+        for num in sorted(pins_by_unit):
+            label = "u{}".format(chr(ord("A") + num - 1)) if num >= 1 else "u{}".format(num)
+            part.unit[label] = SchPartUnit(part, num, label, pins_by_unit[num])
+
     return part
 
 

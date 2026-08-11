@@ -10,4 +10,9 @@ __version__ = "0.2.0"
 
 from .render import render  # noqa: E402
 
-__all__ = ["render", "__version__"]
+# Part of render()'s contract: the exceptions the engine raises when placement
+# or routing can't complete. Exported so callers (e.g. SKiDL) can catch them.
+from .engine.place import PlacementFailure  # noqa: E402
+from .engine.route import RoutingFailure  # noqa: E402
+
+__all__ = ["render", "PlacementFailure", "RoutingFailure", "__version__"]

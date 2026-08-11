@@ -27,6 +27,7 @@ __all__ = [
     "SchNet",
     "NCNet",
     "SchPart",
+    "SchPartUnit",
     "Circuit",
     "HIER_SEP",
 ]
@@ -270,6 +271,75 @@ class SchPart:
         return "SchPart({})".format(self._ref or self.name)
 
 
+class SchPartUnit(SchPart):
+    """One unit of a multi-unit part (e.g. one amplifier in a quad op-amp).
+
+    Units are what actually get placed: the node tree adds ``part.unit.values()``
+    instead of the whole part, and the writer emits one symbol instance per unit,
+    all sharing the parent's reference and distinguished by ``(unit N)``.
+
+    Shared identity (name, library, value, symbol graphics, …) comes from the
+    parent; the unit owns only its own subset of pins and its own placement.
+    """
+
+    def __init__(self, parent, num, label, pins):
+        # Deliberately not calling SchPart.__init__: a unit must not register
+        # itself as a separate part in the circuit.
+        self.parent = parent
+        self.num = num
+        self.label = label
+        self.pins = list(pins)
+
+        # Identity shared with the parent part.
+        self.name = parent.name
+        self.lib = parent.lib
+        self.value = parent.value
+        self.footprint = parent.footprint
+        self.description = parent.description
+        self.datasheet = parent.datasheet
+        self.ref_prefix = parent.ref_prefix
+        self.draw_cmds = parent.draw_cmds
+        self.fields = parent.fields
+        self.circuit = parent.circuit
+
+        # Per-unit placement state.
+        self.symtx = parent.symtx
+        self.orientation_locked = parent.orientation_locked
+        self.tx = Tx()
+        self.unit = {}  # A unit has no sub-units.
+
+    @property
+    def ref(self):
+        """Compound reference ("U1.uA").
+
+        The writer deliberately emits ``parent.ref`` for the KiCad reference
+        (KiCad reads a compound ref as a distinct component), but the compound
+        form still distinguishes units when generating UUIDs.
+        """
+        return HIER_SEP.join((self.parent.ref, self.label))
+
+    @property
+    def tag_ref_name(self):
+        return self.ref
+
+    @property
+    def hiertuple(self):
+        return self.parent.hiertuple
+
+    def grab_pins(self):
+        """Point this unit's pins at the unit (they place/route as the unit)."""
+        for pin in self.pins:
+            pin.part = self
+
+    def release_pins(self):
+        """Hand this unit's pins back to the parent part."""
+        for pin in self.pins:
+            pin.part = self.parent
+
+    def __repr__(self):
+        return "SchPartUnit({})".format(self.ref)
+
+
 class Circuit:
     """Container for the IR parts and nets fed to the engine."""
 
@@ -288,8 +358,23 @@ class Circuit:
         return self.nets
 
     def rmv_parts(self, *parts):
-        """Remove parts (e.g. NetTerminals) from the circuit."""
+        """Remove parts (e.g. NetTerminals) from the circuit.
+
+        Disconnects each removed part's pins from their nets too, so no stale
+        pins linger on the nets. This matters for the place/route retry loop:
+        NetTerminals added on one attempt are removed before the next, and a
+        leftover terminal pin (with a root-level hiertuple) would otherwise
+        break hierarchy lookup when the node tree is rebuilt.
+        """
         for part in parts:
+            for pin in part.pins:
+                net = getattr(pin, "net", None)
+                if net is not None:
+                    try:
+                        net._pins.remove(pin)
+                    except (ValueError, AttributeError):
+                        pass
+                    pin.net = None
             try:
                 self.parts.remove(part)
             except ValueError:

@@ -103,14 +103,21 @@ class NoSwitchBox(Exception):
     pass
 
 
-class TerminalClashException(Exception):
-    """Exception raised when trying to place two terminals at the same coord on a Face."""
+class RoutingFailure(Exception):
+    """Exception raised when a net connecting pins cannot be routed."""
 
     pass
 
 
-class RoutingFailure(Exception):
-    """Exception raised when a net connecting pins cannot be routed."""
+class TerminalClashException(RoutingFailure):
+    """Raised when two terminals collide at the same coord on a Face.
+
+    This is a routing conflict, so it derives from RoutingFailure: the place &
+    route retry loop then treats it like any other routing failure (retry with
+    an expanded area, then surface as a RoutingFailure) rather than letting it
+    escape uncaught. (In SKiDL this derived from ``Exception`` and could escape
+    the retry loop -- a latent bug the IR path hit more often.)
+    """
 
     pass
 
