@@ -92,11 +92,25 @@ def test_render_rejects_bad_schema(tmp_path):
 
 
 def test_render_does_not_import_skidl(tmp_path):
-    """The engine is fully vendored: rendering must not pull in skidl."""
+    """The engine is fully vendored: rendering must not pull in skidl.
+
+    Run in a subprocess: some tests in this suite import skidl to build
+    circuits, so an in-process ``sys.modules`` check would depend on test
+    ordering.
+    """
+    import subprocess
     import sys
 
-    render(_doc("flat.json"), tool="kicad9", filepath=str(tmp_path))
-    assert "skidl" not in sys.modules
+    script = (
+        "import sys;"
+        "from schematizer import render;"
+        f"render({_doc('flat.json')!r}, tool='kicad9', filepath={str(tmp_path)!r});"
+        "sys.exit(1 if 'skidl' in sys.modules else 0)"
+    )
+    proc = subprocess.run([sys.executable, "-c", script], capture_output=True)
+    assert proc.returncode == 0, (
+        "rendering imported skidl:\n" + proc.stderr.decode()
+    )
 
 
 def test_kicad8_format_toggle(tmp_path):
