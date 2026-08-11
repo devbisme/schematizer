@@ -1,0 +1,665 @@
+{
+ "format": "skidl-generic-netlist",
+ "version": 1,
+ "title": "",
+ "top_name": "flat",
+ "sheets": [
+  [
+   ""
+  ]
+ ],
+ "symbols": {
+  "Device:R": {
+   "ref_prefix": "R",
+   "name": "R",
+   "lib": "Device",
+   "description": "Resistor",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       3.81,
+       270
+      ],
+      [
+       "length",
+       1.27
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -3.81,
+       90
+      ],
+      [
+       "length",
+       1.27
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.016,
+       -2.54
+      ],
+      [
+       "end",
+       1.016,
+       2.54
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "R",
+      [
+       "at",
+       2.032,
+       0,
+       90
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "R",
+      [
+       "at",
+       0,
+       0,
+       90
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "rectangle",
+      [
+       "start",
+       -1.016,
+       -2.54
+      ],
+      [
+       "end",
+       1.016,
+       2.54
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "~",
+       "x": 0,
+       "y": 3.81,
+       "orient": "D",
+       "rotation": 270,
+       "length": 1.27,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "~",
+       "x": 0,
+       "y": -3.81,
+       "orient": "U",
+       "rotation": 90,
+       "length": 1.27,
+       "func": "5"
+      }
+     ]
+    }
+   }
+  },
+  "Device:C": {
+   "ref_prefix": "C",
+   "name": "C",
+   "lib": "Device",
+   "description": "Unpolarized capacitor",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       3.81,
+       270
+      ],
+      [
+       "length",
+       2.794
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -3.81,
+       90
+      ],
+      [
+       "length",
+       2.794
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        -0.762
+       ],
+       [
+        "xy",
+        2.032,
+        -0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        0.762
+       ],
+       [
+        "xy",
+        2.032,
+        0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "C",
+      [
+       "at",
+       0.635,
+       2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "C",
+      [
+       "at",
+       0.635,
+       -2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        -0.762
+       ],
+       [
+        "xy",
+        2.032,
+        -0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        0.762
+       ],
+       [
+        "xy",
+        2.032,
+        0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "~",
+       "x": 0,
+       "y": 3.81,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.794,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "~",
+       "x": 0,
+       "y": -3.81,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.794,
+       "func": "5"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "components": [
+  {
+   "ref": "C1",
+   "lib_id": "Device:C",
+   "value": "100nF",
+   "footprint": "Capacitor_SMD:C_0805_2012Metric",
+   "hiertuple": [
+    ""
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "SIG"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ]
+  },
+  {
+   "ref": "R1",
+   "lib_id": "Device:R",
+   "value": "10k",
+   "footprint": "Resistor_SMD:R_0805_2012Metric",
+   "hiertuple": [
+    ""
+   ],
+   "symtx": "H",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "SIG"
+    }
+   ]
+  }
+ ],
+ "nets": [
+  {
+   "name": "GND",
+   "code": 1,
+   "stub": true,
+   "stub_explicit": true,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "C1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    }
+   ]
+  },
+  {
+   "name": "SIG",
+   "code": 2,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "C1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    }
+   ]
+  },
+  {
+   "name": "VCC",
+   "code": 3,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "R1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    }
+   ]
+  }
+ ]
+}

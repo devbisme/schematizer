@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schematizer"
+version = "0.1.0"
+description = "Turn a generic hierarchical netlist (JSON) into a KiCad schematic."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Dave Vandenbout" }]
+keywords = ["KiCad", "schematic", "netlist", "EDA", "SKiDL"]
+
+# NOTE (scaffold stage): this package currently reuses SKiDL's placement/
+# routing/writer engine and object model. The plan is to progressively vendor
+# and replace those with a lightweight, serializable IR so this package no
+# longer depends on skidl at runtime. Until then, skidl is a hard dependency.
+dependencies = [
+    "skidl>=2.0",
+    "simp_sexp",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+schematizer = "schematizer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
