@@ -5,8 +5,9 @@
 """
 Render a generic netlist document into KiCad schematic files.
 
-``render`` is the single public entry point. SKiDL's ``generate_schematic``
-calls it in-process, and the CLI wraps it.
+``render`` is the single public entry point. A front end (SKiDL, or any tool
+that emits the netlist format) calls it in-process, and the CLI wraps it. It
+depends only on the vendored engine in :mod:`schematizer.engine` — no skidl.
 """
 
 import json
@@ -14,7 +15,8 @@ import os
 
 from .loader import load_netlist
 
-# KiCad versions this tool can target.
+# KiCad versions this tool can target. The engine is one modern writer plus a
+# small KiCad-8 format toggle; every version routes through it.
 SUPPORTED_TOOLS = (
     "kicad5",
     "kicad6",
@@ -57,7 +59,7 @@ def render(
             the document's ``top_name``, then ``"schematic"``.
         title (str): Schematic title block text.
         **options: Passed through to the placement/routing/writer engine
-            (e.g. ``flatness``, ``retries``).
+            (e.g. ``flatness``, ``retries``, ``auto_stub``).
 
     Returns:
         str: The output directory (``filepath``).
@@ -73,29 +75,23 @@ def render(
 
     os.makedirs(filepath, exist_ok=True)
 
-    # Reconstruct the circuit (merged) from the document.
+    # Reconstruct the IR circuit from the document.
     circuit = load_netlist(doc, tool=tool)
 
-    # Drive the placement/routing/writer engine directly. This mirrors what
-    # SKiDL's generate_schematic does internally (footprint handler + dispatch),
-    # but without re-merging (the loader already merged).
-    import skidl
-    from skidl.tools import tool_modules
+    # Point the engine's per-version output toggles at the requested tool, then
+    # drive placement/routing/writing.
+    from .engine import gen_schematic as gen_schematic_mod
+    from .engine import sexp_schematic as sexp_mod
 
-    def _empty_footprint_handler(part):
-        part.footprint = ":"
+    gen_schematic_mod.TARGET_TOOL = tool
+    sexp_mod.TARGET_TOOL = tool
 
-    saved_handler = skidl.empty_footprint_handler
-    skidl.empty_footprint_handler = _empty_footprint_handler
-    try:
-        tool_modules[tool].gen_schematic(
-            circuit,
-            filepath=filepath,
-            top_name=top_name,
-            title=title,
-            **options,
-        )
-    finally:
-        skidl.empty_footprint_handler = saved_handler
+    gen_schematic_mod.gen_schematic(
+        circuit,
+        filepath=filepath,
+        top_name=top_name,
+        title=title,
+        **options,
+    )
 
     return filepath

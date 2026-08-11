@@ -4,8 +4,10 @@
 
 """schematizer: generic JSON netlist -> KiCad schematic."""
 
-from .render import render
+# Defined before importing render so the vendored engine (which does
+# ``from .. import __version__`` at import time) can see it.
+__version__ = "0.2.0"
+
+from .render import render  # noqa: E402
 
 __all__ = ["render", "__version__"]
-
-__version__ = "0.1.0"

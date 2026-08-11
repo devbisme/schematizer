@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "schematizer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Turn a generic hierarchical netlist (JSON) into a KiCad schematic."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -12,12 +12,10 @@ license = { text = "MIT" }
 authors = [{ name = "Dave Vandenbout" }]
 keywords = ["KiCad", "schematic", "netlist", "EDA", "SKiDL"]
 
-# NOTE (scaffold stage): this package currently reuses SKiDL's placement/
-# routing/writer engine and object model. The plan is to progressively vendor
-# and replace those with a lightweight, serializable IR so this package no
-# longer depends on skidl at runtime. Until then, skidl is a hard dependency.
+# The placement/routing/writer engine and a lightweight IR are vendored under
+# src/schematizer/engine, so the package is independent of skidl at runtime.
+# Its only runtime dependency is the S-expression reader/writer.
 dependencies = [
-    "skidl>=2.0",
     "simp_sexp",
 ]
 
@@ -29,6 +27,11 @@ schematizer = "schematizer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+# The vendored KiCad power-symbol library (GND, +3V3, …) used when a net name
+# matches a power symbol. Keeps the tool self-contained.
+schematizer = ["data/*.kicad_sym"]
 
 [tool.black]
 line-length = 88

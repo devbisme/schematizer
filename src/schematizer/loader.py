@@ -3,23 +3,25 @@
 # The MIT License (MIT) - Copyright (c) Dave Vandenbout.
 
 """
-Reconstruct a circuit from a generic netlist document.
+Reconstruct an IR circuit from a generic netlist document.
 
 The document describes electrical interconnection, hierarchy, embedded symbol
-geometry, and layout hints. This module turns that back into an object graph
-the placement/routing/writer engine can consume.
+geometry, and layout hints. This module turns that into a graph of lightweight
+:mod:`schematizer.ir` objects (``SchPart``/``SchPin``/``SchNet``) that the
+placement/routing/writer engine consumes directly.
 
-Scaffold note: the reconstructed object graph is currently a real SKiDL
-``Circuit`` (the package reuses SKiDL's engine). This is where the future
-lightweight IR (``SchPart``/``SchPin``/``SchNet``) will slot in, replacing the
-SKiDL dependency while keeping the same public ``load_netlist`` contract.
+No KiCad symbol libraries are read and nothing is re-parsed: the embedded
+``draw_cmds`` are handed to the writer as-is, and pin geometry comes straight
+from the document. (An earlier scaffold round-tripped symbols through a
+temporary ``.kicad_sym`` file and SKiDL's parser; that is gone.)
 """
 
-from collections import defaultdict
+from simp_sexp import Sexp
 
-from .symbols import build_symbol_libs
+from .ir import Circuit, NCNet, SchNet, SchPart, SchPin
 
 SCHEMA_NAME = "skidl-generic-netlist"
+SCHEMA_VERSION = 1
 
 
 def _check_document(doc):
@@ -29,90 +31,105 @@ def _check_document(doc):
         raise ValueError(
             f"Unrecognized netlist format {fmt!r}; expected {SCHEMA_NAME!r}."
         )
-    if doc.get("version") != 1:
+    if doc.get("version") != SCHEMA_VERSION:
         raise ValueError(
             f"Unsupported netlist schema version {doc.get('version')!r}; "
-            f"this tool understands version 1."
+            f"this tool understands version {SCHEMA_VERSION}."
         )
+
+
+def _draw_cmds_to_ir(raw):
+    """Convert JSON draw_cmds ({str unit: [cmd, ...]}) to the engine's form.
+
+    The writer indexes ``draw_cmds`` with integer unit numbers and treats each
+    command as an s-expression, so keys are cast to ``int`` and commands wrapped
+    back into ``Sexp`` (they were flattened to plain lists for JSON transport).
+    """
+    out = {}
+    for unit_num, cmds in (raw or {}).items():
+        out[int(unit_num)] = [Sexp(cmd) for cmd in cmds]
+    return out
+
+
+def _make_part(comp, symbols, nets, circuit):
+    """Instantiate one component (with pins connected) into the circuit."""
+    lib_id = comp["lib_id"]
+    sym = symbols.get(lib_id, {})
+
+    part = SchPart(
+        name=sym.get("name") or lib_id.split(":", 1)[-1],
+        ref=comp["ref"],
+        ref_prefix=sym.get("ref_prefix", "U"),
+        value=comp.get("value", "") or "",
+        footprint=comp.get("footprint", "") or "",
+        lib_id=lib_id,
+        description=sym.get("description", "") or "",
+        datasheet=sym.get("datasheet", "") or "",
+        circuit=circuit,
+    )
+    part.hiertuple = tuple(comp.get("hiertuple", ("",)))
+    part.symtx = comp.get("symtx", "") or ""
+    part.orientation_locked = bool(comp.get("orientation_locked", False))
+    part.draw_cmds = _draw_cmds_to_ir(sym.get("draw_cmds"))
+
+    # Which net each pin connects to (keyed by pin number).
+    net_of_pin = {p["num"]: p.get("net") for p in comp.get("pins", [])}
+
+    # Pin geometry lives in the embedded symbol, per unit. Flatten all units'
+    # pins onto the part (single-unit IR); connect each to its net.
+    for _unit_num, unit in sorted(sym.get("units", {}).items()):
+        for pg in unit.get("pins", []):
+            pin = SchPin(
+                num=pg["num"],
+                name=pg.get("name", "") or "",
+                x=pg.get("x", 0),
+                y=pg.get("y", 0),
+                orientation=pg.get("orient", 0),
+            )
+            part.add_pins(pin)
+            net_name = net_of_pin.get(pg["num"])
+            if net_name is not None and net_name in nets:
+                pin += nets[net_name]
+    return part
 
 
 def load_netlist(doc, tool="kicad9"):
-    """Reconstruct a circuit from a generic netlist document.
+    """Reconstruct an IR circuit from a generic netlist document.
 
     Args:
         doc (dict): Parsed generic netlist JSON.
-        tool (str): KiCad tool name used to parse embedded symbols and build
-            the circuit (e.g. ``"kicad9"``).
+        tool (str): Target KiCad tool name (accepted for API symmetry; the
+            embedded data is tool-neutral, so it is not needed to build the IR).
 
     Returns:
-        Circuit: A merged SKiDL circuit ready for schematic generation.
+        Circuit: An IR circuit ready for schematic generation.
     """
     _check_document(doc)
 
-    from skidl import Circuit, Group, Net, Part, set_default_tool
+    circuit = Circuit()
+    symbols = doc.get("symbols", {})
 
-    set_default_tool(tool)
-    ckt = Circuit()
+    # Create all nets first so pins in any component can attach to them, and
+    # apply user net hints (stub/io direction).
+    nets = {}
+    for n in doc.get("nets", []):
+        NetClass = NCNet if n.get("nc") else SchNet
+        net = NetClass(name=n["name"], code=n.get("code", 0), circuit=circuit)
+        net._implicit = bool(n.get("implicit", False))
+        net.netio = (n.get("netio", "") or "").lower()
+        nets[n["name"]] = net
+        circuit.nets.append(net)
 
-    # Rebuild symbol libraries purely from the embedded definitions.
-    libs = build_symbol_libs(doc, tool)
+    # Instantiate components and connect their pins.
+    for comp in doc.get("components", []):
+        _make_part(comp, symbols, nets, circuit)
 
-    def make_part(comp, nets):
-        lib_name, part_name = comp["lib_id"].split(":", 1)
-        part = Part(
-            libs[lib_name],
-            part_name,
-            footprint=comp.get("footprint") or None,
-        )
-        part.ref = comp["ref"]
-        if comp.get("value"):
-            part.value = comp["value"]
-        if comp.get("symtx"):
-            part.symtx = comp["symtx"]
-        for pin in comp["pins"]:
-            if pin.get("net") is not None:
-                part[pin["num"]] += nets[pin["net"]]
+    # Apply explicit stub hints after pins are connected so the cascade to pins
+    # takes effect. (Automatic stubbing is a layout concern handled downstream.)
+    for n in doc.get("nets", []):
+        if n.get("stub_explicit"):
+            net = nets[n["name"]]
+            net._stub_explicit = True
+            net.stub = bool(n.get("stub", False))
 
-    # Group components by hierarchy path and derive the tree of levels so each
-    # hierarchy node is created exactly once.
-    comps_by_path = defaultdict(list)
-    for comp in doc["components"]:
-        comps_by_path[tuple(comp["hiertuple"])].append(comp)
-
-    paths = set()
-    for p in list(comps_by_path):
-        for i in range(1, len(p) + 1):
-            paths.add(p[:i])
-    children = defaultdict(list)
-    for p in sorted(paths):
-        if len(p) >= 2:
-            parent = p[:-1]
-            if p[-1] not in children[parent]:
-                children[parent].append(p[-1])
-
-    with ckt:
-        # Create all nets up front so pins in different hierarchy groups can
-        # share them, and apply user net hints.
-        nets = {}
-        for n in doc["nets"]:
-            net = Net(n["name"])
-            nets[n["name"]] = net
-            if n.get("stub_explicit"):
-                net.stub = n.get("stub", False)
-            if n.get("netio"):
-                net.netio = n["netio"]
-
-        def build(path):
-            for comp in comps_by_path.get(path, []):
-                make_part(comp, nets)
-            for child_name in children.get(path, []):
-                # Force the exact hierarchy name via tag (hiertuple uses
-                # tag_or_name) so UUIDs/sheet filenames are reproducible.
-                with Group(child_name, tag=child_name):
-                    build(path + (child_name,))
-
-        build(("",))
-
-    ckt.merge_net_names()
-    ckt.merge_nets()
-    return ckt
+    return circuit

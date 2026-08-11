@@ -52,10 +52,13 @@ SKiDL — and reused by any other front end that emits the same format.
 
 ## Status
 
-**Scaffold.** The package currently reconstructs SKiDL objects from the netlist
-and reuses SKiDL's placement/routing/writer engine (so `skidl` is a runtime
-dependency). The roadmap is to replace that with a lightweight, serializable
-intermediate representation so the tool becomes independent of SKiDL internals.
+**Self-contained.** The placement/routing/writer engine is vendored under
+`schematizer/engine`, and the netlist is reconstructed into a lightweight
+intermediate representation (`schematizer.ir`: `SchPart`/`SchPin`/`SchNet`) that
+the engine consumes directly — no `.kicad_sym` re-parse, no KiCad library
+access, and **no runtime dependency on skidl**. The only runtime dependency is
+`simp_sexp`. The KiCad power-symbol library (for `GND`/rail nets) is vendored in
+`schematizer/data`.
 
 ## Supported KiCad versions
 

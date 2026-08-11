@@ -89,3 +89,31 @@ def test_render_rejects_bad_schema(tmp_path):
     bad["format"] = "something-else"
     with pytest.raises(ValueError):
         render(bad, tool="kicad9", filepath=str(tmp_path))
+
+
+def test_render_does_not_import_skidl(tmp_path):
+    """The engine is fully vendored: rendering must not pull in skidl."""
+    import sys
+
+    render(_doc("flat.json"), tool="kicad9", filepath=str(tmp_path))
+    assert "skidl" not in sys.modules
+
+
+def test_kicad8_format_toggle(tmp_path):
+    """KiCad 8 spells hidden pin numbers differently from KiCad 9/10."""
+    render(_doc("flat.json"), tool="kicad8", filepath=str(tmp_path / "k8"),
+           top_name="flat")
+    render(_doc("flat.json"), tool="kicad9", filepath=str(tmp_path / "k9"),
+           top_name="flat")
+    k8 = open(os.path.join(str(tmp_path / "k8"), "flat.kicad_sch")).read()
+    k9 = open(os.path.join(str(tmp_path / "k9"), "flat.kicad_sch")).read()
+    assert "(pin_numbers hide)" in k8
+    assert "(pin_numbers hide)" not in k9
+
+
+def test_render_uses_vendored_power_symbol(tmp_path):
+    """A GND net renders via the vendored KiCad power library (no KiCad access)."""
+    out = render(_doc("flat.json"), tool="kicad9", filepath=str(tmp_path),
+                 top_name="flat")
+    text = open(os.path.join(out, "flat.kicad_sch")).read()
+    assert "power:GND" in text
