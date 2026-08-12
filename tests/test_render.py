@@ -12,6 +12,7 @@ import pytest
 
 from schematizer import render
 from schematizer.loader import load_netlist
+from schematizer.render import SUPPORTED_TOOLS
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
 
@@ -82,6 +83,19 @@ def test_render_accepts_path(tmp_path):
 def test_render_rejects_unknown_tool(tmp_path):
     with pytest.raises(ValueError):
         render(_doc("flat.json"), tool="kicad99", filepath=str(tmp_path))
+
+
+def test_render_rejects_kicad5(tmp_path):
+    """KiCad 5 needs the legacy EESCHEMA writer, which this tool doesn't have.
+
+    Guards against it being quietly routed through the modern s-expression
+    writer, which would emit a .kicad_sch that KiCad 5 cannot open -- and
+    which crashes anyway, since KiCad 5 libraries carry no draw_cmds.
+    """
+    assert "kicad5" not in SUPPORTED_TOOLS
+    with pytest.raises(ValueError, match="KiCad 5"):
+        render(_doc("flat.json"), tool="kicad5", filepath=str(tmp_path))
+    assert not glob.glob(os.path.join(str(tmp_path), "*.kicad_sch"))
 
 
 def test_render_rejects_bad_schema(tmp_path):

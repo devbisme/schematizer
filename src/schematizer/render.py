@@ -17,14 +17,27 @@ from .loader import load_netlist
 
 # KiCad versions this tool can target. The engine is one modern writer plus a
 # small KiCad-8 format toggle; every version routes through it.
+#
+# KiCad 5 is deliberately absent. It needs the legacy EESCHEMA ``.sch`` format,
+# not the s-expression ``.kicad_sch`` this writer emits, and its libraries
+# describe symbols with a different (non-s-expression) draw representation that
+# the generic netlist has no slot for. Supporting it would mean a second writer
+# and a second symbol format, so it is rejected up front instead.
 SUPPORTED_TOOLS = (
-    "kicad5",
     "kicad6",
     "kicad7",
     "kicad8",
     "kicad9",
     "kicad10",
 )
+
+# Rejected with a specific explanation rather than the generic "unsupported".
+_RETIRED_TOOLS = {
+    "kicad5": (
+        "KiCad 5 uses the legacy EESCHEMA '.sch' format, which this tool does "
+        "not write. Use KiCad 6 or later for schematic generation."
+    ),
+}
 
 
 def _load_document(netlist):
@@ -53,7 +66,8 @@ def render(
     Args:
         netlist (dict | str | os.PathLike): The generic netlist document, or a
             path to a JSON file containing it.
-        tool (str): Target KiCad version, ``"kicad5"`` … ``"kicad10"``.
+        tool (str): Target KiCad version, ``"kicad6"`` … ``"kicad10"``.
+            KiCad 5 is not supported; see :data:`SUPPORTED_TOOLS`.
         filepath (str): Output directory for the ``.kicad_sch`` files.
         top_name (str, optional): Base name for the output files. Defaults to
             the document's ``top_name``, then ``"schematic"``.
@@ -64,6 +78,8 @@ def render(
     Returns:
         str: The output directory (``filepath``).
     """
+    if tool in _RETIRED_TOOLS:
+        raise ValueError(_RETIRED_TOOLS[tool])
     if tool not in SUPPORTED_TOOLS:
         raise ValueError(
             f"Unsupported tool {tool!r}; choose one of {', '.join(SUPPORTED_TOOLS)}."

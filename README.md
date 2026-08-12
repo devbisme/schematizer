@@ -62,6 +62,10 @@ access, and **no runtime dependency on skidl**. The only runtime dependency is
 
 ## Supported KiCad versions
 
-`--tool` accepts `kicad5` … `kicad10`. KiCad 6–10 share one modern
-S-expression writer (with a couple of KiCad-8 format toggles); KiCad 5 uses the
-legacy EESCHEMA writer.
+`--tool` accepts `kicad6` … `kicad10`, which share one modern S-expression
+writer (with a couple of KiCad-8 format toggles).
+
+KiCad 5 is **not** supported and is rejected with an explanatory error. It
+needs the legacy EESCHEMA `.sch` format rather than `.kicad_sch`, and KiCad 5
+libraries describe symbols in a different, non-s-expression form that the
+generic netlist does not carry.
