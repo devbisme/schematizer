@@ -1,3 +1,12 @@
+![PyPI Version](https://img.shields.io/pypi/v/schematizer.svg)
+![Python Versions](https://img.shields.io/pypi/pyversions/schematizer.svg)
+![License](https://img.shields.io/pypi/l/schematizer.svg)
+![Downloads](https://img.shields.io/pypi/dm/schematizer.svg)
+![GitHub Stars](https://img.shields.io/github/stars/devbisme/schematizer.svg?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/devbisme/schematizer.svg?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/devbisme/schematizer.svg)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/devbisme/schematizer.svg)
+
 # schematizer
 
 Turn a **generic, hierarchical netlist** (JSON) into a KiCad schematic.
