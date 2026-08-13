@@ -2,19 +2,19 @@
 
 # The MIT License (MIT) - Copyright (c) Dave Vandenbout.
 
-"""Command-line interface: generic netlist JSON -> KiCad schematic files."""
+"""Command-line interface: generic netlist JSON -> schematic files."""
 
 import argparse
 import sys
 
 from . import __version__
-from .render import SUPPORTED_TOOLS, render
+from .render import SUPPORTED_FORMATS, SUPPORTED_TOOLS, render
 
 
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="schematizer",
-        description="Generate KiCad schematic files from a generic "
+        description="Generate KiCad schematic or SVG files from a generic "
         "hierarchical netlist (JSON).",
     )
     parser.add_argument(
@@ -29,10 +29,18 @@ def build_parser():
         help="Target KiCad version (default: kicad9).",
     )
     parser.add_argument(
+        "-f",
+        "--format",
+        default="kicad",
+        choices=SUPPORTED_FORMATS,
+        help="Output format: editable .kicad_sch files, or static "
+        "cross-linked .svg pages (default: kicad).",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         default=".",
-        help="Output directory for the .kicad_sch files (default: .).",
+        help="Output directory for the generated files (default: .).",
     )
     parser.add_argument(
         "--top-name",
@@ -48,7 +56,16 @@ def build_parser():
         "--flatness",
         type=float,
         default=0.0,
-        help="Hierarchy flattening, 0.0 (fully hierarchical) .. 1.0 (flat).",
+        help="Hierarchy flattening, 0.0 (fully hierarchical, one file per "
+        "sheet) .. 1.0 (everything on one sheet).",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed the placer/router so the drawing is reproducible: the same "
+        "netlist, seed and options give byte-identical output. Omit for a "
+        "different (equally valid) layout each run.",
     )
     parser.add_argument(
         "--version",
@@ -67,12 +84,14 @@ def main(argv=None):
             filepath=args.output,
             top_name=args.top_name,
             title=args.title,
+            format=args.format,
             flatness=args.flatness,
+            seed=args.seed,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)
         return 1
-    print(f"Wrote schematic files to {out}")
+    print(f"Wrote {args.format} files to {out}")
     return 0
 
 

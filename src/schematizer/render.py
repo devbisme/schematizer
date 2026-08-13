@@ -31,6 +31,16 @@ SUPPORTED_TOOLS = (
     "kicad10",
 )
 
+# Output formats. Placement and routing are identical for both -- only the
+# final serialization differs, so an SVG page has the same layout as the
+# .kicad_sch it would have produced.
+#
+#   "kicad" -- editable .kicad_sch files, one per hierarchical sheet.
+#   "svg"   -- static .svg pages, one per hierarchical sheet, cross-linked:
+#              a child sheet appears in its parent as a hyperlinked rectangle,
+#              and each child page links back to its parent and to the top.
+SUPPORTED_FORMATS = ("kicad", "svg")
+
 # Rejected with a specific explanation rather than the generic "unsupported".
 _RETIRED_TOOLS = {
     "kicad5": (
@@ -59,6 +69,8 @@ def render(
     filepath=".",
     top_name=None,
     title="SKiDL-Generated Schematic",
+    format="kicad",
+    seed=None,
     **options,
 ):
     """Generate schematic files from a generic netlist document.
@@ -67,13 +79,28 @@ def render(
         netlist (dict | str | os.PathLike): The generic netlist document, or a
             path to a JSON file containing it.
         tool (str): Target KiCad version, ``"kicad6"`` … ``"kicad10"``.
-            KiCad 5 is not supported; see :data:`SUPPORTED_TOOLS`.
-        filepath (str): Output directory for the ``.kicad_sch`` files.
+            KiCad 5 is not supported; see :data:`SUPPORTED_TOOLS`. The version
+            still matters for ``format="svg"`` because the embedded symbol
+            graphics are KiCad-version flavored.
+        filepath (str): Output directory for the generated files.
         top_name (str, optional): Base name for the output files. Defaults to
             the document's ``top_name``, then ``"schematic"``.
         title (str): Schematic title block text.
+        format (str): ``"kicad"`` for editable ``.kicad_sch`` files (default),
+            or ``"svg"`` for static, cross-linked ``.svg`` pages. See
+            :data:`SUPPORTED_FORMATS`.
+        seed (optional): Seed for the placer/router's random number generator.
+            Placement starts from random positions, so the same netlist
+            normally yields a different (equally valid) drawing each run.
+            Passing a seed makes a run reproducible: the same netlist, seed and
+            options produce byte-identical output. ``None`` (default) keeps the
+            existing random behavior. Useful for regression-testing a drawing,
+            for filing a bug against a specific bad layout, and for re-rolling
+            a layout you don't like by trying successive seeds.
         **options: Passed through to the placement/routing/writer engine
-            (e.g. ``flatness``, ``retries``, ``auto_stub``).
+            (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
+            controls hierarchy for both formats: 0 keeps every subcircuit on
+            its own sheet, 1 collapses everything onto one.
 
     Returns:
         str: The output directory (``filepath``).
@@ -83,6 +110,11 @@ def render(
     if tool not in SUPPORTED_TOOLS:
         raise ValueError(
             f"Unsupported tool {tool!r}; choose one of {', '.join(SUPPORTED_TOOLS)}."
+        )
+    if format not in SUPPORTED_FORMATS:
+        raise ValueError(
+            f"Unsupported format {format!r}; "
+            f"choose one of {', '.join(SUPPORTED_FORMATS)}."
         )
 
     doc = _load_document(netlist)
@@ -107,6 +139,8 @@ def render(
         filepath=filepath,
         top_name=top_name,
         title=title,
+        output_format=format,
+        seed=seed,
         **options,
     )
 

@@ -9,7 +9,6 @@ Autoplacer for arranging symbols in a schematic.
 import functools
 import itertools
 import math
-import random
 import sys
 from collections import defaultdict
 from copy import copy
@@ -17,6 +16,7 @@ from copy import copy
 from ..ir import SchPin as Pin
 from .._utils import active_logger
 from .._utils import export_to_all, rmv_attr, sgn
+from .rng import rng
 from .debug_draw import (
     draw_end,
     draw_pause,
@@ -198,18 +198,26 @@ def add_anchor_pull_pins(parts, nets, **options):
         # If nets exist, then these parts are interconnected so
         # assign pins on each net to part anchor and pull pin lists.
         for net in nets:
-            # Get net pins that are on movable parts.
-            pins = {pin for pin in net.pins if pin.part in parts}
+            # Get net pins that are on movable parts. Kept as an ordered list
+            # rather than a set: these pins are appended to the anchor/pull
+            # lists below, and the forces they generate are summed in list
+            # order. Floating-point addition isn't associative, so a set's
+            # id() ordering -- which moves with memory layout -- would shift
+            # the placement even for a fixed seed.
+            pins = [pin for pin in net.pins if pin.part in parts]
 
-            # Get the set of parts with pins on the net.
-            net.parts = {pin.part for pin in pins}
+            # Get the parts with pins on the net, de-duplicated but in
+            # first-seen order, for the same reason.
+            net.parts = list(dict.fromkeys(pin.part for pin in pins))
 
             # Add each pin as an anchor on the part that contains it and
             # as a pull pin on all the other parts that will be pulled by this part.
             for pin in pins:
                 pin.part.anchor_pins[net].append(pin)
                 add_place_pt(pin.part, pin)
-                for part in net.parts - {pin.part}:
+                for part in net.parts:
+                    if part is pin.part:
+                        continue
                     # NetTerminals are pulled towards connected parts, but
                     # those parts are not attracted towards NetTerminals.
                     if not is_net_terminal(pin.part):
@@ -756,7 +764,7 @@ def overlap_force(part, parts, **options):
 
     # Compute the overlap force of the bbox of this part with every other part.
     total_force = Vector(0, 0)
-    for other_part in set(parts) - {part}:
+    for other_part in (p for p in parts if p is not part):
         other_part_bbox = other_part.place_bbox * other_part.tx
 
         # No force unless parts overlap.
@@ -765,7 +773,7 @@ def overlap_force(part, parts, **options):
             # Add some small random offset to break symmetry when parts exactly overlay each other.
             # Move right edge of part to the left of other part's left edge, etc...
             moves = []
-            rnd = Vector(random.random() - 0.5, random.random() - 0.5)
+            rnd = Vector(rng.random() - 0.5, rng.random() - 0.5)
             for edges, dir in (
                 (("ll", "lr"), Vector(1, 0)),
                 (("ul", "ll"), Vector(0, 1)),
@@ -811,7 +819,7 @@ def overlap_force_rand(part, parts, **options):
 
     # Compute the overlap force of the bbox of this part with every other part.
     total_force = Vector(0, 0)
-    for other_part in set(parts) - {part}:
+    for other_part in (p for p in parts if p is not part):
         other_part_bbox = other_part.place_bbox * other_part.tx
 
         # No force unless parts overlap.
@@ -820,7 +828,7 @@ def overlap_force_rand(part, parts, **options):
             # Add some small random offset to break symmetry when parts exactly overlay each other.
             # Move right edge of part to the left of other part's left edge.
             moves = []
-            rnd = Vector(random.random() - 0.5, random.random() - 0.5)
+            rnd = Vector(rng.random() - 0.5, rng.random() - 0.5)
             for edges, dir in (
                 (("ll", "lr"), Vector(1, 0)),
                 (("lr", "ll"), Vector(1, 0)),
@@ -842,7 +850,7 @@ def overlap_force_rand(part, parts, **options):
             for move in moves:
                 move[0] += new_accum
                 new_accum = move[0]
-            select = new_accum * random.random()
+            select = new_accum * rng.random()
             for move in moves:
                 if move[0] >= select:
                     total_force += move[1]
@@ -998,7 +1006,7 @@ def random_placement(parts, **options):
 
     # Place parts randomly within area.
     for part in parts:
-        pt = Point(random.random() * bbox.w, random.random() * bbox.h)
+        pt = Point(rng.random() * bbox.w, rng.random() * bbox.h)
         part.tx = part.tx.move(pt)
 
 
@@ -1357,7 +1365,20 @@ class Placer:
         # Find parts that aren't connected to anything.
         floating_parts = set(node.parts) - set(itertools.chain(*connected_parts))
 
-        return connected_parts, internal_nets, floating_parts
+        # The grouping above needs sets (it merges by intersection), but sets of
+        # Parts iterate in id() order, which shifts with memory layout from run
+        # to run. Everything downstream is order-sensitive -- random_placement()
+        # walks these in order handing out random positions -- so a fixed seed
+        # would still give a different placement each run. Restore the node's
+        # own part order, which is stable, before handing them back.
+        rank = {id(part): i for i, part in enumerate(node.parts)}
+        ordered = lambda group: sorted(group, key=lambda part: rank[id(part)])
+
+        return (
+            [ordered(group) for group in connected_parts],
+            internal_nets,
+            ordered(floating_parts),
+        )
 
     _ROW_PLACE_THRESHOLD = 20
 
@@ -2025,7 +2046,9 @@ class Placer:
         this_module = sys.modules[__name__]
         this_module.__dict__.update(_constants.__dict__)
 
-        random.seed(options.get("seed"))
+        # NB: the generator is seeded once per run by gen_schematic(), not here.
+        # place() recurses into child nodes, so seeding here would restart every
+        # sibling on the identical stream and make each retry a repeat.
 
         # Store the starting attributes of the node's parts, pins, and nets.
         node.attrs = node.get_attrs()

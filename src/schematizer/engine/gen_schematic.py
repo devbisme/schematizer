@@ -17,11 +17,13 @@ from collections import Counter
 
 from ..geometry import BBox, Point, Tx, Vector
 from .net_terminal import NetTerminal
+from .rng import seed as rng_seed
 from .snap import snap_two_pin_parts as _snap_two_pin_parts
 from .._utils import get_script_name
 from .._utils import export_to_all, rmv_attr
 
 from .sexp_schematic import write_top_schematic
+from .svg_schematic import write_top_svg
 from .bboxes import calc_hier_label_bbox, calc_symbol_bbox
 
 __all__ = []
@@ -428,7 +430,6 @@ def _handle_fallback(
     import warnings
 
     from .sch_node import SchNode
-    from .sexp_schematic import write_top_schematic
 
     fallback = options.get("auto_stub_fallback", "labels")
 
@@ -453,9 +454,7 @@ def _handle_fallback(
     node.place(expansion_factor=1.0, **options)
     node.route(**options)
     _snap_two_pin_parts(node)
-    output_file = write_top_schematic(
-        circuit, node, filepath, top_name, title, version=20230409
-    )
+    output_file = _write_output(circuit, node, filepath, top_name, title, options)
     finalize_parts_and_nets(circuit, **options)
 
     msg = (
@@ -629,6 +628,22 @@ def _place_and_classify(node, circuit, expansion_factor, classify=True, **option
 
 
 @export_to_all
+def _write_output(circuit, node, filepath, top_name, title, options):
+    """Serialize the placed+routed node tree in the requested output format.
+
+    Placement and routing are format-agnostic -- only this final step differs,
+    so the SVG pages have exactly the layout of the KiCad sheets.
+    """
+    if options.get("output_format", "kicad") == "svg":
+        return write_top_svg(
+            circuit, node, filepath, top_name, title,
+            fit=options.get("svg_fit", True),
+        )
+    return write_top_schematic(
+        circuit, node, filepath, top_name, title, version=20230409
+    )
+
+
 def gen_schematic(
     circuit,
     filepath=".",
@@ -649,6 +664,12 @@ def gen_schematic(
             Defaults to 0.0 (completely hierarchical). Use 1.0 to flatten everything into one sheet.
         retries (int, optional): Number of times to re-try if routing fails. Defaults to 2.
         options (dict, optional): Dict of options and values, usually for drawing/debugging.
+            Recognizes "seed": seed for the placer/router's random number
+            generator. With a seed, the same circuit and options produce
+            byte-identical output; without one (the default), placement is
+            random and the drawing differs from run to run. Each retry derives
+            its own stream from the seed, so retries still explore different
+            layouts while the run as a whole stays reproducible.
 
     Auto-stub options (pass as keyword arguments):
         auto_stub (bool): Enable auto-stubbing for large/complex circuits. Converts nets that
@@ -720,7 +741,19 @@ def gen_schematic(
     expansion_factor = 1.0
     failure_type = None
 
+    # Seed the placer/router once for the whole run. Doing it here rather than
+    # inside place()/route() matters: those recurse into child nodes, so seeding
+    # there would restart every sibling sheet on the same stream.
+    base_seed = options.get("seed")
+
     for attempt in range(retries):
+        if base_seed is not None:
+            # Give each attempt its own stream derived from the caller's seed.
+            # Reusing the seed verbatim would make every retry re-explore the
+            # same placement, which is the opposite of what a retry is for --
+            # while deriving it keeps the whole run reproducible.
+            rng_seed(f"{base_seed}:{attempt}")
+
         preprocess_circuit(circuit, **options)
 
         node = SchNode(circuit, tool_module, filepath, top_name, title, flatness)
@@ -771,10 +804,9 @@ def gen_schematic(
         if options.get("auto_stub", False):
             _snap_two_pin_parts(node)
 
-        # Generate S-expression schematic using shared module.
-        # KiCad 8/9 use version 20230409.
-        output_file = write_top_schematic(
-            circuit, node, filepath, top_name, title, version=20230409
+        # Serialize in the requested output format (KiCad s-expression or SVG).
+        output_file = _write_output(
+            circuit, node, filepath, top_name, title, options
         )
 
         active_logger.info(f"Schematic written to {output_file}")
@@ -782,7 +814,12 @@ def gen_schematic(
         finalize_parts_and_nets(circuit, **options)
 
         # Phase 2: ERC correction loop (only when auto_stub is enabled).
-        if options.get("auto_stub", False) and shutil.which("kicad-cli"):
+        # kicad-cli can only check .kicad_sch, so this is skipped for SVG.
+        if (
+            options.get("auto_stub", False)
+            and options.get("output_format", "kicad") == "kicad"
+            and shutil.which("kicad-cli")
+        ):
             max_erc_iterations = options.get("erc_max_iterations", 3)
             for erc_attempt in range(max_erc_iterations):
                 erc_report = _run_erc(output_file)
@@ -822,8 +859,8 @@ def gen_schematic(
                         node.route(**options)
                         if options.get("auto_stub", False):
                             _snap_two_pin_parts(node)
-                        output_file = write_top_schematic(
-                            circuit, node, filepath, top_name, title, version=20230409
+                        output_file = _write_output(
+                            circuit, node, filepath, top_name, title, options
                         )
                         finalize_parts_and_nets(circuit, **options)
                         erc_regen_ok = True
