@@ -15,7 +15,6 @@ from itertools import chain, zip_longest
 
 from ..ir import SchPart as Part
 from .._utils import export_to_all, rmv_attr
-from .rng import rng
 from .debug_draw import (
     draw_end,
     draw_endpoint,
@@ -93,30 +92,9 @@ for direction in Direction:
 
 
 # Dictionary for storing colors to visually distinguish routed nets.
-# Deliberately drawn from the `random` module's global generator, not the
-# engine's `rng`: debug colors must not consume from the stream that decides
-# geometry, or turning the debug drawing on would change the routing.
 net_colors = defaultdict(
     lambda: (random.randint(0, 200), random.randint(0, 200), random.randint(0, 200))
 )
-
-
-def _seg_key(seg):
-    """Geometric sort key for a wire Segment.
-
-    Segments hash by identity, so a set of them iterates differently every run.
-    Sort on the endpoints wherever that order can reach the output.
-    """
-    return (seg.p1.x, seg.p1.y, seg.p2.x, seg.p2.y)
-
-
-def _net_key(net):
-    """Stable sort key for a Net, for the same reason as :func:`_seg_key`.
-
-    The switchbox router walks sets of Nets while it assigns wires to columns,
-    so id() ordering there moves wires between runs of the same seed.
-    """
-    return (str(net.name or ""), int(getattr(net, "code", 0) or 0))
 
 
 class NoSwitchBox(Exception):
@@ -453,23 +431,6 @@ class Face(Interval):
         self.switchboxes.update(other.switchboxes)
 
     @property
-    def sort_key(self):
-        """Return a key that orders Faces by geometry rather than by identity.
-
-        Faces are held in sets, and a set of objects iterates in ``id()`` order,
-        which shifts with memory layout from one run to the next. Wherever that
-        order decides which face is routed first or which of two equally-distant
-        faces wins, sorting on this key instead is what lets a seeded run
-        reproduce.
-        """
-        return (
-            self.track.orientation,
-            self.track.coord,
-            self.beg.coord,
-            self.end.coord,
-        )
-
-    @property
     def length(self):
         """Return the length of the face."""
         return self.end.coord - self.beg.coord
@@ -551,10 +512,8 @@ class Face(Interval):
                     intersections[i] = None
                     break
 
-        # Remove None from the list of intersections. Filtered rather than
-        # set-differenced: the merge loop above already fixed a deterministic
-        # order, and routing through a set would discard it.
-        intersections = [x for x in intersections if x is not None]
+        # Remove None from the list of intersections.
+        intersections = list(set(intersections) - {None})
 
         # The intersections are now as large as they can be and not associated
         # with any parts, so there are no terminals associated with part pins.
@@ -982,10 +941,7 @@ class GlobalTrack(list):
     def split_faces(self):
         """Split track faces by any intersecting orthogonal tracks."""
 
-        # Sorted by coordinate because `splits` is a set of Tracks: the split
-        # order fixes the order faces are appended to this track, and every
-        # face index downstream rides on that.
-        for split in sorted(self.splits, key=lambda track: track.coord):
+        for split in self.splits:
             for face in self[:]:
                 # Apply the split track to the face. The face will only be split
                 # if the split track intersects it. Any split faces will be added
@@ -1358,7 +1314,7 @@ class SwitchBox:
                 break
 
             # Take a random choice of the active growth directions.
-            direction = rng.choice(list(growth_directions))
+            direction = random.choice(list(growth_directions))
 
             # Check the switchboxes along the growth side to see if further expansion is possible.
             box_list = box_lists[direction]
@@ -1691,7 +1647,7 @@ class SwitchBox:
 
             # Find possible intervals for multi-track nets.
             net_intervals = []
-            for net in sorted(multi_nets, key=_net_key):
+            for net in multi_nets:
                 net_trk_idxs = [idx for idx, nt in enumerate(track_nets) if nt is net]
                 for index, trk1 in enumerate(net_trk_idxs[:-1], 1):
                     for trk2 in net_trk_idxs[index:]:
@@ -1716,7 +1672,7 @@ class SwitchBox:
             column_nets = set(intvl.net for intvl in column)
 
             # Merge segments of each net in the column.
-            for net in sorted(column_nets, key=_net_key):
+            for net in column_nets:
                 # Extract intervals if the current net has more than one interval.
                 intervals = [intvl for intvl in column if intvl.net is net]
                 if len(intervals) < 2:
@@ -1772,7 +1728,7 @@ class SwitchBox:
             first_track = 0
             last_track = len(track_nets) - 1
             column_nets = set([intvl.net for intvl in column])
-            for net in sorted(column_nets, key=_net_key):
+            for net in column_nets:
                 # Get all the vertical intervals for this net in the current column.
                 net_intervals = [i for i in column if i.net is net]
 
@@ -2319,13 +2275,7 @@ class Router:
 
                     # Get the distances to the faces adjacent to this previously-visited face
                     # and update the closest face if appropriate.
-                    # Sorted because `adjacent` is a set: ties on `dist` are
-                    # broken by whichever face is seen first, so id() ordering
-                    # would silently pick a different route each run.
-                    for adj in sorted(
-                        visited_face.adjacent,
-                        key=lambda a: (a.dist, a.face.sort_key),
-                    ):
+                    for adj in visited_face.adjacent:
                         if adj.face in visited_faces:
                             # Don't re-visit faces that have already been visited.
                             continue
@@ -2397,14 +2347,11 @@ class Router:
 
             # Faces with pins from which paths/routing originate.
             net_pin_faces = {pin.face for pin in node.get_internal_pins(net)}
-            # Sorted, not just listed: the set iterates in id() order, so both
-            # the random pick below and the routing order of the remaining
-            # faces would otherwise vary between runs of the same seed.
-            start_faces = sorted(net_pin_faces, key=lambda face: face.sort_key)
+            start_faces = set(net_pin_faces)
 
             # Select a random start face and look for a route to *any* of the other start faces.
-            start_face = rng.choice(start_faces)
-            start_faces.remove(start_face)
+            start_face = random.choice(list(start_faces))
+            start_faces.discard(start_face)
             stop_faces = set(start_faces)
             initial_route = rt_srch(start_face, stop_faces)
             global_route.append(initial_route)
@@ -2712,11 +2659,7 @@ class Router:
             while stubs:
                 trimmed_segments -= stubs
                 stubs = get_stubs(trimmed_segments)
-            # Segments hash by identity, so this set iterates in id() order.
-            # The result gets shuffled and walked for jogs, and a shuffle of a
-            # differently-ordered list is a different list even from the same
-            # seed -- so order it geometrically before returning.
-            return sorted(trimmed_segments, key=_seg_key)
+            return list(trimmed_segments)
 
         def remove_jogs_old(net, segments, wires, net_bboxes, part_bboxes):
             """Remove jogs in wiring segments.
@@ -2990,7 +2933,7 @@ class Router:
                         yield list(jog_segs), list(start_stop_pts)
 
             # Shuffle segments to vary the order of detected jogs.
-            rng.shuffle(segments)
+            random.shuffle(segments)
 
             # Get iterator for jogs.
             jogs = get_jogs(segments)
@@ -3013,7 +2956,7 @@ class Router:
                 p2s = [Point(p1.x, p3.y), Point(p3.x, p1.y)]
 
                 # Shuffle the routing points so the applied correction isn't always the same orientation.
-                rng.shuffle(p2s)
+                random.shuffle(p2s)
 
                 # Check each routing point to see if it leads to a valid routing.
                 for p2 in p2s:
@@ -3197,6 +3140,8 @@ class Router:
 
         this_module = sys.modules[__name__]
         this_module.__dict__.update(_constants.__dict__)
+
+        random.seed(options.get("seed"))
 
         # Remove any stuff leftover from a previous place & route run.
         node.rmv_routing_stuff()

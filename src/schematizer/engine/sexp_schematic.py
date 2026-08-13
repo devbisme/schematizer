@@ -1572,13 +1572,8 @@ def write_top_schematic(circuit, node, filepath, top_name, title, version=202304
     # Top node is never flattened because it has no parent to accept its contents, so it must always generate a sheet.
     node.flattened = False
 
-    # Generate a deterministic UUID for the top node based on its name. The top
-    # node's name is the empty string (it is the root of the hierarchy), which
-    # would fall through to _gen_uuid's random branch and put a fresh UUID in
-    # every child sheet's instance path on every run. Fall back to the sheet
-    # filename so the root UUID is stable per project but still distinct
-    # between projects.
-    node.uuid = _gen_uuid(node.name or f"root:{node.sheet_filename}")
+    # Generate a deterministic UUID for the top node based on its name.
+    node.uuid = _gen_uuid(node.name)
 
     # UUID paths start from this root node. Used for hierarchical sheet references.
     uuid_path = f"/{node.uuid}"

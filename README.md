@@ -98,35 +98,12 @@ in between flatten only the smaller subcircuits.
 Each SVG page is sized to its drawing rather than to an A-size sheet, since an
 SVG renders at whatever size it declares.
 
-## Reproducible drawings
+## Randomized layout
 
 Placement starts parts at random positions and the router breaks ties randomly,
-so the same netlist normally produces a different — equally valid — drawing on
-every run. Pass a seed to pin it down:
-
-```bash
-schematizer netlist.json --tool kicad9 --seed 42 -o out
-```
-
-```python
-render(netlist, tool="kicad9", filepath="out", seed=42)
-```
-
-The same netlist, seed and options give byte-identical output, across separate
-processes and for both formats. Without a seed the behavior is unchanged:
-random each run.
-
-This is useful for regression-testing a drawing, for reporting a bug against a
-specific bad layout, and for re-rolling a layout you don't like — try `--seed 1`,
-`2`, `3` until you get one you want to keep, then record it.
-
-Retries still explore: when routing fails and the engine retries with a larger
-area, each attempt derives its own stream from your seed, so a retry is a
-genuinely different layout while the run as a whole stays reproducible.
-
-Seeding is local to this library. It uses its own generator, so it neither
-disturbs nor depends on the `random` module's global state in the calling
-program.
+so the same netlist produces a different — equally valid — drawing on every
+run. There is no way to pin a layout down: if you get one you want to keep,
+keep the generated files.
 
 ## Supported KiCad versions
 

@@ -17,7 +17,6 @@ from collections import Counter
 
 from ..geometry import BBox, Point, Tx, Vector
 from .net_terminal import NetTerminal
-from .rng import seed as rng_seed
 from .snap import snap_two_pin_parts as _snap_two_pin_parts
 from .._utils import get_script_name
 from .._utils import export_to_all, rmv_attr
@@ -664,12 +663,6 @@ def gen_schematic(
             Defaults to 0.0 (completely hierarchical). Use 1.0 to flatten everything into one sheet.
         retries (int, optional): Number of times to re-try if routing fails. Defaults to 2.
         options (dict, optional): Dict of options and values, usually for drawing/debugging.
-            Recognizes "seed": seed for the placer/router's random number
-            generator. With a seed, the same circuit and options produce
-            byte-identical output; without one (the default), placement is
-            random and the drawing differs from run to run. Each retry derives
-            its own stream from the seed, so retries still explore different
-            layouts while the run as a whole stays reproducible.
 
     Auto-stub options (pass as keyword arguments):
         auto_stub (bool): Enable auto-stubbing for large/complex circuits. Converts nets that
@@ -741,18 +734,7 @@ def gen_schematic(
     expansion_factor = 1.0
     failure_type = None
 
-    # Seed the placer/router once for the whole run. Doing it here rather than
-    # inside place()/route() matters: those recurse into child nodes, so seeding
-    # there would restart every sibling sheet on the same stream.
-    base_seed = options.get("seed")
-
     for attempt in range(retries):
-        if base_seed is not None:
-            # Give each attempt its own stream derived from the caller's seed.
-            # Reusing the seed verbatim would make every retry re-explore the
-            # same placement, which is the opposite of what a retry is for --
-            # while deriving it keeps the whole run reproducible.
-            rng_seed(f"{base_seed}:{attempt}")
 
         preprocess_circuit(circuit, **options)
 

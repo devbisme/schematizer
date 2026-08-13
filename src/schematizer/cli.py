@@ -60,14 +60,6 @@ def build_parser():
         "sheet) .. 1.0 (everything on one sheet).",
     )
     parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Seed the placer/router so the drawing is reproducible: the same "
-        "netlist, seed and options give byte-identical output. Omit for a "
-        "different (equally valid) layout each run.",
-    )
-    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -86,7 +78,6 @@ def main(argv=None):
             title=args.title,
             format=args.format,
             flatness=args.flatness,
-            seed=args.seed,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)

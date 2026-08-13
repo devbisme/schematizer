@@ -70,7 +70,6 @@ def render(
     top_name=None,
     title="SKiDL-Generated Schematic",
     format="kicad",
-    seed=None,
     **options,
 ):
     """Generate schematic files from a generic netlist document.
@@ -89,14 +88,6 @@ def render(
         format (str): ``"kicad"`` for editable ``.kicad_sch`` files (default),
             or ``"svg"`` for static, cross-linked ``.svg`` pages. See
             :data:`SUPPORTED_FORMATS`.
-        seed (optional): Seed for the placer/router's random number generator.
-            Placement starts from random positions, so the same netlist
-            normally yields a different (equally valid) drawing each run.
-            Passing a seed makes a run reproducible: the same netlist, seed and
-            options produce byte-identical output. ``None`` (default) keeps the
-            existing random behavior. Useful for regression-testing a drawing,
-            for filing a bug against a specific bad layout, and for re-rolling
-            a layout you don't like by trying successive seeds.
         **options: Passed through to the placement/routing/writer engine
             (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
             controls hierarchy for both formats: 0 keeps every subcircuit on
@@ -140,7 +131,6 @@ def render(
         top_name=top_name,
         title=title,
         output_format=format,
-        seed=seed,
         **options,
     )
 
