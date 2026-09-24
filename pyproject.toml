@@ -35,3 +35,20 @@ schematizer = ["data/*.kicad_sym"]
 
 [tool.black]
 line-length = 88
+
+# Run the test suite against each supported Python with `tox` (or one with
+# `tox -e py312`). Interpreters come from the global pyenv setting, which puts
+# python3.8 … python3.14 on PATH so tox can find them.
+[tool.tox]
+requires = ["tox>=4.21"]
+env_list = ["py38", "py39", "py310", "py311", "py312", "py313", "py314"]
+skip_missing_interpreters = true
+
+[tool.tox.env_run_base]
+description = "run the test suite with {base_python}"
+extras = ["test"]
+# Use the local skidl checkout (editable) instead of the PyPI release.
+deps = ["-e {tox_root}/../skidl"]
+# deps = ["skidl"]
+set_env = { SKIDL_TOOL = "KICAD9" }
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
