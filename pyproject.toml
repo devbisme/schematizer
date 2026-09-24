@@ -4,13 +4,32 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "schematizer"
-version = "0.2.0"
+version = "0.1.0"
 description = "Turn a generic hierarchical netlist (JSON) into a KiCad schematic."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
-authors = [{ name = "Dave Vandenbout" }]
+authors = [{ name = "Dave Vandenbout", email = "dave@vdb.name" }]
 keywords = ["KiCad", "schematic", "netlist", "EDA", "SKiDL"]
+# The Python-version classifiers feed the README's PyPI "pyversions" badge;
+# keep them in step with requires-python and the tox env_list.
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+]
 
 # The placement/routing/writer engine and a lightweight IR are vendored under
 # src/schematizer/engine, so the package is independent of skidl at runtime.
@@ -21,6 +40,11 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/devbisme/schematizer"
+Repository = "https://github.com/devbisme/schematizer"
+Issues = "https://github.com/devbisme/schematizer/issues"
 
 [project.scripts]
 schematizer = "schematizer.cli:main"
