@@ -1,0 +1,2394 @@
+{
+ "format": "skidl-generic-netlist",
+ "version": 1,
+ "title": "labels test",
+ "top_name": "labels_case",
+ "sheets": [
+  [
+   "",
+   "top1",
+   "buffer1"
+  ],
+  [
+   ""
+  ],
+  [
+   "",
+   "top1",
+   "buffer2"
+  ],
+  [
+   "",
+   "top1"
+  ]
+ ],
+ "symbols": {
+  "Amplifier_Operational:LM358": {
+   "ref_prefix": "U",
+   "name": "LM358",
+   "lib": "Amplifier_Operational",
+   "description": "Low-Power, Dual Operational Amplifiers, DIP-8/SOIC-8/TO-99-8",
+   "datasheet": "http://www.ti.com/lit/ds/symlink/lm2904-n.pdf",
+   "draw_cmds": {
+    "1": [
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -5.08,
+        5.08
+       ],
+       [
+        "xy",
+        5.08,
+        0
+       ],
+       [
+        "xy",
+        -5.08,
+        -5.08
+       ],
+       [
+        "xy",
+        -5.08,
+        5.08
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "output",
+      "line",
+      [
+       "at",
+       7.62,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -7.62,
+       -2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -7.62,
+       2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       0,
+       5.08,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "LM2904",
+      [
+       "at",
+       0,
+       -5.08,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       0,
+       5.08,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "LM358",
+      [
+       "at",
+       0,
+       -5.08,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ]
+    ],
+    "2": [
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -5.08,
+        5.08
+       ],
+       [
+        "xy",
+        5.08,
+        0
+       ],
+       [
+        "xy",
+        -5.08,
+        -5.08
+       ],
+       [
+        "xy",
+        -5.08,
+        5.08
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -7.62,
+       2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -7.62,
+       -2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "output",
+      "line",
+      [
+       "at",
+       7.62,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    "3": [
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       -2.54,
+       -7.62,
+       90
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "V-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       -2.54,
+       7.62,
+       270
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "V+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "3",
+       "name": "+",
+       "x": -7.62,
+       "y": 2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "2",
+       "name": "-",
+       "x": -7.62,
+       "y": -2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "1",
+       "name": "",
+       "x": 7.62,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "2"
+      }
+     ]
+    },
+    "2": {
+     "pins": [
+      {
+       "num": "7",
+       "name": "",
+       "x": 7.62,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "2"
+      },
+      {
+       "num": "6",
+       "name": "-",
+       "x": -7.62,
+       "y": -2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "5",
+       "name": "+",
+       "x": -7.62,
+       "y": 2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      }
+     ]
+    },
+    "3": {
+     "pins": [
+      {
+       "num": "4",
+       "name": "V-",
+       "x": -2.54,
+       "y": -7.62,
+       "orient": "U",
+       "rotation": 90,
+       "length": 3.81,
+       "func": "7"
+      },
+      {
+       "num": "8",
+       "name": "V+",
+       "x": -2.54,
+       "y": 7.62,
+       "orient": "D",
+       "rotation": 270,
+       "length": 3.81,
+       "func": "7"
+      }
+     ]
+    }
+   }
+  },
+  "Device:R": {
+   "ref_prefix": "R",
+   "name": "R",
+   "lib": "Device",
+   "description": "Resistor",
+   "datasheet": "",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       3.81,
+       270
+      ],
+      [
+       "length",
+       1.27
+      ],
+      [
+       "name",
+       "",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -3.81,
+       90
+      ],
+      [
+       "length",
+       1.27
+      ],
+      [
+       "name",
+       "",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.016,
+       -2.54
+      ],
+      [
+       "end",
+       1.016,
+       2.54
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "R",
+      [
+       "at",
+       2.032,
+       0,
+       90
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "R",
+      [
+       "at",
+       0,
+       0,
+       90
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "rectangle",
+      [
+       "start",
+       -1.016,
+       -2.54
+      ],
+      [
+       "end",
+       1.016,
+       2.54
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "",
+       "x": 0,
+       "y": 3.81,
+       "orient": "D",
+       "rotation": 270,
+       "length": 1.27,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "",
+       "x": 0,
+       "y": -3.81,
+       "orient": "U",
+       "rotation": 90,
+       "length": 1.27,
+       "func": "5"
+      }
+     ]
+    }
+   }
+  },
+  "Connector_Generic:Conn_01x07": {
+   "ref_prefix": "J",
+   "name": "Conn_01x07",
+   "lib": "Connector_Generic",
+   "description": "Generic connector, single row, 01x07, script generated (kicad-library-utils/schlib/autogen/connector/)",
+   "datasheet": "",
+   "draw_cmds": {
+    "1": [
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       8.89
+      ],
+      [
+       "end",
+       1.27,
+       -8.89
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       7.747
+      ],
+      [
+       "end",
+       0,
+       7.493
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       5.207
+      ],
+      [
+       "end",
+       0,
+       4.953
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       2.667
+      ],
+      [
+       "end",
+       0,
+       2.413
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       0.127
+      ],
+      [
+       "end",
+       0,
+       -0.127
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       -2.413
+      ],
+      [
+       "end",
+       0,
+       -2.667
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       -4.953
+      ],
+      [
+       "end",
+       0,
+       -5.207
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.27,
+       -7.493
+      ],
+      [
+       "end",
+       0,
+       -7.747
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       7.62,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       5.08,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       2.54,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       0,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       -2.54,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       -5.08,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       -7.62,
+       0
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "J",
+      [
+       "at",
+       0,
+       10.16,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "Conn_01x07",
+      [
+       "at",
+       0,
+       -10.16,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "Pin_1",
+       "x": -5.08,
+       "y": 7.62,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "Pin_2",
+       "x": -5.08,
+       "y": 5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "3",
+       "name": "Pin_3",
+       "x": -5.08,
+       "y": 2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "4",
+       "name": "Pin_4",
+       "x": -5.08,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "5",
+       "name": "Pin_5",
+       "x": -5.08,
+       "y": -2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "6",
+       "name": "Pin_6",
+       "x": -5.08,
+       "y": -5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "7",
+       "name": "Pin_7",
+       "x": -5.08,
+       "y": -7.62,
+       "orient": "R",
+       "rotation": 0,
+       "length": 3.81,
+       "func": "5"
+      }
+     ]
+    }
+   }
+  },
+  "power:PWR_FLAG": {
+   "ref_prefix": "#FLG",
+   "name": "PWR_FLAG",
+   "lib": "power",
+   "description": "Special symbol for telling ERC where power comes from",
+   "datasheet": "",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "power_out",
+      "line",
+      [
+       "at",
+       0,
+       0,
+       90
+      ],
+      [
+       "length",
+       0
+      ],
+      [
+       "name",
+       "",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        0
+       ],
+       [
+        "xy",
+        0,
+        1.27
+       ],
+       [
+        "xy",
+        -1.016,
+        1.905
+       ],
+       [
+        "xy",
+        0,
+        2.54
+       ],
+       [
+        "xy",
+        1.016,
+        1.905
+       ],
+       [
+        "xy",
+        0,
+        1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "#FLG",
+      [
+       "at",
+       0,
+       1.905,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "PWR_FLAG",
+      [
+       "at",
+       0,
+       3.81,
+       0
+      ],
+      [
+       "show_name",
+       "no"
+      ],
+      [
+       "do_not_autoplace",
+       "no"
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "pin",
+      "power_out",
+      "line",
+      [
+       "at",
+       0,
+       0,
+       90
+      ],
+      [
+       "length",
+       0
+      ],
+      [
+       "name",
+       "",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        0
+       ],
+       [
+        "xy",
+        0,
+        1.27
+       ],
+       [
+        "xy",
+        -1.016,
+        1.905
+       ],
+       [
+        "xy",
+        0,
+        2.54
+       ],
+       [
+        "xy",
+        1.016,
+        1.905
+       ],
+       [
+        "xy",
+        0,
+        1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "",
+       "x": 0,
+       "y": 0,
+       "orient": "U",
+       "rotation": 90,
+       "length": 0,
+       "func": "8"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "components": [
+  {
+   "ref": "#FLG1",
+   "lib_id": "power:PWR_FLAG",
+   "value": "PWR_FLAG",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "top1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "+5V"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "#FLG2",
+   "lib_id": "power:PWR_FLAG",
+   "value": "PWR_FLAG",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "top1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "J1",
+   "lib_id": "Connector_Generic:Conn_01x07",
+   "value": "Conn_01x07",
+   "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical",
+   "hiertuple": [
+    "",
+    "top1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "+5V"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "VIN_A"
+    },
+    {
+     "num": "4",
+     "unit": 1,
+     "net": "VIN_B"
+    },
+    {
+     "num": "5",
+     "unit": 1,
+     "net": "OUT_A"
+    },
+    {
+     "num": "6",
+     "unit": 1,
+     "net": "OUT_B"
+    },
+    {
+     "num": "7",
+     "unit": 1,
+     "net": "__NOCONNECT"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R1",
+   "lib_id": "Device:R",
+   "value": "10k",
+   "footprint": "Resistor_SMD:R_0603_1608Metric",
+   "hiertuple": [
+    "",
+    "top1",
+    "buffer1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VIN_A"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$1"
+    }
+   ],
+   "fields": {
+    "MPN": "RC0603FR-0710KL"
+   }
+  },
+  {
+   "ref": "R2",
+   "lib_id": "Device:R",
+   "value": "10k",
+   "footprint": "Resistor_SMD:R_0603_1608Metric",
+   "hiertuple": [
+    "",
+    "top1",
+    "buffer2"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VIN_B"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$3"
+    }
+   ],
+   "fields": {
+    "MPN": "RC0603FR-0710KL"
+   }
+  },
+  {
+   "ref": "U1",
+   "lib_id": "Amplifier_Operational:LM358",
+   "value": "LM358",
+   "footprint": "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+   "hiertuple": [
+    "",
+    "top1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "N$1"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "OUT_A"
+    },
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "OUT_A"
+    },
+    {
+     "num": "7",
+     "unit": 2,
+     "net": "OUT_B"
+    },
+    {
+     "num": "6",
+     "unit": 2,
+     "net": "OUT_B"
+    },
+    {
+     "num": "5",
+     "unit": 2,
+     "net": "N$3"
+    },
+    {
+     "num": "4",
+     "unit": 3,
+     "net": "GND"
+    },
+    {
+     "num": "8",
+     "unit": 3,
+     "net": "+5V"
+    }
+   ],
+   "fields": {
+    "MPN": "LM358DR"
+   }
+  }
+ ],
+ "nets": [
+  {
+   "name": "+5V",
+   "code": 1,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "#FLG1",
+     "pin": "1",
+     "pintype": "POWER-OUT"
+    },
+    {
+     "ref": "J1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "8",
+     "pintype": "POWER-IN"
+    }
+   ],
+   "attrs": {
+    "netclasses": [
+     "Power"
+    ]
+   }
+  },
+  {
+   "name": "GND",
+   "code": 2,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "#FLG2",
+     "pin": "1",
+     "pintype": "POWER-OUT"
+    },
+    {
+     "ref": "J1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "4",
+     "pintype": "POWER-IN"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$1",
+   "code": 3,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "R1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "3",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$3",
+   "code": 4,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "R2",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "5",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "OUT_A",
+   "code": 5,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "5",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "1",
+     "pintype": "OUTPUT"
+    },
+    {
+     "ref": "U1",
+     "pin": "2",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "OUT_B",
+   "code": 6,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "6",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "6",
+     "pintype": "INPUT"
+    },
+    {
+     "ref": "U1",
+     "pin": "7",
+     "pintype": "OUTPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "VIN_A",
+   "code": 7,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "3",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "VIN_B",
+   "code": 8,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "4",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R2",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "__NOCONNECT",
+   "code": 9,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "7",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {},
+   "nc": true
+  }
+ ],
+ "netclasses": {
+  "Power": {
+   "trace_width": 0.4,
+   "priority": 0
+  }
+ }
+}

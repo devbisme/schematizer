@@ -98,6 +98,42 @@ in between flatten only the smaller subcircuits.
 Each SVG page is sized to its drawing rather than to an A-size sheet, since an
 SVG renders at whatever size it declares.
 
+## Labels-only mode
+
+`mode="labels"` (CLI: `--mode labels`) writes a schematic whose connectivity is
+exact by construction, for flows where correctness matters more than a
+readable drawing (for example, as the input to a PCB layout flow):
+
+- Parts are placed unrotated on a plain, deterministic grid. There is no
+  placement optimization and no wire routing, so it is fast (about 2 s for a
+  190-part design).
+- Every connected pin gets a short wire stub ending in a power symbol (if the
+  net name matches a KiCad power symbol), a global label (net on more than one
+  sheet) or a local label (net on one sheet). Pins on the no-connect net get a
+  no-connect flag.
+- Each subcircuit with parts becomes a sheet directly under the root sheet
+  (nested subcircuits become sibling sheets).
+
+```bash
+schematizer netlist.json --tool kicad10 --mode labels -o out --top-name mydesign
+```
+
+KiCad output only; `format="svg"` is rejected in this mode. KiCad leaves `#`
+references (power symbols, PWR_FLAGs) out of its exported netlists, so compare
+connectivity without them.
+
+## Optional netlist keys
+
+These keys are additive (the schema stays at version 1, and readers ignore
+keys they don't use):
+
+- `components[].fields`: user part fields such as `MPN`; written as symbol
+  properties.
+- `nets[].attrs`: per-net attributes for layout tools, e.g.
+  `{"netclasses": ["Power"]}`.
+- `netclasses`: net class definitions referenced by `nets[].attrs`.
+- A net with `"nc": true` is the no-connect net; its pins get no-connect flags.
+
 ## Randomized layout
 
 Placement starts parts at random positions and the router breaks ties randomly,

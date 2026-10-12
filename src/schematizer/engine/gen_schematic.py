@@ -638,9 +638,7 @@ def _write_output(circuit, node, filepath, top_name, title, options):
             circuit, node, filepath, top_name, title,
             fit=options.get("svg_fit", True),
         )
-    return write_top_schematic(
-        circuit, node, filepath, top_name, title, version=20230409
-    )
+    return write_top_schematic(circuit, node, filepath, top_name, title)
 
 
 def gen_schematic(

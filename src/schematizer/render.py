@@ -41,6 +41,14 @@ SUPPORTED_TOOLS = (
 #              and each child page links back to its parent and to the top.
 SUPPORTED_FORMATS = ("kicad", "svg")
 
+# Layout modes.
+#
+#   "normal" -- placed and routed drawing meant for people to read.
+#   "labels" -- labels-only: parts on a plain grid, every pin stubbed to a power
+#               symbol, label or no-connect flag, no wires between parts.
+#               Connectivity is exact by construction; KiCad output only.
+SUPPORTED_MODES = ("normal", "labels")
+
 # Rejected with a specific explanation rather than the generic "unsupported".
 _RETIRED_TOOLS = {
     "kicad5": (
@@ -70,6 +78,7 @@ def render(
     top_name=None,
     title="SKiDL-Generated Schematic",
     format="kicad",
+    mode="normal",
     **options,
 ):
     """Generate schematic files from a generic netlist document.
@@ -88,6 +97,9 @@ def render(
         format (str): ``"kicad"`` for editable ``.kicad_sch`` files (default),
             or ``"svg"`` for static, cross-linked ``.svg`` pages. See
             :data:`SUPPORTED_FORMATS`.
+        mode (str): ``"normal"`` (placed and routed, default) or ``"labels"``
+            (labels-only: exact connectivity, no routing; KiCad format only).
+            See :data:`SUPPORTED_MODES`.
         **options: Passed through to the placement/routing/writer engine
             (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
             controls hierarchy for both formats: 0 keeps every subcircuit on
@@ -108,6 +120,13 @@ def render(
             f"choose one of {', '.join(SUPPORTED_FORMATS)}."
         )
 
+    if mode not in SUPPORTED_MODES:
+        raise ValueError(
+            f"Unsupported mode {mode!r}; choose one of {', '.join(SUPPORTED_MODES)}."
+        )
+    if mode == "labels" and format != "kicad":
+        raise ValueError("Labels-only mode writes KiCad files only (format='kicad').")
+
     doc = _load_document(netlist)
     top_name = top_name or doc.get("top_name") or "schematic"
     title = title or doc.get("title") or "SKiDL-Generated Schematic"
@@ -124,6 +143,12 @@ def render(
 
     gen_schematic_mod.TARGET_TOOL = tool
     sexp_mod.TARGET_TOOL = tool
+
+    if mode == "labels":
+        from .engine.labels import write_labels_schematic
+
+        write_labels_schematic(circuit, filepath, top_name, title)
+        return filepath
 
     gen_schematic_mod.gen_schematic(
         circuit,

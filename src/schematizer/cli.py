@@ -8,7 +8,7 @@ import argparse
 import sys
 
 from . import __version__
-from .render import SUPPORTED_FORMATS, SUPPORTED_TOOLS, render
+from .render import SUPPORTED_FORMATS, SUPPORTED_MODES, SUPPORTED_TOOLS, render
 
 
 def build_parser():
@@ -53,6 +53,14 @@ def build_parser():
         help="Schematic title-block text.",
     )
     parser.add_argument(
+        "-m",
+        "--mode",
+        default="normal",
+        choices=SUPPORTED_MODES,
+        help="Layout mode: 'normal' (placed and routed) or 'labels' "
+        "(labels-only, exact connectivity, no routing) (default: normal).",
+    )
+    parser.add_argument(
         "--flatness",
         type=float,
         default=0.0,
@@ -77,6 +85,7 @@ def main(argv=None):
             top_name=args.top_name,
             title=args.title,
             format=args.format,
+            mode=args.mode,
             flatness=args.flatness,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:

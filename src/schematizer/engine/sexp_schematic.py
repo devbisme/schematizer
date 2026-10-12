@@ -35,6 +35,26 @@ from .._utils import export_to_all
 # lib-symbol writer is a plain function with no tool argument.
 TARGET_TOOL = "kicad9"
 
+# Project name written into symbol ``(instances (project ...))`` blocks. KiCad
+# looks instance data up by project name, so it must match the .kicad_pro the
+# schematic is opened with (``top_name``). Set by the top-level writers.
+PROJECT_NAME = "SKiDL-Generated"
+
+# Instance path of the sheet whose elements are being emitted. Power symbols
+# use it for their ``(instances (path ...))``; set by node_to_sexp_schematic.
+_sheet_uuid_path = ""
+
+# S-expression file version per target tool. 20250114 is the KiCad 9.0 format,
+# which KiCad 10 reads natively. Older targets keep the version written
+# historically (20230409) until they are re-verified.
+FILE_VERSIONS = {"kicad9": 20250114, "kicad10": 20250114}
+DEFAULT_FILE_VERSION = 20230409
+
+
+def file_version(tool=None):
+    """S-expression file version for a target tool (default: TARGET_TOOL)."""
+    return FILE_VERSIONS.get(tool or TARGET_TOOL, DEFAULT_FILE_VERSION)
+
 # UUID namespace — same as gen_netlist.py so UUIDs are cross-referenceable.
 _NAMESPACE_UUID = uuid.UUID("7026fcc6-e1a0-409e-aaf4-6a17ea82654f")
 
@@ -188,9 +208,32 @@ def _power_symbol_to_sexp(pin, net_name, tx):
     intrinsic = _power_symbol_pin_angle(net_name)
     angle = (_PIN_LABEL_ANGLE[calc_pin_dir(pin)] - intrinsic) % 360
 
-    lib_id = f"power:{net_name}"
-    inst_uuid = _gen_uuid(f"pwr:{net_name}:{x}:{y}:{_pwr_counter[0]}")
+    return power_symbol_instance_sexp(
+        net_name,
+        x,
+        y,
+        angle,
+        pwr_ref,
+        _sheet_uuid_path or f"/{_gen_uuid('root_schematic')}",
+        uuid_seed=f"{net_name}:{x}:{y}:{_pwr_counter[0]}",
+    )
 
+
+def power_symbol_instance_sexp(net_name, x, y, angle, ref, uuid_path, uuid_seed):
+    """Build a power-symbol instance (``power:<net_name>``) at (x, y) in mm.
+
+    Args:
+        net_name: Power net name; also the symbol name and its Value.
+        x, y: Connection point in sheet mm.
+        angle: Instance rotation in degrees.
+        ref: Reference designator (e.g. "#PWR001"); must be unique per design.
+        uuid_path: Instance path of the sheet holding the symbol.
+        uuid_seed: Seed for the deterministic instance and pin UUIDs.
+
+    Returns:
+        Sexp: Power symbol instance.
+    """
+    lib_id = f"power:{net_name}"
     symbol = Sexp(
         [
             "symbol",
@@ -202,7 +245,7 @@ def _power_symbol_to_sexp(pin, net_name, tx):
             ["on_board", "yes"],
             ["dnp", "no"],
             ["fields_autoplaced", "yes"],
-            ["uuid", inst_uuid],
+            ["uuid", _gen_uuid(f"pwr:{uuid_seed}")],
         ]
     )
 
@@ -212,7 +255,7 @@ def _power_symbol_to_sexp(pin, net_name, tx):
             [
                 "property",
                 "Reference",
-                pwr_ref,
+                ref,
                 ["at", x, y - 1.27, 0],
                 ["effects", ["font", ["size", 1.27, 1.27]], ["hide", "yes"]],
             ]
@@ -259,8 +302,7 @@ def _power_symbol_to_sexp(pin, net_name, tx):
     )
 
     # Pin entry (power symbols have a single pin "1").
-    pin_uuid = _gen_uuid(f"pwr_pin:{net_name}:{x}:{y}:{_pwr_counter[0]}")
-    symbol.append(Sexp(["pin", '"1"', ["uuid", pin_uuid]]))
+    symbol.append(Sexp(["pin", '"1"', ["uuid", _gen_uuid(f"pwr_pin:{uuid_seed}")]]))
 
     # Instances section.
     symbol.append(
@@ -269,11 +311,11 @@ def _power_symbol_to_sexp(pin, net_name, tx):
                 "instances",
                 [
                     "project",
-                    "SKiDL-Generated",
+                    PROJECT_NAME,
                     [
                         "path",
-                        f"/{_gen_uuid('root_schematic')}",
-                        ["reference", pwr_ref],
+                        uuid_path,
+                        ["reference", ref],
                         ["unit", 1],
                     ],
                 ],
@@ -508,7 +550,7 @@ def part_to_sexp(part, uuid_path, tx=Tx()):
                 "instances",
                 [
                     "project",
-                    "SKiDL-Generated",
+                    PROJECT_NAME,
                     [
                         "path",
                         f"{uuid_path}",
@@ -628,7 +670,10 @@ def part_to_lib_symbol_definition(part):
                 if cmd[0] not in ("pin", "property")
             ]
             if pin_cmds or graphics:
-                unit_sym = ["symbol", f"{part_name}_{unit_num}_{unit_num}"]
+                # KiCad names unit sub-symbols NAME_<unit>_<body style>; body style
+                # 1 is the normal one (2 is the De Morgan alternate, which KiCad
+                # ignores for normal instances, leaving units 2+ without pins).
+                unit_sym = ["symbol", f"{part_name}_{unit_num}_1"]
                 unit_sym.extend(graphics)
                 unit_sym.extend(pin_cmds)
                 symbol_def.append(unit_sym)
@@ -1105,7 +1150,7 @@ def _power_lib_ids_in_elements(elements):
 
 
 @export_to_all
-def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=20230409):
+def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
     """Convert a SchNode tree to S-expression schematic(s).
 
     Follows the same recursive pattern as kicad5's node_to_eeschema():
@@ -1117,7 +1162,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=20230409):
         node: SchNode to convert.
         uuid_path: Hierarchical UUID path to this node.
         sheet_tx: Parent sheet transformation matrix.
-        version: S-expression version number (20240108 for kicad6, 20230409 for kicad8/9).
+        version: S-expression version number (default: file_version()).
 
     Returns:
         list[Sexp]: S-expression for elements in this node (parts, wires, labels, sheet refs).
@@ -1157,6 +1202,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=20230409):
     pwr_symbols = {}
 
     # Recurse into children.
+    global _sheet_uuid_path
     for i, child in enumerate(node.children.values()):
         # Give each child a unique UUID path based on its name and index.
         child.uuid = _gen_uuid(f"{child.name}_{i}")
@@ -1168,6 +1214,11 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=20230409):
         elements.extend(sexp_list)
         lib_symbols.update(part_dict)
         pwr_symbols.update(pwr_dict)
+
+    # Children are done, so this node's own elements are emitted next. They land
+    # on the sheet at uuid_path (for a flattened node, uuid_path was trimmed to
+    # the parent's above, which is where its elements end up).
+    _sheet_uuid_path = uuid_path
 
     # Collect net names that have real (non-NetTerminal) stubbed pins on this
     # sheet.  NetTerminal labels are redundant for these nets since the pins
@@ -1471,7 +1522,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=20230409):
     schematic = Sexp(
         [
             "kicad_sch",
-            ["version", version],
+            ["version", version or file_version()],
             ["generator", "skidl"],
             ["generator_version", __version__],
             ["uuid", node.uuid],
@@ -1549,7 +1600,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=20230409):
 
 
 @export_to_all
-def write_top_schematic(circuit, node, filepath, top_name, title, version=20230409):
+def write_top_schematic(circuit, node, filepath, top_name, title, version=None):
     """Generate and write the complete schematic from a placed+routed node tree.
 
     This is the main entry point called by each tool's gen_schematic().
@@ -1563,7 +1614,9 @@ def write_top_schematic(circuit, node, filepath, top_name, title, version=202304
         version: S-expression version number.
     """
 
+    global PROJECT_NAME
     init_power_symbol_data()
+    PROJECT_NAME = top_name or "schematic"
 
     node.title = title
     node.sheet_filename = top_name or "schematic"
@@ -1655,6 +1708,7 @@ def _write_sexp_schematic(schematic, filepath):
             "generator",
             "generator_version",
             "paper",
+            "page",
         )
 
     def need_quote_alternate(x):

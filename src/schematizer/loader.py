@@ -71,6 +71,8 @@ def _make_part(comp, symbols, nets, circuit):
     part.symtx = comp.get("symtx", "") or ""
     part.orientation_locked = bool(comp.get("orientation_locked", False))
     part.draw_cmds = _draw_cmds_to_ir(sym.get("draw_cmds"))
+    # User part fields (MPN, manufacturer, DNP, ...); additive key, may be absent.
+    part.fields = {str(k): v for k, v in (comp.get("fields") or {}).items()}
 
     # Which net each pin connects to (keyed by pin number).
     net_of_pin = {p["num"]: p.get("net") for p in comp.get("pins", [])}
