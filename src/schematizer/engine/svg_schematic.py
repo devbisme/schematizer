@@ -43,6 +43,8 @@ from .sexp_schematic import (
     _calc_sheet_tx,
     _power_symbol_pin_angle,
     _round_mm,
+    calc_field_layout,
+    calc_label_dir,
     calc_pin_dir,
     init_power_symbol_data,
 )
@@ -176,28 +178,18 @@ def _field_svg(text, x, y, anchor="middle", rotate=0):
     return _halo_text("field", text, x, y, 1.27, COLORS["field"], anchor, rotate)
 
 
-def _field_positions(gbbox):
-    """Where to put the reference and value text, given the drawn symbol's box.
+_SVG_ANCHOR = {"left": "start", "right": "end", None: "middle"}
 
-    Fields go beside the symbol on the axis its pins DON'T use, so they never
-    land on the wires: to the right of a tall (vertically-pinned) symbol, above
-    and below a wide one. The KiCad writer can place both fields at the part
-    origin because ``fields_autoplaced`` lets the editor move them at load
-    time; nothing moves them in a static SVG, so they are placed properly here.
+
+def _field_positions(part, sheet_tx):
+    """Where to put the reference and value text: the KiCad writer's layout
+    (pin-free sides of the body), converted to SVG text anchors.
 
     Returns ``(ref_pos, value_pos)``, each ``(x, y, anchor, rotate)``.
     """
-    pad = 0.9
-    if gbbox.h >= gbbox.w:
-        # Tall symbol: pins exit top/bottom, so stack the fields on the right.
-        x = gbbox.max.x + pad
-        ctr_y = (gbbox.min.y + gbbox.max.y) / 2
-        return (x, ctr_y - 1.0, "start", 0), (x, ctr_y + 1.0, "start", 0)
-    # Wide symbol: pins exit left/right, so put the fields above and below.
-    ctr_x = (gbbox.min.x + gbbox.max.x) / 2
-    return (
-        (ctr_x, gbbox.min.y - pad, "middle", 0),
-        (ctr_x, gbbox.max.y + pad, "middle", 0),
+    return tuple(
+        (x, y, _SVG_ANCHOR[justify], 0)
+        for x, y, justify in calc_field_layout(part, sheet_tx)
     )
 
 
@@ -223,7 +215,7 @@ def part_to_svg(part, sheet_tx):
             bbox.add(bb)
 
     if math.isfinite(bbox.w) and math.isfinite(bbox.h):
-        ref_pos, val_pos = _field_positions(bbox)
+        ref_pos, val_pos = _field_positions(part, sheet_tx)
         value = str(getattr(part, "value", "") or "")
         for text, (x, y, anchor, rotate) in (
             (base_ref, ref_pos),
@@ -249,7 +241,7 @@ def power_symbol_to_svg(pin, net_name, sheet_tx):
         return "", BBox()
 
     pt = _pin_page_pt(pin, sheet_tx)
-    angle = (_PIN_LABEL_ANGLE[calc_pin_dir(pin)] - _power_symbol_pin_angle(net_name)) % 360
+    angle = (_PIN_LABEL_ANGLE[calc_label_dir(pin)] - _power_symbol_pin_angle(net_name)) % 360
     tx = instance_tx(angle, Point(_round_mm(pt.x), _round_mm(pt.y)))
 
     svg = [f'<g class="power" data-net="{esc(net_name)}">\n']
@@ -334,7 +326,7 @@ def net_label_to_svg(pin, sheet_tx, force=False):
         return power_symbol_to_svg(pin, net.name, sheet_tx)
 
     pt = _pin_page_pt(pin, sheet_tx)
-    rotate, anchor, off = _SVG_LABEL_PLACEMENT[calc_pin_dir(pin)]
+    rotate, anchor, off = _SVG_LABEL_PLACEMENT[calc_label_dir(pin)]
     x, y = _round_mm(pt.x + off[0]), _round_mm(pt.y + off[1])
     svg = _halo_text(
         "net_label", net.name, x, y, 1.27, COLORS["global_label"], anchor, rotate

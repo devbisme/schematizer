@@ -18,13 +18,14 @@ Sources:
 
 import copy
 import datetime
+import math
 import os
 import uuid
 from collections import OrderedDict
 
 from simp_sexp import Sexp
 
-from ..geometry import Point, Tx
+from ..geometry import BBox, Point, Tx, Vector
 from ..ir import NCNet
 from .. import __version__
 from .net_terminal import NetTerminal
@@ -206,7 +207,7 @@ def _power_symbol_to_sexp(pin, net_name, tx):
     # subtracted so e.g. a GND on a pin that exits to the right gets rotated
     # to face left into the pin instead of always hanging straight down.
     intrinsic = _power_symbol_pin_angle(net_name)
-    angle = (_PIN_LABEL_ANGLE[calc_pin_dir(pin)] - intrinsic) % 360
+    angle = (_PIN_LABEL_ANGLE[calc_label_dir(pin)] - intrinsic) % 360
 
     return power_symbol_instance_sexp(
         net_name,
@@ -217,6 +218,9 @@ def _power_symbol_to_sexp(pin, net_name, tx):
         _sheet_uuid_path or f"/{_gen_uuid('root_schematic')}",
         uuid_seed=f"{net_name}:{x}:{y}:{_pwr_counter[0]}",
     )
+
+
+POWER_VALUE_DIST_MM = 3.81  # Distance from a power symbol's pin to its Value text.
 
 
 def power_symbol_instance_sexp(net_name, x, y, angle, ref, uuid_path, uuid_seed):
@@ -234,6 +238,16 @@ def power_symbol_instance_sexp(net_name, x, y, angle, ref, uuid_path, uuid_seed)
         Sexp: Power symbol instance.
     """
     lib_id = f"power:{net_name}"
+
+    # Put the Value text past the end of the symbol body, which extends from the
+    # connection point in this direction (KiCad angles: CCW, sheet Y points down).
+    out_angle = (angle + _power_symbol_pin_angle(net_name)) % 360
+    out_x = round(math.cos(math.radians(out_angle)))
+    out_y = -round(math.sin(math.radians(out_angle)))
+    val_x = _round_mm(x + out_x * POWER_VALUE_DIST_MM)
+    val_y = _round_mm(y + out_y * POWER_VALUE_DIST_MM)
+    val_just = {1: "left", -1: "right"}.get(out_x)
+
     symbol = Sexp(
         [
             "symbol",
@@ -269,8 +283,8 @@ def power_symbol_instance_sexp(net_name, x, y, angle, ref, uuid_path, uuid_seed)
                 "property",
                 "Value",
                 net_name,
-                ["at", x, y - 3.81, 0],
-                ["effects", ["font", ["size", 1.27, 1.27]]],
+                ["at", val_x, val_y, 0],
+                _field_effects(val_just),
             ]
         )
     )
@@ -380,6 +394,121 @@ def _pick_paper_size(bbox):
 # ---------------------------------------------------------------------------
 
 
+FIELD_GAP_MM = 0.9  # Clearance between a symbol body and its Ref/Value text.
+FIELD_PITCH_MM = 1.27  # Center-to-center spacing of stacked Ref/Value text.
+
+
+def calc_field_layout(part, sheet_tx):
+    """Place a part's Reference and Value text on sides of its body that have no pins.
+
+    The text is always horizontal in sheet space so it reads correctly whatever
+    the part's rotation/mirroring, and it sits outside the body on a pin-free
+    side so it doesn't land on the body graphics or the wires leaving the pins:
+    above/below a part with pins only on its left/right, to the right (or left)
+    of one with pins only on its top/bottom, and so on.
+
+    Args:
+        part: Placed part (unit).
+        sheet_tx: Sheet-level transformation matrix (mils -> sheet mm, Y-flip).
+
+    Returns:
+        tuple: ((ref_x, ref_y, justify), (val_x, val_y, justify)) in sheet mm,
+            where justify is "left", "right" or None (centered).
+    """
+    tx = getattr(part, "tx", Tx()) * sheet_tx
+    pin_pts = [pin.pt * tx for pin in part.pins if getattr(pin, "pt", None) is not None]
+
+    body = getattr(part, "body_bbox", None)
+    if body is not None and body.w >= 0:
+        body = body * tx
+    elif pin_pts:
+        # No symbol bbox (e.g., labels-only mode), so estimate it from the pins.
+        body = BBox(*pin_pts).resize(Vector(1.27, 1.27))
+    else:
+        org = tx.origin
+        body = BBox(org, org).resize(Vector(1.27, 1.27))
+
+    # Find which sides of the body have pins on them (pins sit on the body bbox edges).
+    eps = 0.1
+    sides = set()
+    for pt in pin_pts:
+        if pt.x <= body.min.x + eps:
+            sides.add("L")
+        if pt.x >= body.max.x - eps:
+            sides.add("R")
+        if pt.y <= body.min.y + eps:
+            sides.add("T")
+        if pt.y >= body.max.y - eps:
+            sides.add("B")
+
+    ctr = body.ctr
+    above = body.min.y - FIELD_GAP_MM - FIELD_PITCH_MM / 2
+    below = body.max.y + FIELD_GAP_MM + FIELD_PITCH_MM / 2
+    right = body.max.x + FIELD_GAP_MM
+    left = body.min.x - FIELD_GAP_MM
+    half = FIELD_PITCH_MM / 2
+
+    if "T" not in sides and "B" not in sides:
+        # Horizontally-pinned part: reference above, value below.
+        return (ctr.x, above, None), (ctr.x, below, None)
+    if "R" not in sides:
+        return (right, ctr.y - half, "left"), (right, ctr.y + half, "left")
+    if "L" not in sides:
+        return (left, ctr.y - half, "right"), (left, ctr.y + half, "right")
+    if "T" not in sides:
+        return (ctr.x, above - FIELD_PITCH_MM, None), (ctr.x, above, None)
+    if "B" not in sides:
+        return (ctr.x, below, None), (ctr.x, below + FIELD_PITCH_MM, None)
+    # Pins on every side: tuck the fields just outside the top-left/bottom-left corners.
+    return (body.min.x, above, "left"), (body.min.x, below, "left")
+
+
+def _kicad_field_orient(part_tx, sheet_tx, justify):
+    """Convert a sheet-space field justification into KiCad's symbol-relative form.
+
+    KiCad stores a symbol field's angle and justification relative to the symbol,
+    then applies the symbol's rotation/mirroring when drawing it. So find the
+    symbol-local direction that ends up pointing right (+X) on the sheet and
+    express horizontal, `justify`-aligned sheet text in terms of it.
+
+    Args:
+        part_tx (Tx): Part transformation matrix.
+        sheet_tx (Tx): Sheet-level transformation matrix.
+        justify (str): Sheet-space justification: "left", "right" or None (centered).
+
+    Returns:
+        tuple: (field angle, field justification) to write into the schematic.
+    """
+    tx = part_tx * sheet_tx
+    lin = Tx(a=tx.a, b=tx.b, c=tx.c, d=tx.d)
+    # KiCad's symbol-local coords are the library coords with Y negated.
+    to_sheet = Tx(d=-1) * lin
+    for local_dir, angle, fwd_just in (
+        (Point(1, 0), 0, "left"),
+        (Point(-1, 0), 0, "right"),
+        (Point(0, -1), 90, "left"),  # Angle-90 text reads toward local -Y.
+        (Point(0, 1), 90, "right"),
+    ):
+        v = local_dir * to_sheet
+        if v.x > 0 and abs(v.y) < 1e-6 * abs(v.x):
+            break
+    if justify is None:
+        return angle, None
+    if justify == "left":
+        return angle, fwd_just
+    return angle, "right" if fwd_just == "left" else "left"
+
+
+def _field_effects(justify, hide=False):
+    """Build the effects S-expression for a symbol field."""
+    effects = ["effects", ["font", ["size", 1.27, 1.27]]]
+    if justify:
+        effects.append(["justify", justify])
+    if hide:
+        effects.append(["hide", "yes"])
+    return effects
+
+
 def part_to_sexp(part, uuid_path, tx=Tx()):
     """Create S-expression for a symbol instance.
 
@@ -403,6 +532,7 @@ def part_to_sexp(part, uuid_path, tx=Tx()):
         mirror = ["mirror", "y"]
     else:
         mirror = []
+    sheet_tx = tx
     tx = part_tx * tx
     origin = Point(_round_mm(tx.origin.x), _round_mm(tx.origin.y))
     unit_num = getattr(part, "num", 1)
@@ -442,28 +572,30 @@ def part_to_sexp(part, uuid_path, tx=Tx()):
         symbol_list.remove([])
     symbol = Sexp(symbol_list)
 
-    # Reference
+    # Reference & Value: horizontal text on pin-free sides of the body, expressed
+    # relative to the symbol's orientation the way KiCad stores it.
+    (ref_x, ref_y, ref_just), (val_x, val_y, val_just) = calc_field_layout(part, sheet_tx)
+    ref_angle, ref_just = _kicad_field_orient(part_tx, sheet_tx, ref_just)
+    val_angle, val_just = _kicad_field_orient(part_tx, sheet_tx, val_just)
     symbol.append(
         Sexp(
             [
                 "property",
                 "Reference",
                 base_ref,
-                ["at", origin.x, origin.y - 2.54, angle],
-                ["effects", ["font", ["size", 1.27, 1.27]], ["justify", "left"]],
+                ["at", _round_mm(ref_x), _round_mm(ref_y), ref_angle],
+                _field_effects(ref_just),
             ]
         )
     )
-
-    # Value
     symbol.append(
         Sexp(
             [
                 "property",
                 "Value",
                 str(part.value),
-                ["at", origin.x, origin.y + 2.54, angle],
-                ["effects", ["font", ["size", 1.27, 1.27]], ["justify", "left"]],
+                ["at", _round_mm(val_x), _round_mm(val_y), val_angle],
+                _field_effects(val_just),
             ]
         )
     )
@@ -821,6 +953,23 @@ def calc_pin_dir(pin):
     }[pin_vector]
 
 
+_OPPOSITE_DIR = {"U": "D", "D": "U", "L": "R", "R": "L"}
+
+
+def calc_label_dir(pin):
+    """Pin direction used to orient the pin's net label or power symbol.
+
+    _PIN_LABEL_ANGLE points a label away from the part body that sits behind the
+    pin. A NetTerminal's "body" is the label itself (its routing enters from the
+    opposite side), so its direction is reversed or the label would be drawn
+    back across the wiring and parts it is attached to.
+    """
+    pin_dir = calc_pin_dir(pin)
+    if isinstance(pin.part, NetTerminal):
+        pin_dir = _OPPOSITE_DIR[pin_dir]
+    return pin_dir
+
+
 def net_label_to_sexp(pin, tx=Tx(), force=False):
     """Create S-expression for a net label at a pin stub.
 
@@ -873,7 +1022,7 @@ def net_label_to_sexp(pin, tx=Tx(), force=False):
     # _PIN_LABEL_ANGLE table (so it can't drift from the power-symbol emitter);
     # justify is "left" for the 0/90 angles and "right" otherwise, which exactly
     # reproduces R:(180,right) L:(0,left) U:(270,right) D:(90,left).
-    angle = _PIN_LABEL_ANGLE[calc_pin_dir(pin)]
+    angle = _PIN_LABEL_ANGLE[calc_label_dir(pin)]
     justify = "left" if angle in (0, 90) else "right"
 
     label = Sexp(

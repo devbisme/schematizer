@@ -582,6 +582,8 @@ def preprocess_circuit(circuit, **options):
                 resize_wh.y = (100 - bare_bbox.h) / 2
             bare_bbox = bare_bbox.resize(resize_wh)
 
+            # Bare symbol bbox (no labels) is used by the writers to place Ref/Value fields.
+            part_unit.body_bbox = bare_bbox
             part_unit.lbl_bbox = BBox()
             part_unit.lbl_bbox.add(bare_bbox)
             for pin in part_unit:
@@ -607,7 +609,7 @@ def finalize_parts_and_nets(circuit, **options):
     for part in circuit.parts:
         part.grab_pins()
 
-    rmv_attr(circuit.parts, ("force", "bbox", "lbl_bbox", "tx"))
+    rmv_attr(circuit.parts, ("force", "bbox", "lbl_bbox", "body_bbox", "tx"))
 
 
 def _place_and_classify(node, circuit, expansion_factor, classify=True, **options):

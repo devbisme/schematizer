@@ -391,8 +391,9 @@ def deconflict_labels(labels, occupied_seed, node, backend, sheet_tx):
         occupied[cell] = owner
 
     def _label_dir(a):
+        # KiCad label angles are CCW (90 points up) but sheet Y increases downward.
         r = radians(a)
-        return (cos(r), sin(r))
+        return (cos(r), -sin(r))
 
     LABEL_W, LABEL_H = backend.label_bbox(None)
     moves = []
@@ -450,6 +451,13 @@ def deconflict_labels(labels, occupied_seed, node, backend, sheet_tx):
             owner = occupied.get(_cell(nx, ny), "__free__")
             if owner not in ("__free__", net):
                 break  # leave the label on its pin rather than risk a short
+            # Reject moves whose connecting wire would cut through a component body:
+            # it would cross that part's pins and short nets (or at best look awful).
+            if any(
+                _seg_crosses_box((ax, ay), (nx, ny), (b.min.x, b.min.y), (b.max.x, b.max.y))
+                for b in comp_bboxes
+            ):
+                break
             moves.append((idx, nx, ny))
             occupied[_cell(nx, ny)] = net
             new_wires.append((ax, ay, nx, ny))
