@@ -521,9 +521,10 @@ def preprocess_circuit(circuit, **options):
                 pin.routed = False
 
     def rotate_power_pins(part):
-        """Rotate a part based on the direction of its power pins."""
+        """Rotate a part so its voltage-rail pins face up and its ground pins face down."""
 
-        if not getattr(part, "symtx", ""):
+        # Don't rotate parts that are already explicitly rotated/flipped.
+        if getattr(part, "symtx", ""):
             return
 
         def is_pwr(net_name):
