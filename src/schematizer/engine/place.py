@@ -664,17 +664,35 @@ net_tension = net_tension_dist
 # net_tension = net_torque_dist
 
 
+class PinPoints(dict):
+    """Cache of pin placement points transformed by their parts' current tx.
+
+    The same pins are pulled on by many parts, so during an iteration of
+    force-directed placement (when no parts move) each pin's position is
+    computed once on first use and then looked up.
+    """
+
+    def __missing__(self, pin):
+        pt = self[pin] = pin.place_pt * pin.part.tx
+        return pt
+
+
 @export_to_all
-def net_force_dist(part, **options):
+def net_force_dist(part, pin_pts=None, **options):
     """Compute attractive force on a part from all the other parts connected to it.
 
     Args:
         part (Part): Part affected by forces from other connected parts.
+        pin_pts (PinPoints, optional): Cache of transformed pin points for the
+            current part placement. Computed as needed if not given.
         options (dict): Dict of options and values that enable/disable functions.
 
     Returns:
         Vector: Force upon given part.
     """
+
+    if pin_pts is None:
+        pin_pts = PinPoints()
 
     # Get the anchor and pull pins for each net connected to this part.
     anchor_pins = part.anchor_pins
@@ -700,27 +718,30 @@ def net_force_dist(part, **options):
         # Multiply the force exerted by point-to-point nets.
         force_mult = pt_to_pt_mult if len(pull_pins[net]) <= 1 else 1
 
-        # Initialize net force.
-        net_force = Vector(0, 0)
+        # Initialize net force. (Accumulated in plain floats rather than Vectors
+        # since this inner loop runs a lot.)
+        net_force_x = net_force_y = 0
 
         pin_normalizer = 0
 
-        # Compute the anchor and pulling point (x,y)s for the net.
-        anchor_pts = [pin.place_pt * pin.part.tx for pin in anchor_pins[net]]
-        pull_pts = [pin.place_pt * pin.part.tx for pin in pull_pins[net]]
+        # Get the anchor and pulling point (x,y)s for the net.
+        anchor_pts = [pin_pts[pin] for pin in anchor_pins[net]]
+        pull_pts = [pin_pts[pin] for pin in pull_pins[net]]
 
         # Compute the net force acting on each anchor point on the part.
         for anchor_pt in anchor_pts:
+            anchor_x, anchor_y = anchor_pt.x, anchor_pt.y
             # Sum the forces from each pulling point on the anchor point.
             for pull_pt in pull_pts:
-                # Get the distance from the pull pt to the anchor point.
-                dist_vec = pull_pt - anchor_pt
-
-                # Add the force on the anchor pin from the pulling pin.
-                net_force += dist_vec
+                # Add the distance from the pull pt to the anchor point as the
+                # force on the anchor pin from the pulling pin.
+                net_force_x += pull_pt.x - anchor_x
+                net_force_y += pull_pt.y - anchor_y
 
                 # Increment the normalizer for every pull force added to the net force.
                 pin_normalizer += 1
+
+        net_force = Vector(net_force_x, net_force_y)
 
         if options.get("pin_normalize"):
             # Normalize the net force across all the anchor & pull pins.
@@ -746,8 +767,47 @@ def net_force_dist(part, **options):
 attractive_force = net_force_dist
 
 
+# Below this many parts, finding overlaps by checking every pair of parts is faster
+# than sweep-and-prune (measured break-even is ~10 parts).
+SWEEP_MIN_PARTS = 10
+
+
+def find_overlaps(parts, bboxes):
+    """Find the parts whose placement bboxes overlap each part's bbox.
+
+    Sweep-and-prune: sort the bboxes by left edge and sweep across them, so each
+    bbox is only tested against the bboxes whose x-extent it could overlap
+    instead of against every other part.
+
+    Args:
+        parts (list): List of parts.
+        bboxes (dict): Placement bboxes of the parts (transformed by part.tx), keyed by part.
+
+    Returns:
+        dict: For each part, the list of other parts overlapping it, in the same
+            order as they appear in parts (so the force computations and their use
+            of random numbers proceed in the same order as a brute-force search).
+    """
+    index = {part: i for i, part in enumerate(parts)}
+    overlaps = {part: [] for part in parts}
+    active = []  # Parts whose bbox x-extent may still overlap the sweep position.
+    for part in sorted(parts, key=lambda p: bboxes[p].min.x):
+        bbox = bboxes[part]
+        # Drop parts that end at or before this part begins; they can't overlap it
+        # or any part after it in the sweep.
+        active = [a for a in active if bboxes[a].max.x > bbox.min.x]
+        for other in active:
+            if bbox.intersects(bboxes[other]):
+                overlaps[part].append(other)
+                overlaps[other].append(part)
+        active.append(part)
+    for others in overlaps.values():
+        others.sort(key=index.__getitem__)
+    return overlaps
+
+
 @export_to_all
-def overlap_force(part, parts, bboxes=None, **options):
+def overlap_force(part, parts, bboxes=None, overlaps=None, **options):
     """Compute the repulsive force on a part from overlapping other parts.
 
     Args:
@@ -755,6 +815,8 @@ def overlap_force(part, parts, bboxes=None, **options):
         parts (list): List of parts to check for overlaps.
         bboxes (dict, optional): Placement bboxes of the parts already transformed by
             their current part.tx, keyed by part. Computed here if not given.
+        overlaps (dict, optional): The parts overlapping each part, from find_overlaps().
+            If not given, the part is checked against all the other parts.
         options (dict): Dict of options and values that enable/disable functions.
 
     Returns:
@@ -773,7 +835,8 @@ def overlap_force(part, parts, bboxes=None, **options):
     # (Iterate the list rather than a set so the order -- and therefore which random
     # offset goes with which overlap -- doesn't depend on memory addresses. Otherwise
     # placements aren't reproducible even with a fixed random seed.)
-    for other_part in parts:
+    candidates = overlaps[part] if overlaps else parts
+    for other_part in candidates:
         if other_part is part:
             continue
         other_part_bbox = placed_bbox(other_part)
@@ -916,29 +979,40 @@ def total_part_force(part, parts, scale, alpha, **options):
     return force
 
 
-def similarity_force(part, parts, similarity, **options):
+def similarity_force(part, parts, similarity, pin_pts=None, **options):
     """Compute attractive force on a part from all the other parts connected to it.
 
     Args:
         part (Part): Part affected by similarity forces with other parts.
         similarity (dict): Similarity score for any pair of parts used as keys.
+        pin_pts (PinPoints, optional): Cache of transformed pin points for the
+            current part placement. Computed as needed if not given.
         options (dict): Dict of options and values that enable/disable functions.
 
     Returns:
         Vector: Force upon given part.
     """
 
+    if pin_pts is None:
+        pin_pts = PinPoints()
+
     # Get the single anchor point for similarity forces affecting this part.
-    anchor_pt = part.anchor_pins["similarity"][0].place_pt * part.tx
+    anchor_pt = pin_pts[part.anchor_pins["similarity"][0]]
+    anchor_x, anchor_y = anchor_pt.x, anchor_pt.y
 
     # Compute the combined force of all the similarity pulling points.
-    total_force = Vector(0, 0)
+    # (Accumulated in plain floats rather than Vectors since every part pulls on
+    # every other part, so this loop runs a lot.)
+    part_similarity = similarity[part]
+    force_x = force_y = 0
     for pull_pin in part.pull_pins["similarity"]:
-        pull_pt = pull_pin.place_pt * pull_pin.part.tx
+        pull_pt = pin_pts[pull_pin]
         # Force from pulling to anchor point is proportional to part similarity and distance.
-        total_force += (pull_pt - anchor_pt) * similarity[part][pull_pin.part]
+        sim = part_similarity[pull_pin.part]
+        force_x += sim * (pull_pt.x - anchor_x)
+        force_y += sim * (pull_pt.y - anchor_y)
 
-    return total_force
+    return Vector(force_x, force_y)
 
 
 def total_similarity_force(part, parts, similarity, scale, alpha, **options):
@@ -1093,10 +1167,24 @@ def push_and_pull(anchored_parts, mobile_parts, nets, force_func, **options):
             # Compute forces exerted on the parts by each other. The placement bboxes
             # don't change until all the forces are computed, so transform them once.
             bboxes = {part: part.place_bbox * part.tx for part in parts}
+            # Only worth sweeping for overlaps in larger groups; for small ones,
+            # just checking every pair is faster. (Either way gives the same result.)
+            overlaps = (
+                find_overlaps(parts, bboxes) if len(parts) > SWEEP_MIN_PARTS else None
+            )
+            # Likewise, transform each pin point once (on first use) for the iteration.
+            pin_pts = PinPoints()
             sum_of_forces = 0
             for part in mobile_parts:
                 part.force = force_func(
-                    part, parts, scale=scale, alpha=alpha, bboxes=bboxes, **options
+                    part,
+                    parts,
+                    scale=scale,
+                    alpha=alpha,
+                    bboxes=bboxes,
+                    overlaps=overlaps,
+                    pin_pts=pin_pts,
+                    **options,
                 )
                 # Mask X or Y component of force during part alignment.
                 part.force = part.force.mask(force_mask)
