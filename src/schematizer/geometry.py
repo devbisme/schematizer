@@ -681,6 +681,9 @@ class Point:
 Vector = Point
 
 
+_INF = float("inf")
+
+
 @export_to_all
 class BBox:
     """
@@ -696,6 +699,13 @@ class BBox:
 
     def __init__(self, *pts):
         """Create a bounding box surrounding the given points."""
+        if len(pts) == 2 and type(pts[0]) is Point and type(pts[1]) is Point:
+            # Fast path for the most common case: a box from two corner points.
+            # Starting from +/-inf matches add() exactly, even for NaN coords.
+            p1, p2 = pts
+            self.min = Point(min(_INF, p1.x, p2.x), min(_INF, p1.y, p2.y))
+            self.max = Point(max(-_INF, p1.x, p2.x), max(-_INF, p1.y, p2.y))
+            return
         inf = float("inf")
         self.min = Point(inf, inf)
         self.max = Point(-inf, -inf)
@@ -715,15 +725,9 @@ class BBox:
             NotImplementedError: If obj is not a Point or BBox.
         """
         sum_ = BBox()
-        if isinstance(obj, Point):
-            sum_.min = self.min.min(obj)
-            sum_.max = self.max.max(obj)
-        elif isinstance(obj, BBox):
-            sum_.min = self.min.min(obj.min)
-            sum_.max = self.max.max(obj.max)
-        else:
-            raise NotImplementedError
-        return sum_
+        sum_.min = self.min
+        sum_.max = self.max
+        return sum_.add(obj)
 
     def __iadd__(self, obj):
         """
@@ -735,10 +739,7 @@ class BBox:
         Returns:
             BBox: The updated bounding box (self).
         """
-        sum_ = self + obj
-        self.min = sum_.min
-        self.max = sum_.max
-        return self
+        return self.add(obj)
 
     def add(self, *objs):
         """
@@ -750,8 +751,21 @@ class BBox:
         Returns:
             BBox: The updated bounding box (self).
         """
+        # Accumulate the extents as plain floats and create new min/max Points at the
+        # end. (Never update the existing Points in place: they may be shared.)
+        min_x, min_y = self.min.x, self.min.y
+        max_x, max_y = self.max.x, self.max.y
         for obj in objs:
-            self += obj
+            if isinstance(obj, Point):
+                lo = hi = obj
+            elif isinstance(obj, BBox):
+                lo, hi = obj.min, obj.max
+            else:
+                raise NotImplementedError
+            min_x, min_y = min(min_x, lo.x), min(min_y, lo.y)
+            max_x, max_y = max(max_x, hi.x), max(max_y, hi.y)
+        self.min = Point(min_x, min_y)
+        self.max = Point(max_x, max_y)
         return self
 
     def __mul__(self, m):
@@ -764,7 +778,17 @@ class BBox:
         Returns:
             BBox: A new transformed bounding box.
         """
-        return BBox(self.min * m, self.max * m)
+        # Transform the corners inline rather than via Point * Tx to avoid creating
+        # intermediate Points (this is called a lot during placement).
+        x1, y1, x2, y2 = self.min.x, self.min.y, self.max.x, self.max.y
+        tx1 = x1 * m.a + y1 * m.c + m.dx
+        ty1 = x1 * m.b + y1 * m.d + m.dy
+        tx2 = x2 * m.a + y2 * m.c + m.dx
+        ty2 = x2 * m.b + y2 * m.d + m.dy
+        bbox = BBox.__new__(BBox)
+        bbox.min = Point(min(_INF, tx1, tx2), min(_INF, ty1, ty2))
+        bbox.max = Point(max(-_INF, tx1, tx2), max(-_INF, ty1, ty2))
+        return bbox
 
     def round(self):
         """

@@ -739,56 +739,56 @@ attractive_force = net_force_dist
 
 
 @export_to_all
-def overlap_force(part, parts, **options):
+def overlap_force(part, parts, bboxes=None, **options):
     """Compute the repulsive force on a part from overlapping other parts.
 
     Args:
         part (Part): Part affected by forces from other overlapping parts.
         parts (list): List of parts to check for overlaps.
+        bboxes (dict, optional): Placement bboxes of the parts already transformed by
+            their current part.tx, keyed by part. Computed here if not given.
         options (dict): Dict of options and values that enable/disable functions.
 
     Returns:
         Vector: Force upon given part.
     """
 
+    def placed_bbox(p):
+        return bboxes[p] if bboxes else p.place_bbox * p.tx
+
     # Bounding box of given part.
-    part_bbox = part.place_bbox * part.tx
+    part_bbox = placed_bbox(part)
+    p_min, p_max = part_bbox.min, part_bbox.max
 
     # Compute the overlap force of the bbox of this part with every other part.
     total_force = Vector(0, 0)
-    for other_part in set(parts) - {part}:
-        other_part_bbox = other_part.place_bbox * other_part.tx
+    # (Iterate the list rather than a set so the order -- and therefore which random
+    # offset goes with which overlap -- doesn't depend on memory addresses. Otherwise
+    # placements aren't reproducible even with a fixed random seed.)
+    for other_part in parts:
+        if other_part is part:
+            continue
+        other_part_bbox = placed_bbox(other_part)
 
         # No force unless parts overlap.
         if part_bbox.intersects(other_part_bbox):
             # Compute the movement needed to separate the bboxes in left/right/up/down directions.
             # Add some small random offset to break symmetry when parts exactly overlay each other.
             # Move right edge of part to the left of other part's left edge, etc...
-            moves = []
-            rnd = Vector(random.random() - 0.5, random.random() - 0.5)
-            for edges, dir in (
-                (("ll", "lr"), Vector(1, 0)),
-                (("ul", "ll"), Vector(0, 1)),
-            ):
-                move = (
-                    getattr(other_part_bbox, edges[0])
-                    - getattr(part_bbox, edges[1])
-                    - rnd
-                ) * dir
-                moves.append([move.magnitude, move])
-                # Flip edges...
-                move = (
-                    getattr(other_part_bbox, edges[1])
-                    - getattr(part_bbox, edges[0])
-                    - rnd
-                ) * dir
-                moves.append([move.magnitude, move])
+            o_min, o_max = other_part_bbox.min, other_part_bbox.max
+            rnd_x, rnd_y = random.random() - 0.5, random.random() - 0.5
+            moves = (
+                (o_min.x - p_max.x - rnd_x, 0),  # Move part left of other part.
+                (o_max.x - p_min.x - rnd_x, 0),  # Move part right of other part.
+                (0, o_max.y - p_min.y - rnd_y),  # Move part above other part.
+                (0, o_min.y - p_max.y - rnd_y),  # Move part below other part.
+            )
 
             # Select the smallest move that separates the parts.
-            move = min(moves, key=lambda m: m[0])
+            move = min(moves, key=lambda m: abs(m[0]) + abs(m[1]))
 
             # Add the move to the total force on the part.
-            total_force += move[1]
+            total_force += Vector(*move)
 
     return total_force
 
@@ -1082,11 +1082,13 @@ def push_and_pull(anchored_parts, mobile_parts, nets, force_func, **options):
         # Move parts for this alpha until they all settle into fixed positions.
         # Place an iteration limit to prevent an infinite loop.
         for _ in range(1000):  # HACK: Ad-hoc iteration limit.
-            # Compute forces exerted on the parts by each other.
+            # Compute forces exerted on the parts by each other. The placement bboxes
+            # don't change until all the forces are computed, so transform them once.
+            bboxes = {part: part.place_bbox * part.tx for part in parts}
             sum_of_forces = 0
             for part in mobile_parts:
                 part.force = force_func(
-                    part, parts, scale=scale, alpha=alpha, **options
+                    part, parts, scale=scale, alpha=alpha, bboxes=bboxes, **options
                 )
                 # Mask X or Y component of force during part alignment.
                 part.force = part.force.mask(force_mask)
