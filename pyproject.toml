@@ -33,8 +33,10 @@ classifiers = [
 
 # The placement/routing/writer engine and a lightweight IR are vendored under
 # src/schematizer/engine, so the package is independent of skidl at runtime.
-# Its only runtime dependency is the S-expression reader/writer.
+# Its runtime dependencies are the S-expression reader/writer and numpy (for the
+# placement force computations).
 dependencies = [
+    "numpy",
     "simp_sexp",
 ]
 

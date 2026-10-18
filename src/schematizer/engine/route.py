@@ -10,6 +10,7 @@ import copy
 import random
 import sys
 from collections import Counter, defaultdict
+from heapq import heappop, heappush
 from enum import Enum
 from itertools import chain, zip_longest
 
@@ -2291,10 +2292,6 @@ class Router:
             if start_face in stop_faces or not stop_faces:
                 return GlobalWire(net)
 
-            # Record faces that have been visited and their distance from the start face.
-            visited_faces = [start_face]
-            start_face.dist_from_start = 0
-
             # Path searches are allowed to touch a Face on a Part if it
             # has a Pin on the net being routed or if it is one of the stop faces.
             # This is necessary to allow a search to terminate on a stop face or to
@@ -2302,64 +2299,65 @@ class Router:
             # to one of the stop faces.
             unconstrained_faces = stop_faces | net_pin_faces
 
+            # Dijkstra search using a heap of candidate faces adjacent to the
+            # visited faces. Each entry is (distance from start, visit order of
+            # the face it was reached from, rank of the adjacency in that face's
+            # sorted adjacency list, face, face it was reached from). Among
+            # equally-distant candidates, that ordering picks the same face a
+            # linear scan of the visited faces (in visit order) would pick
+            # first, so the search finds the same paths as before.
+            visited_faces = {start_face}
+            start_face.dist_from_start = 0
+            candidates = []
+            visit_cnt = 0
+            face, face_dist = start_face, 0
+
             # Search through faces until a path is found & returned or a routing exception occurs.
             while True:
-                # Set up for finding the closest unvisited face.
-                closest_dist = float("inf")
-                closest_face = None
+                # Add the faces adjacent to the newly-visited face as candidates.
+                # Sorted because `adjacent` is a set: ties on `dist` are
+                # broken by whichever face is seen first, so id() ordering
+                # would silently pick a different route each run.
+                for rank, adj in enumerate(
+                    sorted(face.adjacent, key=lambda a: (a.dist, a.face.sort_key))
+                ):
+                    if adj.face in visited_faces:
+                        # Don't re-visit faces that have already been visited.
+                        continue
 
-                # Search for the closest face adjacent to the visited faces.
-                visited_faces.sort(key=lambda f: f.dist_from_start)
-                for visited_face in visited_faces:
-                    if visited_face.dist_from_start > closest_dist:
-                        # Visited face is already further than the current
-                        # closest face, so no use continuing search since
-                        # any remaining visited faces are even more distant.
-                        break
-
-                    # Get the distances to the faces adjacent to this previously-visited face
-                    # and update the closest face if appropriate.
-                    # Sorted because `adjacent` is a set: ties on `dist` are
-                    # broken by whichever face is seen first, so id() ordering
-                    # would silently pick a different route each run.
-                    for adj in sorted(
-                        visited_face.adjacent,
-                        key=lambda a: (a.dist, a.face.sort_key),
+                    if (
+                        adj.face not in unconstrained_faces
+                        and adj.face.capacity <= 0
                     ):
-                        if adj.face in visited_faces:
-                            # Don't re-visit faces that have already been visited.
-                            continue
+                        # Skip faces with insufficient routing capacity.
+                        continue
 
-                        if (
-                            adj.face not in unconstrained_faces
-                            and adj.face.capacity <= 0
-                        ):
-                            # Skip faces with insufficient routing capacity.
-                            continue
+                    heappush(
+                        candidates,
+                        (face_dist + adj.dist, visit_cnt, rank, adj.face, face),
+                    )
+                visit_cnt += 1
 
-                        # Compute distance of this adjacent face to the start face.
-                        dist = visited_face.dist_from_start + adj.dist
-
-                        if dist < closest_dist:
-                            # Record the closest face seen so far.
-                            closest_dist = dist
-                            closest_face = adj.face
-                            closest_face.prev_face = visited_face
-
-                if not closest_face:
+                # Get the closest candidate face that hasn't been visited yet.
+                while candidates:
+                    face_dist, _, _, face, prev_face = heappop(candidates)
+                    if face not in visited_faces:
+                        break
+                else:
                     # Exception raised if couldn't find a path from start to stop faces.
                     raise GlobalRoutingFailure(
                         f"Global routing failure: {net.name} {net} {start_face.pins}"
                     )
 
-                # Add the closest adjacent face to the list of visited faces.
-                closest_face.dist_from_start = closest_dist
-                visited_faces.append(closest_face)
+                # Add the closest adjacent face to the set of visited faces.
+                face.dist_from_start = face_dist
+                face.prev_face = prev_face
+                visited_faces.add(face)
 
-                if closest_face in stop_faces:
+                if face in stop_faces:
                     # The newest, closest face is actually on the list of stop faces, so the search is done.
                     # Now search back from this face to find the path back to the start face.
-                    face_path = [closest_face]
+                    face_path = [face]
                     while face_path[-1] is not start_face:
                         face_path.append(face_path[-1].prev_face)
 

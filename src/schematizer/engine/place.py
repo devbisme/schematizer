@@ -13,6 +13,8 @@ import sys
 from collections import defaultdict
 from copy import copy
 
+import numpy as np
+
 from ..ir import SchPin as Pin
 from .._utils import active_logger
 from .._utils import export_to_all, rmv_attr, sgn
@@ -300,13 +302,19 @@ def adjust_orientations(parts, **options):
 
     def orientation_cost(part):
         """Combined orientation cost: net tension plus optional label overlap."""
-        cost = net_tension(part, **options)
+        if net_tension is net_tension_dist:
+            cost = orient_costs.tension(part)
+        else:
+            cost = net_tension(part, **options)
         if label_aware:
             cost += label_weight * label_overlap_cost(part, **options)
         return cost
 
     def find_best_orientation(part):
         """Each part has 8 possible orientations. Find the best of the 7 alternatives from the starting one."""
+
+        # Bring the cached positions of the other parts up to date.
+        orient_costs.refresh()
 
         # Store starting orientation.
         part.prev_tx = copy(part.tx)
@@ -356,9 +364,11 @@ def adjust_orientations(parts, **options):
 
     # Provide neighbor parts to the label-overlap cost so it can penalize a
     # part's labels piling onto other parts' bodies.  Use all parts in scope.
+    # The cache of other parts' pin positions and bboxes used for the costs.
+    orient_costs = OrientationCosts(movable_parts, parts if label_aware else None)
     if label_aware:
         options = dict(options)
-        options["_label_neighbors"] = list(parts)
+        options["_label_neighbors"] = orient_costs
 
     # Kernighan-Lin algorithm for finding near-optimal part orientations.
     # Because of the way the tension for part alignment is computed based on
@@ -563,9 +573,11 @@ def label_overlap_cost(part, **options):
 
     # Build a flag box for each labeled pin under the current orientation.
     boxes = []
+    out_dirs = []
     for pin in lbl_pins:
         anchor = pin.pt * part.tx
         out_dir = _pin_out_dir(pin)
+        out_dirs.append(out_dir)
         boxes.append(_label_box(anchor, out_dir))
 
     cost = 0.0
@@ -584,15 +596,16 @@ def label_overlap_cost(part, **options):
     # invariant (labels rotate with the part) and gives no preference.
     text_band = _text_band_box(part)
     if text_band is not None:
-        for pin, box in zip(lbl_pins, boxes):
-            out_dir = _pin_out_dir(pin)
+        for out_dir, box in zip(out_dirs, boxes):
             # Only vertical labels (no horizontal component) cross the band.
             if out_dir.x == 0 and box.intersects(text_band):
                 cost += 1.0
 
     # (a) Label flag over a NEIGHBOR part's placement bbox.
     neighbors = options.get("_label_neighbors", None)
-    if neighbors:
+    if isinstance(neighbors, OrientationCosts):
+        cost += neighbors.neighbor_hits(part, boxes)
+    elif neighbors:
         for other in neighbors:
             if other is part:
                 continue
@@ -662,6 +675,168 @@ def net_torque_dist(part, **options):
 # Select the net tension method used for the adjusting the orientation of parts.
 net_tension = net_tension_dist
 # net_tension = net_torque_dist
+
+
+# Below these sizes, plain Python loops over the cached points/boxes in
+# OrientationCosts are faster than the per-call overhead of numpy.
+ORIENT_NUMPY_MIN_PINS = 16
+ORIENT_NUMPY_MIN_BOXES = 16
+
+
+class OrientationCosts:
+    """Cached geometry for scoring part orientations in adjust_orientations().
+
+    While adjust_orientations() tries the eight orientations of one part, all the
+    other parts stay put. So the sheet positions of the other parts' pull pins
+    and placement bboxes are cached, a part's entries are recomputed only when
+    its tx changes, and the scoring runs against the cache (with numpy when there
+    are enough entries for it to pay off).
+
+    tension() returns exactly what net_tension_dist() does and neighbor_hits()
+    exactly the neighbor-overlap count in label_overlap_cost(): cached points and
+    boxes come from the same Point/BBox arithmetic, overlap counts are integers,
+    and each nearest pull-pin distance is recomputed in Python from the numpy
+    candidates, so no float rounding differs from the scalar code.
+    """
+
+    def __init__(self, parts, neighbors=None):
+        # Parts whose tx changes are tracked, with the cached entries that depend on them.
+        self.owners = []
+        self.owner_txs = []
+        self.owner_pins = []
+        self.owner_slots = []
+        owner_index = {}
+
+        def owner(part):
+            k = owner_index.get(id(part))
+            if k is None:
+                k = owner_index[id(part)] = len(self.owners)
+                self.owners.append(part)
+                self.owner_txs.append(None)
+                self.owner_pins.append([])
+                self.owner_slots.append([])
+            return k
+
+        # Table of pull pins on other parts, and for each part, its groups of
+        # (anchor pins, table indices of pull pins on other parts, pull pins on itself).
+        self.pins = []
+        pin_index = {}
+        self.groups = {}
+        for part in parts:
+            groups = []
+            for net, anchor_pins in part.anchor_pins.items():
+                pull_pins = part.pull_pins[net]
+                if not anchor_pins or not pull_pins:
+                    continue
+                own_pins = []
+                idx = []
+                for pin in pull_pins:
+                    if pin.part is part:
+                        own_pins.append(pin)
+                        continue
+                    i = pin_index.get(id(pin))
+                    if i is None:
+                        i = pin_index[id(pin)] = len(self.pins)
+                        self.pins.append(pin)
+                        self.owner_pins[owner(pin.part)].append(i)
+                    idx.append(i)
+                groups.append((anchor_pins, np.array(idx, dtype=np.intp), idx, own_pins))
+            self.groups[id(part)] = groups
+        self.pin_x = np.zeros(len(self.pins))
+        self.pin_y = np.zeros(len(self.pins))
+        self.pin_xl = [0.0] * len(self.pins)
+        self.pin_yl = [0.0] * len(self.pins)
+
+        # Placement bboxes of the neighbor parts that labels can pile onto.
+        # Parts without a placement bbox never overlap (NaN compares false).
+        self.neighbors = list(neighbors or [])
+        self.part_slots = defaultdict(list)
+        for j, part in enumerate(self.neighbors):
+            self.part_slots[id(part)].append(j)
+            self.owner_slots[owner(part)].append(j)
+        nan = float("nan")
+        self.boxes = np.full((4, len(self.neighbors)), nan)
+        self.boxes_l = [(nan, nan, nan, nan)] * len(self.neighbors)
+
+        self.refresh()
+
+    def refresh(self):
+        """Update the cached entries of any parts whose tx has changed."""
+        for k, part in enumerate(self.owners):
+            tx = getattr(part, "tx", None)
+            if tx is self.owner_txs[k]:
+                continue
+            self.owner_txs[k] = tx
+            for i in self.owner_pins[k]:
+                pin = self.pins[i]
+                pt = pin.place_pt * pin.part.tx
+                self.pin_x[i] = self.pin_xl[i] = pt.x
+                self.pin_y[i] = self.pin_yl[i] = pt.y
+            for j in self.owner_slots[k]:
+                try:
+                    bbox = part.place_bbox * part.tx
+                except AttributeError:
+                    continue
+                box = (bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y)
+                self.boxes[:, j] = box
+                self.boxes_l[j] = box
+
+    def tension(self, part):
+        """Same as net_tension_dist(part) for the part's current tx."""
+        tension = 0.0
+        for anchor_pins, idx, idx_l, own_pins in self.groups[id(part)]:
+            own_pts = [pin.place_pt * pin.part.tx for pin in own_pins]
+            for anchor_pin in anchor_pins:
+                anchor_pt = anchor_pin.place_pt * anchor_pin.part.tx
+                ax, ay = anchor_pt.x, anchor_pt.y
+                if len(idx_l) >= ORIENT_NUMPY_MIN_PINS:
+                    # Find the nearest pull pins with numpy, then take the
+                    # exact distance of those candidates (within rounding of
+                    # the nearest) the same way Point.magnitude does.
+                    dx = ax - self.pin_x[idx]
+                    dy = ay - self.pin_y[idx]
+                    dist2 = dx * dx + dy * dy
+                    near = idx[dist2 <= dist2.min() * (1 + 1e-9)].tolist()
+                else:
+                    near = idx_l
+                xs, ys = self.pin_xl, self.pin_yl
+                dists = [math.sqrt((ax - xs[i]) ** 2 + (ay - ys[i]) ** 2) for i in near]
+                dists.extend((anchor_pt - pt).magnitude for pt in own_pts)
+                tension += min(dists)
+        return tension
+
+    def neighbor_hits(self, part, label_boxes):
+        """Count (label box, neighbor bbox) overlaps, skipping the part itself."""
+        if not self.neighbors or not label_boxes:
+            return 0
+        skip = self.part_slots.get(id(part), ())
+        if len(self.neighbors) < ORIENT_NUMPY_MIN_BOXES:
+            hits = 0
+            for j, (minx, miny, maxx, maxy) in enumerate(self.boxes_l):
+                if j in skip:
+                    continue
+                for box in label_boxes:
+                    if (
+                        box.min.x < maxx
+                        and box.max.x > minx
+                        and box.min.y < maxy
+                        and box.max.y > miny
+                    ):
+                        hits += 1
+            return hits
+        minx, miny, maxx, maxy = self.boxes
+        hits = 0
+        for box in label_boxes:
+            hit = (
+                (box.min.x < maxx)
+                & (box.max.x > minx)
+                & (box.min.y < maxy)
+                & (box.max.y > miny)
+            )
+            hits += int(np.count_nonzero(hit))
+            for j in skip:
+                hits -= int(hit[j])
+        return hits
 
 
 class PinPoints(dict):
@@ -1084,6 +1259,285 @@ def random_placement(parts, **options):
         part.tx = part.tx.move(pt)
 
 
+# With fewer parts than this, the scalar force computations in push_and_pull are
+# faster than VectorForces. (Both give identical results.)
+VECTOR_MIN_PARTS = 4
+
+
+class VectorForces:
+    """Vectorized (numpy) version of the iterations in a push_and_pull stage.
+
+    During an alpha stage of push_and_pull, parts only translate, so everything
+    that depends on a part's rotation/flip (its placement bbox corners and pin
+    offsets) is computed once per stage, and only the part positions change
+    between iterations. The O(n^2) work -- testing every pair of parts for
+    overlap and summing the pin-to-pin or part-to-part attractions -- is done
+    with numpy, while the O(n) bookkeeping stays in plain Python floats.
+
+    The results are bit-identical to the scalar code (total_part_force or
+    total_similarity_force with net_force_dist/similarity_force and
+    overlap_force): every floating-point operation is the same and is done in
+    the same order. (np.bincount() accumulates its weights in input order, so
+    per-part sums add the same terms in the same sequence as the Python loops.)
+    That includes drawing random offsets for overlapping parts in the same order,
+    so seeded placements are unchanged.
+    """
+
+    @classmethod
+    def build(cls, force_func, parts, mobile_parts, **options):
+        """Return a VectorForces for force_func, or None if it isn't one this handles
+        (or if there are too few parts for numpy to be faster than the scalar code)."""
+        if len(parts) < VECTOR_MIN_PARTS or repulsive_force is not overlap_force:
+            return None
+        if force_func is total_part_force and attractive_force is net_force_dist:
+            return cls(parts, mobile_parts, None, **options)
+        if (
+            isinstance(force_func, functools.partial)
+            and force_func.func is total_similarity_force
+            and not force_func.args
+            and set(force_func.keywords) == {"similarity"}
+        ):
+            similarity = force_func.keywords["similarity"]
+            return cls(parts, mobile_parts, similarity, **options)
+        return None
+
+    def __init__(self, parts, mobile_parts, similarity, **options):
+        self.mobile_parts = mobile_parts
+        self.n_mobile = len(mobile_parts)
+        index = {id(part): i for i, part in enumerate(parts)}
+        self.mobile_idx = np.array([index[id(p)] for p in mobile_parts], dtype=np.intp)
+        self.moved = False
+
+        # Part positions (the translation part of each part's tx).
+        self.dx = np.array([float(p.tx.dx) for p in parts])
+        self.dy = np.array([float(p.tx.dy) for p in parts])
+
+        # Placement bbox corners with the part rotation/flip applied but not the
+        # translation: the "x * a + y * c" of "x * a + y * c + dx" in BBox * Tx.
+        corners = []
+        for part in parts:
+            tx, bbox = part.tx, part.place_bbox
+            x1, y1, x2, y2 = bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y
+            corners.append(
+                (
+                    x1 * tx.a + y1 * tx.c,
+                    x1 * tx.b + y1 * tx.d,
+                    x2 * tx.a + y2 * tx.c,
+                    x2 * tx.b + y2 * tx.d,
+                )
+            )
+        self.corners = np.array(corners, dtype=float).reshape(-1, 4)
+
+        # The pins that anchor or pull on the mobile parts.
+        self.pin_ids = {}
+        self.pin_rel = []  # Pin point with its part's rotation/flip applied.
+        self.pin_owner = []  # Index of the pin's part in parts, or -1 if it isn't there.
+        if similarity is None:
+            self._build_net_pairs(index, **options)
+        else:
+            self._build_similarity_pairs(index, similarity)
+        rel = np.array(self.pin_rel, dtype=float).reshape(-1, 3)
+        self.pin_rel_x, self.pin_rel_y = rel[:, 0], rel[:, 1]
+        self.pin_fixed = rel[:, 2] > 0
+        self.pin_owner = np.array(self.pin_owner, dtype=np.intp)
+        self.pin_owner[self.pin_fixed] = 0  # Any valid index: np.where() ignores it.
+
+    def _pin(self, pin, index):
+        """Return the index of a pin, registering it the first time it's seen."""
+        key = id(pin)
+        if key not in self.pin_ids:
+            tx, pt = pin.part.tx, pin.place_pt
+            owner = index.get(id(pin.part), -1)
+            if owner >= 0:
+                rel = (pt.x * tx.a + pt.y * tx.c, pt.x * tx.b + pt.y * tx.d, 0)
+            else:
+                # The pin is on a part that isn't being placed, so its point is fixed.
+                fixed_pt = pt * tx
+                rel = (fixed_pt.x, fixed_pt.y, 1)
+            self.pin_rel.append(rel)
+            self.pin_owner.append(owner)
+            self.pin_ids[key] = len(self.pin_rel) - 1
+        return self.pin_ids[key]
+
+    def _build_net_pairs(self, index, **options):
+        """Set up the (anchor, pull) pin pairs that net_force_dist() sums for each part."""
+        pt_to_pt_mult = options.get("pt_to_pt_mult", 1)
+        self.pin_normalize = bool(options.get("pin_normalize"))
+        self.net_normalize = bool(options.get("net_normalize"))
+        anchors, pulls, pair_group = [], [], []
+        group_row, group_mult, group_norm, net_count = [], [], [], []
+        for row, part in enumerate(self.mobile_parts):
+            anchor_pins, pull_pins = part.anchor_pins, part.pull_pins
+            n_nets = 0
+            for net in anchor_pins.keys():
+                if not anchor_pins[net] or not pull_pins[net]:
+                    continue
+                group = len(group_row)
+                group_row.append(row)
+                group_mult.append(pt_to_pt_mult if len(pull_pins[net]) <= 1 else 1)
+                group_norm.append(len(anchor_pins[net]) * len(pull_pins[net]) or 1)
+                pull_ids = [self._pin(pin, index) for pin in pull_pins[net]]
+                for anchor_pin in anchor_pins[net]:
+                    anchors.extend([self._pin(anchor_pin, index)] * len(pull_ids))
+                    pulls.extend(pull_ids)
+                    pair_group.extend([group] * len(pull_ids))
+                n_nets += 1
+            net_count.append(n_nets or 1)
+        self.similarity = False
+        self.pair_anchor = np.array(anchors, dtype=np.intp)
+        self.pair_pull = np.array(pulls, dtype=np.intp)
+        self.pair_group = np.array(pair_group, dtype=np.intp)
+        self.group_row = np.array(group_row, dtype=np.intp)
+        self.group_mult = np.array(group_mult, dtype=float)
+        self.group_norm = np.array(group_norm, dtype=float)
+        self.net_count = np.array(net_count, dtype=float)
+
+    def _build_similarity_pairs(self, index, similarity):
+        """Set up the (anchor, pull) pin pairs that similarity_force() sums for each part."""
+        anchors, pulls, pair_row, sims = [], [], [], []
+        for row, part in enumerate(self.mobile_parts):
+            anchor = self._pin(part.anchor_pins["similarity"][0], index)
+            part_similarity = similarity[part]
+            for pull_pin in part.pull_pins["similarity"]:
+                anchors.append(anchor)
+                pulls.append(self._pin(pull_pin, index))
+                pair_row.append(row)
+                sims.append(part_similarity[pull_pin.part])
+        self.similarity = True
+        self.pair_anchor = np.array(anchors, dtype=np.intp)
+        self.pair_pull = np.array(pulls, dtype=np.intp)
+        self.pair_row = np.array(pair_row, dtype=np.intp)
+        self.pair_sim = np.array(sims, dtype=float)
+
+    def _attraction(self):
+        """Attractive force on each mobile part, as net_force_dist() or similarity_force()."""
+        n = self.n_mobile
+        if not len(self.pair_anchor):
+            return np.zeros(n), np.zeros(n)
+        owner, fixed = self.pin_owner, self.pin_fixed
+        px = np.where(fixed, self.pin_rel_x, self.pin_rel_x + self.dx[owner])
+        py = np.where(fixed, self.pin_rel_y, self.pin_rel_y + self.dy[owner])
+        diff_x = px[self.pair_pull] - px[self.pair_anchor]
+        diff_y = py[self.pair_pull] - py[self.pair_anchor]
+        if self.similarity:
+            fx = np.bincount(self.pair_row, self.pair_sim * diff_x, minlength=n)
+            fy = np.bincount(self.pair_row, self.pair_sim * diff_y, minlength=n)
+            return fx, fy
+        n_groups = len(self.group_row)
+        gx = np.bincount(self.pair_group, diff_x, minlength=n_groups)
+        gy = np.bincount(self.pair_group, diff_y, minlength=n_groups)
+        if self.pin_normalize:
+            gx, gy = gx / self.group_norm, gy / self.group_norm
+        fx = np.bincount(self.group_row, self.group_mult * gx, minlength=n)
+        fy = np.bincount(self.group_row, self.group_mult * gy, minlength=n)
+        if self.net_normalize:
+            fx, fy = fx / self.net_count, fy / self.net_count
+        return fx, fy
+
+    def _repulsion(self):
+        """Overlap force on each mobile part, as overlap_force()."""
+        n = self.n_mobile
+        c, dx, dy = self.corners, self.dx, self.dy
+        x1, y1, x2, y2 = c[:, 0] + dx, c[:, 1] + dy, c[:, 2] + dx, c[:, 3] + dy
+        lo_x, hi_x = np.minimum(x1, x2), np.maximum(x1, x2)
+        lo_y, hi_y = np.minimum(y1, y2), np.maximum(y1, y2)
+
+        # Overlapping (mobile part, other part) pairs, in the same row-major order
+        # that overlap_force() visits them for successive mobile parts.
+        m = self.mobile_idx
+        hit = (
+            (lo_x[m, None] < hi_x[None, :])
+            & (hi_x[m, None] > lo_x[None, :])
+            & (lo_y[m, None] < hi_y[None, :])
+            & (hi_y[m, None] > lo_y[None, :])
+        )
+        hit[np.arange(n), m] = False  # A part doesn't overlap itself.
+        rows, cols = np.nonzero(hit)
+        if not len(rows):
+            return np.zeros(n), np.zeros(n)
+
+        # Random offsets to break symmetry, drawn in the same order as overlap_force().
+        rnd = np.array([rng.random() for _ in range(2 * len(rows))])
+        rnd_x, rnd_y = rnd[0::2] - 0.5, rnd[1::2] - 0.5
+
+        p = m[rows]
+        moves = np.stack(
+            (
+                lo_x[cols] - hi_x[p] - rnd_x,  # Move part left of other part.
+                hi_x[cols] - lo_x[p] - rnd_x,  # Move part right of other part.
+                hi_y[cols] - lo_y[p] - rnd_y,  # Move part above other part.
+                lo_y[cols] - hi_y[p] - rnd_y,  # Move part below other part.
+            ),
+            axis=1,
+        )
+
+        # Select the smallest move that separates the parts (the first one wins ties, like min()).
+        best = np.argmin(np.abs(moves), axis=1)
+        move = moves[np.arange(len(best)), best]
+        horz = best < 2
+        fx = np.bincount(rows, np.where(horz, move, 0.0), minlength=n)
+        fy = np.bincount(rows, np.where(horz, 0.0, move), minlength=n)
+        return fx, fy
+
+    def step(self, scale, alpha, speed, force_mask, rmv_drift):
+        """Compute the forces on the mobile parts and move them.
+
+        Args:
+            Same as the variables of the same names in push_and_pull().
+
+        Returns:
+            float: Sum of the force magnitudes (before any drift is removed).
+        """
+        attr_x, attr_y = self._attraction()
+        rep_x, rep_y = self._repulsion()
+        attr_mult = scale * (1 - alpha)
+        fx = ((attr_mult * attr_x + alpha * rep_x) * force_mask[0]).tolist()
+        fy = ((attr_mult * attr_y + alpha * rep_y) * force_mask[1]).tolist()
+
+        # The O(n) bookkeeping is done in Python floats so it matches push_and_pull() exactly.
+        sum_of_forces = 0
+        for x, y in zip(fx, fy):
+            sum_of_forces += math.sqrt(x**2 + y**2)
+
+        if rmv_drift:
+            drift_x = drift_y = 0
+            for x, y in zip(fx, fy):
+                drift_x += x
+                drift_y += y
+            drift_x, drift_y = drift_x / self.n_mobile, drift_y / self.n_mobile
+            fx = [x - drift_x for x in fx]
+            fy = [y - drift_y for y in fy]
+        self.force_x, self.force_y, self.speed = fx, fy, speed
+
+        # Move the parts: same arithmetic as part.tx *= Tx(dx=mv.x, dy=mv.y).
+        m = self.mobile_idx
+        dx, dy = self.dx[m], self.dy[m]
+        self.dx[m] = dx * 1 + dy * 0 + speed * np.array(fx)
+        self.dy[m] = dx * 0 + dy * 1 + speed * np.array(fy)
+        self.moved = True
+        return sum_of_forces
+
+    def write_back(self):
+        """Store the final positions (and last forces and moves) in the mobile parts."""
+        if not self.moved:
+            return
+        dx, dy = self.dx.tolist(), self.dy.tolist()
+        for row, part in enumerate(self.mobile_parts):
+            i = int(self.mobile_idx[row])
+            tx = part.tx
+            # Rotation/flip terms as they come out of tx * Tx(dx=..., dy=...).
+            part.tx = Tx(
+                a=tx.a * 1 + tx.b * 0,
+                b=tx.a * 0 + tx.b * 1,
+                c=tx.c * 1 + tx.d * 0,
+                d=tx.c * 0 + tx.d * 1,
+                dx=dx[i],
+                dy=dy[i],
+            )
+            part.force = Vector(self.force_x[row], self.force_y[row])
+            part.mv = part.force * self.speed
+
+
 def push_and_pull(anchored_parts, mobile_parts, nets, force_func, **options):
     """Move parts under influence of attractive nets and repulsive part overlaps.
 
@@ -1161,48 +1615,59 @@ def push_and_pull(anchored_parts, mobile_parts, nets, force_func, **options):
         # Since it can never be negative, set it to -1 to indicate it's uninitialized.
         stable_threshold = -1
 
+        # Compute the forces with numpy if VectorForces handles this force function.
+        vector_forces = VectorForces.build(force_func, parts, mobile_parts, **options)
+
         # Move parts for this alpha until they all settle into fixed positions.
         # Place an iteration limit to prevent an infinite loop.
         for _ in range(1000):  # HACK: Ad-hoc iteration limit.
-            # Compute forces exerted on the parts by each other. The placement bboxes
-            # don't change until all the forces are computed, so transform them once.
-            bboxes = {part: part.place_bbox * part.tx for part in parts}
-            # Only worth sweeping for overlaps in larger groups; for small ones,
-            # just checking every pair is faster. (Either way gives the same result.)
-            overlaps = (
-                find_overlaps(parts, bboxes) if len(parts) > SWEEP_MIN_PARTS else None
-            )
-            # Likewise, transform each pin point once (on first use) for the iteration.
-            pin_pts = PinPoints()
-            sum_of_forces = 0
-            for part in mobile_parts:
-                part.force = force_func(
-                    part,
-                    parts,
-                    scale=scale,
-                    alpha=alpha,
-                    bboxes=bboxes,
-                    overlaps=overlaps,
-                    pin_pts=pin_pts,
-                    **options,
+            if vector_forces:
+                # Compute the forces on the parts and move them.
+                sum_of_forces = vector_forces.step(
+                    scale, alpha, speed, force_mask, rmv_drift
                 )
-                # Mask X or Y component of force during part alignment.
-                part.force = part.force.mask(force_mask)
-                sum_of_forces += part.force.magnitude
-
-            if rmv_drift:
-                # Calculate the drift force across all parts and subtract it from each part
-                # to prevent them from continually drifting in one direction.
-                drift_force = force_sum([part.force for part in mobile_parts]) / len(
-                    mobile_parts
+            else:
+                # Compute forces exerted on the parts by each other. The placement bboxes
+                # don't change until all the forces are computed, so transform them once.
+                bboxes = {part: part.place_bbox * part.tx for part in parts}
+                # Only worth sweeping for overlaps in larger groups; for small ones,
+                # just checking every pair is faster. (Either way gives the same result.)
+                overlaps = (
+                    find_overlaps(parts, bboxes)
+                    if len(parts) > SWEEP_MIN_PARTS
+                    else None
                 )
+                # Likewise, transform each pin point once (on first use) for the iteration.
+                pin_pts = PinPoints()
+                sum_of_forces = 0
                 for part in mobile_parts:
-                    part.force -= drift_force
+                    part.force = force_func(
+                        part,
+                        parts,
+                        scale=scale,
+                        alpha=alpha,
+                        bboxes=bboxes,
+                        overlaps=overlaps,
+                        pin_pts=pin_pts,
+                        **options,
+                    )
+                    # Mask X or Y component of force during part alignment.
+                    part.force = part.force.mask(force_mask)
+                    sum_of_forces += part.force.magnitude
 
-            # Apply movements to part positions.
-            for part in mobile_parts:
-                part.mv = part.force * speed
-                part.tx *= Tx(dx=part.mv.x, dy=part.mv.y)
+                if rmv_drift:
+                    # Calculate the drift force across all parts and subtract it from each part
+                    # to prevent them from continually drifting in one direction.
+                    drift_force = force_sum(
+                        [part.force for part in mobile_parts]
+                    ) / len(mobile_parts)
+                    for part in mobile_parts:
+                        part.force -= drift_force
+
+                # Apply movements to part positions.
+                for part in mobile_parts:
+                    part.mv = part.force * speed
+                    part.tx *= Tx(dx=part.mv.x, dy=part.mv.y)
 
             # Keep iterating until all the parts are still.
             if stable_threshold < 0:
@@ -1217,6 +1682,10 @@ def push_and_pull(anchored_parts, mobile_parts, nets, force_func, **options):
                 # spreading out. This can happen if speed is too large, so reduce it so
                 # the forces may start to decrease.
                 speed *= 0.50
+
+        if vector_forces:
+            # Put the positions computed with numpy back into the parts.
+            vector_forces.write_back()
 
         if scr:
             # Draw current part placement for debugging purposes.
