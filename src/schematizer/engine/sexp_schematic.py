@@ -1582,18 +1582,12 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
         for pin in part:
             if id(pin) in wired_pin_ids:
                 continue
+            # Routed (non-stub) power pins get no symbol: the routed wire already
+            # connects them to the net's power symbol. Snapped parts are stubbed
+            # by snap.py, so they come through here as ordinary stubbed pins.
             label = net_label_to_sexp(pin, tx=tx)
             if label:
                 elements.append(label)
-            elif (
-                len(part.pins) == 2
-                and not pin.stub
-                and pin.is_connected()
-                and pin.net.name in pwr_symbol_names
-            ):
-                label = net_label_to_sexp(pin, tx=tx, force=True)
-                if label:
-                    elements.append(label)
 
     # No-connect flags for NCNet pins.
     for nc_x, nc_y, part_ref, pin_num in _decisions.find_no_connect_pins(

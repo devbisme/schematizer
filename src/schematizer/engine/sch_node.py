@@ -170,7 +170,13 @@ class SchNode(Placer, Router):
                     continue
 
             # Add a single terminal to each node that contains one or more pins of the net.
-            visited = []
+            # A node holding an explicit power symbol for the net needs no terminal:
+            # the symbol already labels the net there, and a terminal would add a duplicate.
+            visited = [
+                pin.part.hiertuple
+                for pin in net.pins
+                if getattr(pin.part, "is_power_symbol", False)
+            ]
             for pin in net.pins:
                 # A stubbed pin can't be used to add NetTerminal since there is no explicit wire.
                 if pin.stub:

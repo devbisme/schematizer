@@ -202,6 +202,15 @@ class SchPart:
         self._ref = value
 
     @property
+    def is_power_symbol(self):
+        """True for a KiCad power symbol (GND, VCC, ...): it labels its net by itself.
+
+        Identified by KiCad's ``#PWR`` reference prefix (``PWR_FLAG`` uses
+        ``#FLG`` and doesn't name its net, so it doesn't qualify).
+        """
+        return self.ref_prefix == "#PWR" and len(self.pins) == 1
+
+    @property
     def tag_ref_name(self):
         return str(self._ref)
 

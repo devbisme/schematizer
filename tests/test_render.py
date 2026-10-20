@@ -145,3 +145,16 @@ def test_render_uses_vendored_power_symbol(tmp_path):
                  top_name="flat")
     text = open(os.path.join(out, "flat.kicad_sch")).read()
     assert "power:GND" in text
+
+
+def test_explicit_power_symbols_not_duplicated(tmp_path):
+    """Explicit GND/VCC power parts are the nets' only power symbols.
+
+    Neither a NetTerminal for the named power net nor a routed 2-pin part on it
+    should add a second symbol alongside the user's own.
+    """
+    out = render(_doc("and_gate.json"), tool="kicad9", filepath=str(tmp_path),
+                 top_name="and_gate", seed=1)
+    text = open(os.path.join(out, "and_gate.kicad_sch")).read()
+    assert text.count('(lib_id "power:GND")') == 1
+    assert text.count('(lib_id "power:VCC")') == 1
