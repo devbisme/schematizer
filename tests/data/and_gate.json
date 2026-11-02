@@ -1,0 +1,1859 @@
+{
+  "format": "skidl-generic-netlist",
+  "version": 1,
+  "title": "",
+  "top_name": "",
+  "sheets": [
+    [
+      ""
+    ]
+  ],
+  "symbols": {
+    "power:GND": {
+      "ref_prefix": "#PWR",
+      "name": "GND",
+      "lib": "power",
+      "description": "Power symbol creates a global label with name \"GND\" , ground",
+      "datasheet": "",
+      "draw_cmds": {
+        "1": [
+          [
+            "pin",
+            "power_in",
+            "line",
+            [
+              "at",
+              0,
+              0,
+              270
+            ],
+            [
+              "length",
+              0
+            ],
+            [
+              "name",
+              "~",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "1",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0,
+                0
+              ],
+              [
+                "xy",
+                0,
+                -1.27
+              ],
+              [
+                "xy",
+                1.27,
+                -1.27
+              ],
+              [
+                "xy",
+                0,
+                -2.54
+              ],
+              [
+                "xy",
+                -1.27,
+                -1.27
+              ],
+              [
+                "xy",
+                0,
+                -1.27
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Reference",
+            "#PWR",
+            [
+              "at",
+              0,
+              -6.35,
+              0
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ],
+              [
+                "hide",
+                "yes"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Value",
+            "GND",
+            [
+              "at",
+              0,
+              -3.81,
+              0
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ]
+            ]
+          ]
+        ],
+        "0": [
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0,
+                0
+              ],
+              [
+                "xy",
+                0,
+                -1.27
+              ],
+              [
+                "xy",
+                1.27,
+                -1.27
+              ],
+              [
+                "xy",
+                0,
+                -2.54
+              ],
+              [
+                "xy",
+                -1.27,
+                -1.27
+              ],
+              [
+                "xy",
+                0,
+                -1.27
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ]
+        ]
+      },
+      "units": {
+        "1": {
+          "pins": [
+            {
+              "num": "1",
+              "name": "~",
+              "x": 0,
+              "y": 0,
+              "orient": "D",
+              "rotation": 270,
+              "length": 0,
+              "func": "7"
+            }
+          ]
+        }
+      }
+    },
+    "power:VCC": {
+      "ref_prefix": "#PWR",
+      "name": "VCC",
+      "lib": "power",
+      "description": "Power symbol creates a global label with name \"VCC\"",
+      "datasheet": "",
+      "draw_cmds": {
+        "1": [
+          [
+            "pin",
+            "power_in",
+            "line",
+            [
+              "at",
+              0,
+              0,
+              90
+            ],
+            [
+              "length",
+              0
+            ],
+            [
+              "name",
+              "~",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "1",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                -0.762,
+                1.27
+              ],
+              [
+                "xy",
+                0,
+                2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0,
+                2.54
+              ],
+              [
+                "xy",
+                0.762,
+                1.27
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0,
+                0
+              ],
+              [
+                "xy",
+                0,
+                2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Reference",
+            "#PWR",
+            [
+              "at",
+              0,
+              -3.81,
+              0
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ],
+              [
+                "hide",
+                "yes"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Value",
+            "VCC",
+            [
+              "at",
+              0,
+              3.556,
+              0
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ]
+            ]
+          ]
+        ],
+        "0": [
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                -0.762,
+                1.27
+              ],
+              [
+                "xy",
+                0,
+                2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0,
+                2.54
+              ],
+              [
+                "xy",
+                0.762,
+                1.27
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0,
+                0
+              ],
+              [
+                "xy",
+                0,
+                2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ]
+        ]
+      },
+      "units": {
+        "1": {
+          "pins": [
+            {
+              "num": "1",
+              "name": "~",
+              "x": 0,
+              "y": 0,
+              "orient": "U",
+              "rotation": 90,
+              "length": 0,
+              "func": "7"
+            }
+          ]
+        }
+      }
+    },
+    "Transistor_BJT:Q_PNP_CBE": {
+      "ref_prefix": "Q",
+      "name": "Q_PNP_CBE",
+      "lib": "Transistor_BJT",
+      "description": "PNP transistor, collector/base/emitter",
+      "datasheet": "~",
+      "draw_cmds": {
+        "1": [
+          [
+            "pin",
+            "input",
+            "line",
+            [
+              "at",
+              -5.08,
+              0,
+              0
+            ],
+            [
+              "length",
+              2.54
+            ],
+            [
+              "name",
+              "B",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "2",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "pin",
+            "passive",
+            "line",
+            [
+              "at",
+              2.54,
+              5.08,
+              270
+            ],
+            [
+              "length",
+              2.54
+            ],
+            [
+              "name",
+              "C",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "1",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "pin",
+            "passive",
+            "line",
+            [
+              "at",
+              2.54,
+              -5.08,
+              90
+            ],
+            [
+              "length",
+              2.54
+            ],
+            [
+              "name",
+              "E",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "3",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                -2.54,
+                0
+              ],
+              [
+                "xy",
+                0.635,
+                0
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0.635,
+                1.905
+              ],
+              [
+                "xy",
+                0.635,
+                -1.905
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0.508
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0.635,
+                0.635
+              ],
+              [
+                "xy",
+                2.54,
+                2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0.635,
+                -0.635
+              ],
+              [
+                "xy",
+                2.54,
+                -2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "circle",
+            [
+              "center",
+              1.27,
+              0
+            ],
+            [
+              "radius",
+              2.8194
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0.254
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                2.286,
+                -1.778
+              ],
+              [
+                "xy",
+                1.778,
+                -2.286
+              ],
+              [
+                "xy",
+                1.27,
+                -1.27
+              ],
+              [
+                "xy",
+                2.286,
+                -1.778
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "outline"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Reference",
+            "Q",
+            [
+              "at",
+              5.08,
+              1.27,
+              0
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ],
+              [
+                "justify",
+                "left"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Value",
+            "Q_PNP_CBE",
+            [
+              "at",
+              5.08,
+              -1.27,
+              0
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ],
+              [
+                "justify",
+                "left"
+              ]
+            ]
+          ]
+        ],
+        "0": [
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                -2.54,
+                0
+              ],
+              [
+                "xy",
+                0.635,
+                0
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0.635,
+                1.905
+              ],
+              [
+                "xy",
+                0.635,
+                -1.905
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0.508
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0.635,
+                0.635
+              ],
+              [
+                "xy",
+                2.54,
+                2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                0.635,
+                -0.635
+              ],
+              [
+                "xy",
+                2.54,
+                -2.54
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "circle",
+            [
+              "center",
+              1.27,
+              0
+            ],
+            [
+              "radius",
+              2.8194
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0.254
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "polyline",
+            [
+              "pts",
+              [
+                "xy",
+                2.286,
+                -1.778
+              ],
+              [
+                "xy",
+                1.778,
+                -2.286
+              ],
+              [
+                "xy",
+                1.27,
+                -1.27
+              ],
+              [
+                "xy",
+                2.286,
+                -1.778
+              ]
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "outline"
+              ]
+            ]
+          ]
+        ]
+      },
+      "units": {
+        "1": {
+          "pins": [
+            {
+              "num": "2",
+              "name": "B",
+              "x": -5.08,
+              "y": 0,
+              "orient": "R",
+              "rotation": 0,
+              "length": 2.54,
+              "func": "1"
+            },
+            {
+              "num": "1",
+              "name": "C",
+              "x": 2.54,
+              "y": 5.08,
+              "orient": "D",
+              "rotation": 270,
+              "length": 2.54,
+              "func": "5"
+            },
+            {
+              "num": "3",
+              "name": "E",
+              "x": 2.54,
+              "y": -5.08,
+              "orient": "U",
+              "rotation": 90,
+              "length": 2.54,
+              "func": "5"
+            }
+          ]
+        }
+      }
+    },
+    "Device:R": {
+      "ref_prefix": "R",
+      "name": "R",
+      "lib": "Device",
+      "description": "Resistor",
+      "datasheet": "~",
+      "draw_cmds": {
+        "1": [
+          [
+            "pin",
+            "passive",
+            "line",
+            [
+              "at",
+              0,
+              3.81,
+              270
+            ],
+            [
+              "length",
+              1.27
+            ],
+            [
+              "name",
+              "~",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "1",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "pin",
+            "passive",
+            "line",
+            [
+              "at",
+              0,
+              -3.81,
+              90
+            ],
+            [
+              "length",
+              1.27
+            ],
+            [
+              "name",
+              "~",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ],
+            [
+              "number",
+              "2",
+              [
+                "effects",
+                [
+                  "font",
+                  [
+                    "size",
+                    1.27,
+                    1.27
+                  ]
+                ]
+              ]
+            ]
+          ],
+          [
+            "rectangle",
+            [
+              "start",
+              -1.016,
+              -2.54
+            ],
+            [
+              "end",
+              1.016,
+              2.54
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0.254
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Reference",
+            "R",
+            [
+              "at",
+              2.032,
+              0,
+              90
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ]
+            ]
+          ],
+          [
+            "property",
+            "Value",
+            "R",
+            [
+              "at",
+              0,
+              0,
+              90
+            ],
+            [
+              "effects",
+              [
+                "font",
+                [
+                  "size",
+                  1.27,
+                  1.27
+                ]
+              ]
+            ]
+          ]
+        ],
+        "0": [
+          [
+            "rectangle",
+            [
+              "start",
+              -1.016,
+              -2.54
+            ],
+            [
+              "end",
+              1.016,
+              2.54
+            ],
+            [
+              "stroke",
+              [
+                "width",
+                0.254
+              ],
+              [
+                "type",
+                "default"
+              ]
+            ],
+            [
+              "fill",
+              [
+                "type",
+                "none"
+              ]
+            ]
+          ]
+        ]
+      },
+      "units": {
+        "1": {
+          "pins": [
+            {
+              "num": "1",
+              "name": "~",
+              "x": 0,
+              "y": 3.81,
+              "orient": "D",
+              "rotation": 270,
+              "length": 1.27,
+              "func": "5"
+            },
+            {
+              "num": "2",
+              "name": "~",
+              "x": 0,
+              "y": -3.81,
+              "orient": "U",
+              "rotation": 90,
+              "length": 1.27,
+              "func": "5"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "ref": "#PWR1",
+      "lib_id": "power:GND",
+      "value": "GND",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "GND"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "#PWR2",
+      "lib_id": "power:VCC",
+      "value": "VCC",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "VCC"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "Q1",
+      "lib_id": "Transistor_BJT:Q_PNP_CBE",
+      "value": "Q_PNP_CBE",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "V",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "N$1"
+        },
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "N$2"
+        },
+        {
+          "num": "3",
+          "unit": 1,
+          "net": "VCC"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "Q2",
+      "lib_id": "Transistor_BJT:Q_PNP_CBE",
+      "value": "Q_PNP_CBE",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "V",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "N$3"
+        },
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "A_AND_B"
+        },
+        {
+          "num": "3",
+          "unit": 1,
+          "net": "VCC"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "R1",
+      "lib_id": "Device:R",
+      "value": "10K",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "A"
+        },
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "N$1"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "R2",
+      "lib_id": "Device:R",
+      "value": "10K",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "B"
+        },
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "N$1"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "R3",
+      "lib_id": "Device:R",
+      "value": "10K",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "N$2"
+        },
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "GND"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "R4",
+      "lib_id": "Device:R",
+      "value": "10K",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "N$2"
+        },
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "N$3"
+        }
+      ],
+      "fields": {}
+    },
+    {
+      "ref": "R5",
+      "lib_id": "Device:R",
+      "value": "10K",
+      "footprint": "",
+      "hiertuple": [
+        ""
+      ],
+      "symtx": "",
+      "orientation_locked": false,
+      "pins": [
+        {
+          "num": "1",
+          "unit": 1,
+          "net": "A_AND_B"
+        },
+        {
+          "num": "2",
+          "unit": 1,
+          "net": "GND"
+        }
+      ],
+      "fields": {}
+    }
+  ],
+  "nets": [
+    {
+      "name": "A",
+      "code": 1,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "i",
+      "implicit": false,
+      "nodes": [
+        {
+          "ref": "R1",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "A_AND_B",
+      "code": 2,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "o",
+      "implicit": false,
+      "nodes": [
+        {
+          "ref": "Q2",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        },
+        {
+          "ref": "R5",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "B",
+      "code": 3,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "i",
+      "implicit": false,
+      "nodes": [
+        {
+          "ref": "R2",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "GND",
+      "code": 4,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "",
+      "implicit": false,
+      "nodes": [
+        {
+          "ref": "#PWR1",
+          "pin": "1",
+          "pintype": "POWER-IN"
+        },
+        {
+          "ref": "R3",
+          "pin": "2",
+          "pintype": "PASSIVE"
+        },
+        {
+          "ref": "R5",
+          "pin": "2",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "N$1",
+      "code": 5,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "",
+      "implicit": true,
+      "nodes": [
+        {
+          "ref": "Q1",
+          "pin": "2",
+          "pintype": "INPUT"
+        },
+        {
+          "ref": "R1",
+          "pin": "2",
+          "pintype": "PASSIVE"
+        },
+        {
+          "ref": "R2",
+          "pin": "2",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "N$2",
+      "code": 6,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "",
+      "implicit": true,
+      "nodes": [
+        {
+          "ref": "Q1",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        },
+        {
+          "ref": "R3",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        },
+        {
+          "ref": "R4",
+          "pin": "1",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "N$3",
+      "code": 7,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "",
+      "implicit": true,
+      "nodes": [
+        {
+          "ref": "Q2",
+          "pin": "2",
+          "pintype": "INPUT"
+        },
+        {
+          "ref": "R4",
+          "pin": "2",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    },
+    {
+      "name": "VCC",
+      "code": 8,
+      "stub": false,
+      "stub_explicit": false,
+      "netio": "",
+      "implicit": false,
+      "nodes": [
+        {
+          "ref": "#PWR2",
+          "pin": "1",
+          "pintype": "POWER-IN"
+        },
+        {
+          "ref": "Q1",
+          "pin": "3",
+          "pintype": "PASSIVE"
+        },
+        {
+          "ref": "Q2",
+          "pin": "3",
+          "pintype": "PASSIVE"
+        }
+      ],
+      "attrs": {}
+    }
+  ],
+  "netclasses": {}
+}
