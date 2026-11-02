@@ -11,8 +11,8 @@ import pytest
 
 from schematizer import RoutingFailure, render
 from schematizer.engine.sch_node import SchNode
-from schematizer.quality import score_files, score_schematic
-from schematizer.render import LAYOUT_BEND_COST
+from schematizer.quality import score_files, score_overlaps, score_schematic
+from schematizer.render import layout_cost
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
 
@@ -58,8 +58,7 @@ def test_svg_wires_score_like_kicad_wires():
 
 
 def _cost(path):
-    score = score_files(str(path))
-    return score["wirelength"] + LAYOUT_BEND_COST * score["bends"]
+    return layout_cost(score_files(str(path)))
 
 
 @pytest.fixture
@@ -124,3 +123,95 @@ def test_every_failed_try_falls_back_as_the_caller_asked(and_gate, tmp_path, mon
     monkeypatch.setattr(SchNode, "route", fail_until_labels_only)
     render(and_gate, filepath=str(tmp_path), top_name="sch", seed=1, tries=2, auto_stub=True)
     assert (tmp_path / "sch.kicad_sch").exists()
+
+
+_LIB = """(symbol "Device:R"
+  (symbol "R_0_1" (rectangle (start -1 -3) (end 1 3)))
+  (symbol "R_1_1"
+    (pin passive line (at 0 5 270) (length 2) (name "~") (number "1"))
+    (pin passive line (at 0 -5 90) (length 2) (name "~") (number "2"))))"""
+
+
+def _sch(*items):
+    return f"(kicad_sch (lib_symbols {_LIB}) {' '.join(items)})"
+
+
+def _resistor(ref, x, y, angle=0, value_at=None):
+    value_at = value_at or (x + 3, y)
+    return f"""(symbol (lib_id "Device:R") (at {x} {y} {angle}) (unit 1)
+      (property "Reference" "{ref}" (at {x + 3} {y - 2} 0) (effects (font (size 1.27 1.27)) (justify left)))
+      (property "Value" "10K" (at {value_at[0]} {value_at[1]} 0) (effects (font (size 1.27 1.27)) (justify left)))
+      (property "Footprint" "long hidden text" (at {x} {y} 0) (effects (font (size 1.27 1.27)) (hide yes))))"""
+
+
+def _label(name, x, y, angle=0):
+    return f'(global_label "{name}" (shape bidirectional) (at {x} {y} {angle}))'
+
+
+def test_separated_parts_have_no_overlaps():
+    sch = _sch(_resistor("R1", 0, 0), _resistor("R2", 50, 0))
+    assert score_overlaps(sch) == {"part_overlaps": 0, "text_overlaps": 0}
+
+
+def test_overlapping_parts_are_counted():
+    assert score_overlaps(_sch(_resistor("R1", 0, 0), _resistor("R2", 1, 0)))["part_overlaps"] == 1
+
+
+def test_a_rotated_part_uses_its_rotated_outline():
+    # R2's body runs sideways through R1 only when it's rotated.
+    upright = _sch(_resistor("R1", 0, 0), _resistor("R2", 5, 0))
+    rotated = _sch(_resistor("R1", 0, 0), _resistor("R2", 5, 0, angle=90))
+    assert score_overlaps(upright)["part_overlaps"] == 0
+    assert score_overlaps(rotated)["part_overlaps"] == 1
+
+
+def test_text_over_another_part_is_counted():
+    sch = _sch(_resistor("R1", 0, 0), _resistor("R2", 50, 0, value_at=(0, 0)))
+    assert score_overlaps(sch)["text_overlaps"] == 1
+
+
+def test_text_against_its_own_part_is_not_counted():
+    assert score_overlaps(_sch(_resistor("R1", 0, 0, value_at=(0, 0))))["text_overlaps"] == 0
+
+
+def test_labels_extend_away_from_their_anchors():
+    part = _resistor("R1", 0, 0)
+    # A label anchored 5 mm left of the body reaches it when pointing right, not left.
+    assert score_overlaps(_sch(part, _label("LONG_NET", -6, 0, 0)))["text_overlaps"] == 1
+    assert score_overlaps(_sch(part, _label("LONG_NET", -6, 0, 180)))["text_overlaps"] == 0
+
+
+def test_hidden_fields_are_ignored():
+    sch = _sch(_resistor("R1", 0, 0), _resistor("R2", 50, 0))
+    assert "hide" in sch and score_overlaps(sch)["text_overlaps"] == 0
+
+
+def test_overlaps_raise_the_layout_cost():
+    wires = {"wirelength": 10, "bends": 1}
+    clean = layout_cost({**wires, "part_overlaps": 0, "text_overlaps": 0})
+    assert layout_cost({**wires, "part_overlaps": 0, "text_overlaps": 1}) > clean
+    assert layout_cost({**wires, "part_overlaps": 1, "text_overlaps": 0}) > clean
+
+
+def test_power_symbol_references_are_visible_text():
+    far = _resistor("#PWR1", 50, 0, value_at=(50, 20))
+    part = _resistor("R1", 53, -2, value_at=(53, 20))
+    assert score_overlaps(_sch(part, far))["text_overlaps"] >= 1
+
+
+def test_a_wire_through_a_parts_text_is_counted():
+    part = _resistor("R1", 0, 0)
+    wire = "(wire (pts (xy 4 -10) (xy 4 10)))"
+    assert score_overlaps(_sch(part, wire))["text_overlaps"] == 2  # Reference and Value.
+
+
+def test_a_wire_ending_on_a_label_is_not_counted():
+    wire = "(wire (pts (xy 20 0) (xy 30 0)))"
+    assert score_overlaps(_sch(_label("NET", 20, 0), wire))["text_overlaps"] == 0
+
+
+def test_pin_names_count_as_part_of_the_symbol():
+    lib = _LIB.replace('(name "~")', '(name "A")')
+    parts = _resistor("R1", 0, 0, value_at=(50, 0)), _resistor("R2", 50, 0, value_at=(1.1, 4))
+    named = f"(kicad_sch (lib_symbols {lib}) {parts[0]} {parts[1]})"
+    assert score_overlaps(named)["text_overlaps"] > score_overlaps(_sch(*parts))["text_overlaps"]

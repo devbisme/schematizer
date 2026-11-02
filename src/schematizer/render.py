@@ -19,8 +19,9 @@ import tempfile
 from .loader import load_netlist
 from .quality import score_files
 
-# Wire length (mm) one bend is worth when comparing layouts for ``tries``.
+# Wire length (mm) a bend or an overlap is worth when comparing layouts for ``tries``.
 LAYOUT_BEND_COST = 5
+LAYOUT_OVERLAP_COST = 10
 
 # KiCad versions this tool can target. The engine is one modern writer plus a
 # small KiCad-8 format toggle; every version routes through it.
@@ -118,7 +119,7 @@ def render(
             for filing a bug against a specific bad layout, and for re-rolling
             a layout you don't like by trying successive seeds.
         tries (int): Number of layouts to generate, keeping the one with the
-            lowest ``LAYOUT_BEND_COST``-weighted wiring score from
+            lowest score (see :func:`layout_cost`) from
             :mod:`schematizer.quality`. Takes about ``tries`` times as long.
             The seed still makes the result reproducible. Ignored when
             ``mode="labels"``, which has no layout to vary.
@@ -192,6 +193,16 @@ def render(
     return filepath
 
 
+def layout_cost(score):
+    """Combine the scores of a layout from ``score_files()`` into one number."""
+    overlaps = score["part_overlaps"] + score["text_overlaps"]
+    return (
+        score["wirelength"]
+        + LAYOUT_BEND_COST * score["bends"]
+        + LAYOUT_OVERLAP_COST * overlaps
+    )
+
+
 def _render_best_layout(doc, filepath, seed, tries, kwargs, options):
     """Render several layouts and keep the files of the one with the best score."""
     from .engine.place import PlacementFailure
@@ -205,24 +216,31 @@ def _render_best_layout(doc, filepath, seed, tries, kwargs, options):
     fallback = options.get("auto_stub_fallback", "labels")
     trial_options = {**options, "auto_stub_fallback": "raise"}
 
+    # Overlaps can only be scored from KiCad files, so an SVG is drawn from the
+    # seed of the best layout once that's known.
+    trial_kwargs = {**kwargs, "format": "kicad"}
+
     work_dir = tempfile.mkdtemp()
     try:
-        best_dir, best_cost = None, float("inf")
+        best_dir, best_seed, best_cost = None, None, float("inf")
         for i in range(tries):
             trial_dir = os.path.join(work_dir, str(i))
+            trial_seed = f"{seed}:{i}"
             try:
-                render(doc, filepath=trial_dir, seed=f"{seed}:{i}", **kwargs, **trial_options)
+                render(doc, filepath=trial_dir, seed=trial_seed, **trial_kwargs, **trial_options)
             except (PlacementFailure, RoutingFailure):
                 continue
-            score = score_files(trial_dir)
-            cost = score["wirelength"] + LAYOUT_BEND_COST * score["bends"]
+            cost = layout_cost(score_files(trial_dir))
             if cost < best_cost:
-                best_dir, best_cost = trial_dir, cost
+                best_dir, best_seed, best_cost = trial_dir, trial_seed, cost
 
         if best_dir is None:
             # Every layout failed, so handle that as the caller asked.
             final_options = {**options, "auto_stub_fallback": fallback}
             return render(doc, filepath=filepath, seed=seed, **kwargs, **final_options)
+
+        if kwargs["format"] != "kicad":
+            return render(doc, filepath=filepath, seed=best_seed, **kwargs, **trial_options)
 
         os.makedirs(filepath, exist_ok=True)
         shutil.copytree(best_dir, filepath, dirs_exist_ok=True)
