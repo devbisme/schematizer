@@ -212,3 +212,49 @@ def test_kicad_remains_the_default_format(tmp_path):
     render(_doc("flat.json"), tool="kicad9", filepath=str(tmp_path), top_name="sch")
     assert glob.glob(os.path.join(str(tmp_path), "*.kicad_sch"))
     assert not _svgs(tmp_path)
+
+
+def _wires_from_kicad(text):
+    found = re.findall(
+        r"\(wire\s*\(pts\s*\(xy ([-\d.]+) ([-\d.]+)\)\s*\(xy ([-\d.]+) ([-\d.]+)\)", text
+    )
+    return {tuple(map(float, wire)) for wire in found}
+
+
+def _wires_from_svg(text):
+    found = re.findall(r'<line x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"', text)
+    return {tuple(map(float, wire)) for wire in found}
+
+
+@pytest.mark.parametrize("auto_stub", [False, True])
+@pytest.mark.parametrize(
+    "fixture, flatness", [("and_gate_nopwr", 0.0), ("span_hier", 1.0)]
+)
+def test_svg_and_kicad_draw_the_same_connectivity(
+    tmp_path, monkeypatch, fixture, flatness, auto_stub
+):
+    """Both writers, given one placed and routed design, draw the same sheet."""
+    from schematizer.engine import gen_schematic, svg_schematic
+
+    # Write both formats from the same node: separate runs may route differently.
+    write_kicad = gen_schematic._write_output
+
+    def write_both(circuit, node, filepath, top_name, title, options):
+        svg_schematic.write_top_svg(circuit, node, filepath, "page", title)
+        return write_kicad(circuit, node, filepath, top_name, title, options)
+
+    monkeypatch.setattr(gen_schematic, "_write_output", write_both)
+
+    with open(os.path.join(os.path.dirname(__file__), "data", f"{fixture}.json")) as f:
+        doc = json.load(f)
+    render(
+        doc, tool="kicad9", filepath=str(tmp_path), top_name="page",
+        flatness=flatness, seed=1, auto_stub=auto_stub, erc_max_iterations=0,
+    )
+
+    kicad = (tmp_path / "page.kicad_sch").read_text()
+    svg = (tmp_path / "page.svg").read_text()
+    assert _wires_from_kicad(kicad) == _wires_from_svg(svg)
+    assert kicad.count("(junction") == svg.count('r="0.45"')
+    assert kicad.count("(global_label") == svg.count('class="net_label"')
+    assert kicad.count('(lib_id "power:') == svg.count('class="power"')

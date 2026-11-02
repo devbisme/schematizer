@@ -37,6 +37,7 @@ COLORS = {
     "field": "#840000",  # Reference / value text.
     "wire": "#008484",
     "junction": "#008484",
+    "no_connect": "#0000C8",
     "label": "#008484",
     "global_label": "#840000",
     "sheet": "#840084",  # Hierarchical sheet border + name.

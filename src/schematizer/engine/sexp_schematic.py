@@ -1299,76 +1299,31 @@ def _power_lib_ids_in_elements(elements):
 
 
 @export_to_all
-def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
-    """Convert a SchNode tree to S-expression schematic(s).
+def _sheet_backend():
+    """Backend used by the decision layer for one sheet's post-processing."""
+    from .backend import RenderContext
+    from .kicad_backend import Kicad9Backend
 
-    Follows the same recursive pattern as kicad5's node_to_eeschema():
-    - Flattened nodes: return elements for inclusion in the parent sheet.
-    - Unflattened nodes: write a separate .kicad_sch file and return a
-      sheet reference for the parent.
+    return RenderContext(Kicad9Backend())
+
+
+def sheet_connectivity(node, elements, tx, emit_part=None):
+    """Add a node's labels, wires and junctions to its sheet's elements.
+
+    Every output format draws this list, so whatever is decided here (which
+    wires are kept, where labels go, which extra wires snap needs) comes out
+    the same in all of them.
 
     Args:
-        node: SchNode to convert.
-        uuid_path: Hierarchical UUID path to this node.
-        sheet_tx: Parent sheet transformation matrix.
-        version: S-expression version number (default: file_version()).
+        node: SchNode being written.
+        elements: Sheet elements so far, including any flattened children's.
+        tx: Sheet transformation matrix.
+        emit_part: Called with each real part to get its element. Omitted by
+            writers that draw the parts themselves.
 
     Returns:
-        list[Sexp]: S-expression for elements in this node (parts, wires, labels, sheet refs).
-        dict: Dict of symbols in this node including in any flattened children.
-        dict: Dict of power symbols used in this node including in any flattened children.
-        str: For unflattened nodes, the filename of the .kicad_sch file written for this sheet.
+        list[Sexp]: The elements, with dangling wires purged.
     """
-    # Fix filename extension for KiCad 6+ S-expression format.
-
-    """Ensure node.sheet_filename uses .kicad_sch extension (SchNode defaults to .sch)."""
-    node.sheet_filename = node.sheet_filename or "no_sheet_filename"
-    node.sheet_filename = os.path.splitext(node.sheet_filename)[0] + ".kicad_sch"
-
-    if node.flattened:
-        # Flattened node doesn't get its own sheet, so remove its UUID.
-        uuid_path = "/".join(uuid_path.split("/")[:-1])
-        # Flattened node shares the parent sheet, so apply the parent's sheet_tx.
-        tx = node.tx * sheet_tx
-    else:
-        # Compute the transform and sheet paper size for this node's sheet.
-        tx, paper = _calc_sheet_tx(node.internal_bbox())
-
-    # Storage for S-expression elements of schematic.
-    elements = []
-
-    # Collect lib_symbols needed for this node's parts.
-    lib_symbols = {}
-    for part in node.parts:
-        if not isinstance(part, NetTerminal):
-            lib_id = f"{part.lib.filename}:{part.name}"
-            lib_symbols[lib_id] = part
-
-    # Power-symbol definitions are emitted later from the instances actually
-    # placed on this sheet (see `_power_lib_ids_in_elements`), so no wire-based
-    # pre-scan is needed here. `pwr_symbols` is kept only to satisfy the
-    # flattened-node return contract.
-    pwr_symbols = {}
-
-    # Recurse into children.
-    global _sheet_uuid_path
-    for i, child in enumerate(node.children.values()):
-        # Give each child a unique UUID path based on its name and index.
-        child.uuid = _gen_uuid(f"{child.name}_{i}")
-        child_uuid_path = f"{uuid_path}/{child.uuid}"
-        # Get elements for child sheet (or for inclusion in this sheet if child is flattened).
-        sexp_list, part_dict, pwr_dict, _ = node_to_sexp_schematic(
-            child, child_uuid_path, sheet_tx=tx, version=version
-        )
-        elements.extend(sexp_list)
-        lib_symbols.update(part_dict)
-        pwr_symbols.update(pwr_dict)
-
-    # Children are done, so this node's own elements are emitted next. They land
-    # on the sheet at uuid_path (for a flattened node, uuid_path was trimmed to
-    # the parent's above, which is where its elements end up).
-    _sheet_uuid_path = uuid_path
-
     # Collect net names that have real (non-NetTerminal) stubbed pins on this
     # sheet.  NetTerminal labels are redundant for these nets since the pins
     # will generate their own labels.
@@ -1445,8 +1400,8 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
             label = net_label_to_sexp(pin, tx=tx, force=True)
             if label:
                 elements.append(label)
-        else:
-            elements.append(part_to_sexp(part, uuid_path, tx=tx))
+        elif emit_part:
+            elements.append(emit_part(part))
 
     # Generate wire S-expressions (split at junction points).
     # Skip nets that snap converted to stubs after routing — their routed
@@ -1478,10 +1433,8 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
     # sheet are memoized. Created here, AFTER snap has finalized all part.tx in
     # gen_schematic, so no pre-snap stale positions can be cached (doc S7.6).
     from . import decisions as _decisions
-    from .backend import RenderContext
-    from .kicad_backend import Kicad9Backend
 
-    _backend = RenderContext(Kicad9Backend())
+    _backend = _sheet_backend()
 
     # Suppress labels for snap-overlapping pins (one label per connected cluster).
     wired_pin_ids = _decisions.find_overlapping_pins(node, _backend, tx)
@@ -1616,6 +1569,11 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
             _ptx = getattr(_pin.part, "tx", Tx())
             _w = _pp * _ptx * tx
             _anchor_pts.add((_round_mm(_w.x), _round_mm(_w.y)))
+    # Flattened children's wires are in `elements` too, and end on their pins.
+    for _child in node.children.values():
+        if _child.flattened:
+            _anchor_pts |= _child.pin_anchor_pts
+    node.pin_anchor_pts = set(_anchor_pts)
     for _el in elements:
         if (
             isinstance(_el, (list, Sexp))
@@ -1655,6 +1613,95 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
         if not _drop:
             break
         elements = [_el for _i, _el in enumerate(elements) if _i not in _drop]
+
+    return elements
+
+
+def deconflict_sheet_labels(elements, node, tx):
+    """Spread net labels off component bodies once a sheet's elements are complete.
+
+    The decision (overlap + nudge target) lives in schematics/decisions.py; the
+    backend reads/mutates the label Sexps and appends connecting wires.
+    """
+    _sheet_backend().apply_label_deconfliction(elements, node, tx)
+
+
+def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
+    """Convert a SchNode tree to S-expression schematic(s).
+
+    Follows the same recursive pattern as kicad5's node_to_eeschema():
+    - Flattened nodes: return elements for inclusion in the parent sheet.
+    - Unflattened nodes: write a separate .kicad_sch file and return a
+      sheet reference for the parent.
+
+    Args:
+        node: SchNode to convert.
+        uuid_path: Hierarchical UUID path to this node.
+        sheet_tx: Parent sheet transformation matrix.
+        version: S-expression version number (default: file_version()).
+
+    Returns:
+        list[Sexp]: S-expression for elements in this node (parts, wires, labels, sheet refs).
+        dict: Dict of symbols in this node including in any flattened children.
+        dict: Dict of power symbols used in this node including in any flattened children.
+        str: For unflattened nodes, the filename of the .kicad_sch file written for this sheet.
+    """
+    # Fix filename extension for KiCad 6+ S-expression format.
+
+    """Ensure node.sheet_filename uses .kicad_sch extension (SchNode defaults to .sch)."""
+    node.sheet_filename = node.sheet_filename or "no_sheet_filename"
+    node.sheet_filename = os.path.splitext(node.sheet_filename)[0] + ".kicad_sch"
+
+    if node.flattened:
+        # Flattened node doesn't get its own sheet, so remove its UUID.
+        uuid_path = "/".join(uuid_path.split("/")[:-1])
+        # Flattened node shares the parent sheet, so apply the parent's sheet_tx.
+        tx = node.tx * sheet_tx
+    else:
+        # Compute the transform and sheet paper size for this node's sheet.
+        tx, paper = _calc_sheet_tx(node.internal_bbox())
+
+    # Storage for S-expression elements of schematic.
+    elements = []
+
+    # Collect lib_symbols needed for this node's parts.
+    lib_symbols = {}
+    for part in node.parts:
+        if not isinstance(part, NetTerminal):
+            lib_id = f"{part.lib.filename}:{part.name}"
+            lib_symbols[lib_id] = part
+
+    # Power-symbol definitions are emitted later from the instances actually
+    # placed on this sheet (see `_power_lib_ids_in_elements`), so no wire-based
+    # pre-scan is needed here. `pwr_symbols` is kept only to satisfy the
+    # flattened-node return contract.
+    pwr_symbols = {}
+
+    # Recurse into children.
+    global _sheet_uuid_path
+    for i, child in enumerate(node.children.values()):
+        # Give each child a unique UUID path based on its name and index.
+        child.uuid = _gen_uuid(f"{child.name}_{i}")
+        child_uuid_path = f"{uuid_path}/{child.uuid}"
+        # Get elements for child sheet (or for inclusion in this sheet if child is flattened).
+        sexp_list, part_dict, pwr_dict, _ = node_to_sexp_schematic(
+            child, child_uuid_path, sheet_tx=tx, version=version
+        )
+        elements.extend(sexp_list)
+        lib_symbols.update(part_dict)
+        pwr_symbols.update(pwr_dict)
+
+    # Children are done, so this node's own elements are emitted next. They land
+    # on the sheet at uuid_path (for a flattened node, uuid_path was trimmed to
+    # the parent's above, which is where its elements end up).
+    _sheet_uuid_path = uuid_path
+
+    elements = sheet_connectivity(
+        node,
+        elements,
+        tx,
+        emit_part=lambda part: part_to_sexp(part, uuid_path, tx=tx),
+    )
 
     if node.flattened:
         # This node is flattened, so return elements for inclusion in the parent sheet.
@@ -1713,9 +1760,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
             hlabel_y += 2.54
 
     # Spread net labels off component bodies (connectivity-preserving).
-    # Decision (overlap + nudge target) lives in schematics/decisions.py; the
-    # backend reads/mutates the label Sexps and appends connecting wires.
-    _backend.apply_label_deconfliction(elements, node, tx)
+    deconflict_sheet_labels(elements, node, tx)
 
     # Add all the collected elements of the schematic.
     for elem in elements:

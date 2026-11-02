@@ -384,7 +384,8 @@ def _classify_and_stub_complex_nets(circuit, node, **options):
 
         # Stub all remaining nets in small subcircuits (<=6 routeable nets).
         # Only large chain structures (switch->R->IC grids) benefit from wiring.
-        if len(non_stubbed) <= 6:
+        # A flattened subcircuit shares its parent's page, so wires still fit.
+        if not child.flattened and len(non_stubbed) <= 6:
             for net in non_stubbed:
                 net._stub = True
                 net._stub_explicit = False

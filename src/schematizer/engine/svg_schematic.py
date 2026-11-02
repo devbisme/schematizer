@@ -9,7 +9,8 @@ This is the sibling of :mod:`sexp_schematic`: same input (a placed + routed
 ``SchNode`` tree), same page geometry, different serialization. Where the
 s-expression writer emits a symbol *instance* that KiCad later draws from its
 ``lib_symbols`` section, this module draws the symbol graphics itself using
-:mod:`svg_draw`.
+:mod:`svg_draw`. Labels, wires and junctions aren't decided here: both writers
+draw the list built by ``sexp_schematic.sheet_connectivity``.
 
 Hierarchy works exactly as it does for KiCad, and is driven by the same
 ``flatness`` option:
@@ -39,12 +40,9 @@ from .svg_draw import COLORS, draw_cmd_to_svg, esc
 from . import sexp_schematic as _sexp
 from .sexp_schematic import (
     A_SIZES,
-    _PIN_LABEL_ANGLE,
     _calc_sheet_tx,
-    _power_symbol_pin_angle,
     _round_mm,
     calc_field_layout,
-    calc_label_dir,
     calc_pin_dir,
     init_power_symbol_data,
 )
@@ -61,6 +59,7 @@ _DRAW_HEADS = {"polyline", "rectangle", "circle", "arc", "pin", "text", "propert
 # Wire/label line weights, in mm.
 _WIRE_WIDTH = 0.1524
 _JUNCTION_RADIUS = 0.45
+_NO_CONNECT_SIZE = 0.635
 
 
 # ---------------------------------------------------------------------------
@@ -89,12 +88,6 @@ def instance_tx(angle_deg, origin):
     directly at a pin rather than by the placer.
     """
     return Tx(a=1, d=-1).rot(-angle_deg).move(origin)
-
-
-def _pin_page_pt(pin, sheet_tx):
-    """Page-mm position of a pin, matching the wire/label emitters."""
-    pin_pt = getattr(pin, "pt", None) or Point(pin.x, pin.y)
-    return pin_pt * getattr(pin.part, "tx", Tx()) * sheet_tx
 
 
 # ---------------------------------------------------------------------------
@@ -230,19 +223,13 @@ def part_to_svg(part, sheet_tx):
     return "".join(svg), bbox
 
 
-def power_symbol_to_svg(pin, net_name, sheet_tx):
-    """Draw a power symbol (GND, +3V3, ...) at *pin*. Returns ``(svg, bbox)``.
-
-    Placed and rotated the same way the KiCad writer places its power-symbol
-    instances, so the two renderings agree.
-    """
+def power_symbol_to_svg(net_name, x, y, angle):
+    """Draw a power symbol (GND, +3V3, ...) at (x, y). Returns ``(svg, bbox)``."""
     sym = _sexp.pwr_symbol_sexp_dict.get(net_name)
     if sym is None:
         return "", BBox()
 
-    pt = _pin_page_pt(pin, sheet_tx)
-    angle = (_PIN_LABEL_ANGLE[calc_label_dir(pin)] - _power_symbol_pin_angle(net_name)) % 360
-    tx = instance_tx(angle, Point(_round_mm(pt.x), _round_mm(pt.y)))
+    tx = instance_tx(angle, Point(x, y))
 
     svg = [f'<g class="power" data-net="{esc(net_name)}">\n']
     bbox = BBox()
@@ -262,76 +249,85 @@ def power_symbol_to_svg(pin, net_name, sheet_tx):
 # ---------------------------------------------------------------------------
 
 
-def wire_to_svg(wire, sheet_tx):
-    """Draw one net's routed wire segments. Returns ``(svg, bbox)``."""
-    svg = []
-    bbox = BBox()
-    for segment in wire:
-        s = segment * sheet_tx
-        p1 = Point(_round_mm(s.p1.x), _round_mm(s.p1.y))
-        p2 = Point(_round_mm(s.p2.x), _round_mm(s.p2.y))
-        bbox.add(BBox(p1, p2))
-        svg.append(
-            f'<line x1="{p1.x:.3f}" y1="{p1.y:.3f}" '
-            f'x2="{p2.x:.3f}" y2="{p2.y:.3f}" '
-            f'style="stroke:{COLORS["wire"]}; stroke-width:{_WIRE_WIDTH}" />\n'
-        )
-    return "".join(svg), bbox
+def wire_to_svg(x1, y1, x2, y2):
+    """Draw a wire segment. Returns ``(svg, bbox)``."""
+    svg = (
+        f'<line x1="{x1:.3f}" y1="{y1:.3f}" x2="{x2:.3f}" y2="{y2:.3f}" '
+        f'style="stroke:{COLORS["wire"]}; stroke-width:{_WIRE_WIDTH}" />\n'
+    )
+    return svg, BBox(Point(x1, y1), Point(x2, y2))
 
 
-def junctions_to_svg(junctions, sheet_tx):
-    """Draw a net's junction dots. Returns ``(svg, bbox)``."""
-    svg = []
-    bbox = BBox()
-    for junction in junctions:
-        pt = junction * sheet_tx
-        x, y = _round_mm(pt.x), _round_mm(pt.y)
-        bbox.add(BBox(Point(x, y)))
-        svg.append(
-            f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{_JUNCTION_RADIUS}" '
-            f'style="fill:{COLORS["junction"]}; stroke:none" />\n'
-        )
-    return "".join(svg), bbox
+def junction_to_svg(x, y):
+    """Draw a junction dot. Returns ``(svg, bbox)``."""
+    svg = (
+        f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{_JUNCTION_RADIUS}" '
+        f'style="fill:{COLORS["junction"]}; stroke:none" />\n'
+    )
+    return svg, BBox(Point(x, y))
 
 
-# Where a net label sits relative to its pin, keyed by the pin's outward
-# direction in placement space (Y-up; the sheet transform flips it, so "U" is
-# visually up on the page). Each entry is (rotate, text-anchor, offset).
-#
-# The label always runs OUTWARD from the pin so it never lies along the wire
-# that connects to it. This is derived from the pin direction rather than
-# reusing the KiCad writer's angle/justify table: KiCad rotates the whole label
-# element and justifies within that rotated frame, which does not map onto
-# SVG's rotate + text-anchor pair -- reusing it drew labels back over the wire.
+def no_connect_to_svg(x, y):
+    """Draw a no-connect cross. Returns ``(svg, bbox)``."""
+    r = _NO_CONNECT_SIZE
+    svg = (
+        f'<path class="no_connect" d="M{x - r:.3f} {y - r:.3f} L{x + r:.3f} {y + r:.3f} '
+        f'M{x - r:.3f} {y + r:.3f} L{x + r:.3f} {y - r:.3f}" '
+        f'style="stroke:{COLORS["no_connect"]}; stroke-width:{_WIRE_WIDTH}; fill:none" />\n'
+    )
+    return svg, BBox(Point(x - r, y - r), Point(x + r, y + r))
+
+
+# How a label's KiCad angle runs on the page: (rotate, text-anchor, offset).
+# The label's anchor is its connection point and the text leads away from it.
 _SVG_LABEL_PLACEMENT = {
-    "R": (0, "start", (0.8, 0.0)),
-    "L": (0, "end", (-0.8, 0.0)),
-    "U": (-90, "start", (0.0, -0.8)),
-    "D": (-90, "end", (0.0, 0.8)),
+    0: (0, "start", (0.8, 0.0)),
+    180: (0, "end", (-0.8, 0.0)),
+    90: (-90, "start", (0.0, -0.8)),
+    270: (-90, "end", (0.0, 0.8)),
 }
 
 
-def net_label_to_svg(pin, sheet_tx, force=False):
-    """Draw a net label (or power symbol) at a stubbed pin.
-
-    Returns ``(svg, bbox)``, empty if the pin needs no label.
-    """
-    if not force and (not getattr(pin, "stub", False) or not pin.is_connected()):
-        return "", BBox()
-    net = getattr(pin, "net", None)
-    if net is None or not pin.is_connected():
-        return "", BBox()
-
-    if net.name in _sexp.pwr_symbol_names:
-        return power_symbol_to_svg(pin, net.name, sheet_tx)
-
-    pt = _pin_page_pt(pin, sheet_tx)
-    rotate, anchor, off = _SVG_LABEL_PLACEMENT[calc_label_dir(pin)]
-    x, y = _round_mm(pt.x + off[0]), _round_mm(pt.y + off[1])
+def net_label_to_svg(name, x, y, angle):
+    """Draw a net label anchored at (x, y). Returns ``(svg, bbox)``."""
+    rotate, anchor, off = _SVG_LABEL_PLACEMENT[angle]
+    x, y = _round_mm(x + off[0]), _round_mm(y + off[1])
     svg = _halo_text(
-        "net_label", net.name, x, y, 1.27, COLORS["global_label"], anchor, rotate
+        "net_label", name, x, y, 1.27, COLORS["global_label"], anchor, rotate
     )
-    return svg, _text_extent(net.name, x, y, 1.27, anchor, rotate)
+    return svg, _text_extent(name, x, y, 1.27, anchor, rotate)
+
+
+def _field(element, head):
+    """The sub-expression of a sheet element that starts with *head*."""
+    return next(
+        (s for s in element if isinstance(s, list) and len(s) and s[0] == head), None
+    )
+
+
+def element_to_svg(element):
+    """Draw one entry of a sheet's element list. Returns ``(svg, bbox)``.
+
+    Only connectivity is drawn. Parts and sheet boxes aren't in the list given
+    to this writer, and a hierarchical label has no drawing of its own: the
+    parent page lists those nets on the sheet box.
+    """
+    kind = element[0]
+    if kind == "wire":
+        xys = [xy for xy in _field(element, "pts")[1:] if xy[0] == "xy"]
+        return wire_to_svg(xys[0][1], xys[0][2], xys[1][1], xys[1][2])
+    if kind == "junction":
+        return junction_to_svg(*_field(element, "at")[1:3])
+    if kind == "no_connect":
+        return no_connect_to_svg(*_field(element, "at")[1:3])
+    if kind == "global_label":
+        return net_label_to_svg(element[1], *_field(element, "at")[1:4])
+    if kind == "symbol":
+        lib_id = _field(element, "lib_id")[1]
+        return power_symbol_to_svg(
+            lib_id.split(":", 1)[1], *_field(element, "at")[1:4]
+        )
+    return "", BBox()
 
 
 # ---------------------------------------------------------------------------
@@ -513,10 +509,14 @@ def node_to_svg(node, parent=None, top_node=None, sheet_tx=Tx(), title="", fit=T
     elements for inclusion in the parent's page; an unflattened one writes its
     own file and returns a hyperlinked sheet box for the parent to draw.
 
+    A sheet's labels and wires come from ``sexp_schematic.sheet_connectivity``,
+    so they are the ones the KiCad writer emits for the same placement.
+
     Returns:
-        tuple[str, BBox, list[str]]: SVG fragment for the parent to include,
-        its bounding box, and the paths of every file written at or below
-        this node.
+        tuple[str, BBox, list[str], list]: SVG fragment for the parent to
+        include, its bounding box, the paths of every file written at or below
+        this node, and a flattened node's connectivity elements for the
+        parent's page.
     """
     if node.flattened:
         # No page of its own; draw straight into the parent's coordinate space.
@@ -526,6 +526,7 @@ def node_to_svg(node, parent=None, top_node=None, sheet_tx=Tx(), title="", fit=T
         tx, paper = _calc_sheet_tx(node.internal_bbox())
 
     elements = []
+    sheet_elements = []
     bbox = BBox()
     written = []
 
@@ -538,41 +539,30 @@ def node_to_svg(node, parent=None, top_node=None, sheet_tx=Tx(), title="", fit=T
     # Recurse into children first so their sheet boxes land under this page's
     # wires rather than on top of them.
     for child in node.children.values():
-        child_svg, child_bbox, child_written = node_to_svg(
+        child_svg, child_bbox, child_written, child_elements = node_to_svg(
             child, parent=node, top_node=top_node, sheet_tx=tx, title=title, fit=fit
         )
         written.extend(child_written)
+        sheet_elements.extend(child_elements)
         if child_svg:
             elements.append(child_svg)
             bbox.add(child_bbox)
 
-    # Parts, and the labels that stand in for NetTerminals.
     for part in node.parts:
-        if isinstance(part, NetTerminal):
-            pin = part.pins[0]
-            if pin.is_connected():
-                add(net_label_to_svg(pin, tx, force=True))
-        else:
+        if not isinstance(part, NetTerminal):
             add(part_to_svg(part, tx))
-            # Stubbed pins carry their own label / power symbol.
-            for pin in part:
-                add(net_label_to_svg(pin, tx))
 
-    # Routed wires and their junction dots.
-    for net, wire in node.wires.items():
-        if getattr(net, "_stub", False):
-            continue
-        add(wire_to_svg(wire, tx))
-    for net, junctions in node.junctions.items():
-        if getattr(net, "_stub", False):
-            continue
-        add(junctions_to_svg(junctions, tx))
-
-    body = "".join(elements)
+    sheet_elements = _sexp.sheet_connectivity(node, sheet_elements, tx)
 
     if node.flattened:
         # Hand the drawing up to the parent instead of writing a page.
-        return body, bbox, written
+        return "".join(elements), bbox, written, sheet_elements
+
+    _sexp.deconflict_sheet_labels(sheet_elements, node, tx)
+    for element in sheet_elements:
+        add(element_to_svg(element))
+
+    body = "".join(elements)
 
     # --- Unflattened node: write its own SVG page. ---
     nav = _nav_links_svg(node, parent, top_node)
@@ -600,7 +590,7 @@ def node_to_svg(node, parent=None, top_node=None, sheet_tx=Tx(), title="", fit=T
 
     # The parent draws a hyperlinked box standing in for this sheet.
     box_svg, box_bbox = sheet_box_to_svg(node, sheet_tx)
-    return box_svg, box_bbox, written
+    return box_svg, box_bbox, written, []
 
 
 @export_to_all
@@ -631,7 +621,7 @@ def write_top_svg(circuit, node, filepath, top_name, title, fit=True):
     # The top node has no parent to absorb its contents, so it always gets a page.
     node.flattened = False
 
-    _, _, written = node_to_svg(
+    _, _, written, _ = node_to_svg(
         node, parent=None, top_node=node, title=title, fit=fit
     )
 
