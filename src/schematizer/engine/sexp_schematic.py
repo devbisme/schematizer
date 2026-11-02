@@ -105,6 +105,11 @@ def _find_power_lib():
     return None
 
 
+# Parsed power libraries by path. Nothing modifies these symbols: the writers
+# work on copies (see _extract_power_lib_symbol).
+_pwr_lib_cache = {}
+
+
 def init_power_symbol_data():
     """Initialize power symbol state at the start of schematic generation."""
 
@@ -121,11 +126,13 @@ def init_power_symbol_data():
         pwr_symbol_sexp_dict = {}
         pwr_symbol_names = set()
         return
-    with open(path, "r") as f:
-        pwr_lib_text = f.read()
-    pwr_lib_sexp = Sexp(pwr_lib_text)
-    pwr_symbol_sexps = pwr_lib_sexp.search("/kicad_symbol_lib/symbol")
-    pwr_symbol_sexp_dict = {sym[1]: sym for sym in pwr_symbol_sexps}
+    if path not in _pwr_lib_cache:
+        with open(path, "r") as f:
+            pwr_lib_text = f.read()
+        pwr_lib_sexp = Sexp(pwr_lib_text)
+        pwr_symbol_sexps = pwr_lib_sexp.search("/kicad_symbol_lib/symbol")
+        _pwr_lib_cache[path] = {sym[1]: sym for sym in pwr_symbol_sexps}
+    pwr_symbol_sexp_dict = _pwr_lib_cache[path]
     pwr_symbol_names = set(pwr_symbol_sexp_dict.keys())
 
 
@@ -1788,7 +1795,9 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
 
 
 @export_to_all
-def write_top_schematic(circuit, node, filepath, top_name, title, version=None):
+def write_top_schematic(
+    circuit, node, filepath, top_name, title, version=None, validate=True
+):
     """Generate and write the complete schematic from a placed+routed node tree.
 
     This is the main entry point called by each tool's gen_schematic().
@@ -1800,6 +1809,7 @@ def write_top_schematic(circuit, node, filepath, top_name, title, version=None):
         top_name: Base filename (without extension).
         title: Schematic title.
         version: S-expression version number.
+        validate: Run kicad-cli ERC on the result, if kicad-cli is available.
     """
 
     global PROJECT_NAME
@@ -1830,7 +1840,8 @@ def write_top_schematic(circuit, node, filepath, top_name, title, version=None):
     )
 
     # Optional: validate with kicad-cli if available.
-    _validate_with_kicad_cli(output_file)
+    if validate:
+        _validate_with_kicad_cli(output_file)
 
     return output_file
 

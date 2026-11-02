@@ -9,6 +9,7 @@ Layer 3: KiCad CLI validation (skipped if kicad-cli not installed)
 """
 
 import importlib
+import json
 import os
 import re
 import shutil
@@ -874,3 +875,62 @@ class TestSharedIcPinFan:
         assert (abs(rx - cx) > 100) or (
             abs(ry - cy) > 100
         ), f"R free pin ({rx},{ry}) and C free pin ({cx},{cy}) too close"
+
+
+# ===========================================================================
+# ERC correction loop
+# ===========================================================================
+
+
+class TestErcLoopStops:
+    """Regenerating is expensive, so the loop only runs while it can help."""
+
+    def _render(self, monkeypatch, tmp_path, report):
+        """Render with a stubbed-out ERC; return (sheets written, validations run)."""
+        from schematizer import render
+        from schematizer.engine import sexp_schematic
+
+        writes, validations = [], []
+        write_output = gen_schematic._write_output
+
+        def counting_write(*args):
+            writes.append(1)
+            return write_output(*args)
+
+        monkeypatch.setattr(gen_schematic, "_write_output", counting_write)
+        monkeypatch.setattr(gen_schematic.shutil, "which", lambda name: "/bin/true")
+        monkeypatch.setattr(gen_schematic, "_run_erc", lambda path: "report")
+        monkeypatch.setattr(gen_schematic, "_parse_erc_report", report)
+        monkeypatch.setattr(
+            sexp_schematic, "_validate_with_kicad_cli", validations.append
+        )
+        path = os.path.join(os.path.dirname(__file__), "..", "data", "and_gate_nopwr.json")
+        with open(path) as f:
+            doc = json.load(f)
+        render(
+            doc, tool="kicad9", filepath=str(tmp_path), seed=1, auto_stub=True,
+            erc_max_iterations=8,
+        )
+        return len(writes), len(validations)
+
+    def test_nothing_left_to_stub_stops_regeneration(self, monkeypatch, tmp_path):
+        errors = [("pin_not_connected", "R1", "1")]
+        monkeypatch.setattr(gen_schematic, "_stub_nets_for_erc_errors", lambda *a: False)
+        writes, _ = self._render(monkeypatch, tmp_path, lambda path: errors)
+        assert writes == 1
+
+    def test_repeated_errors_stop_regeneration(self, monkeypatch, tmp_path):
+        errors = [("pin_not_connected", "R1", "1")]
+        monkeypatch.setattr(gen_schematic, "_stub_nets_for_erc_errors", lambda *a: True)
+        writes, _ = self._render(monkeypatch, tmp_path, lambda path: errors)
+        assert writes == 2  # The first attempt, then one to see stubbing not help.
+
+    def test_erc_runs_once_per_sheet_written(self, monkeypatch, tmp_path):
+        _, validations = self._render(monkeypatch, tmp_path, lambda path: [])
+        assert validations == 0
+
+    def test_already_stubbed_nets_are_not_reported_as_new(self):
+        circuit = TestStubNetsForErcErrors()._make_circuit_with_parts()[0]
+        errors = [("pin_not_connected", "R1", "2")]
+        assert _stub_nets_for_erc_errors(circuit, errors) is True
+        assert _stub_nets_for_erc_errors(circuit, errors) is False

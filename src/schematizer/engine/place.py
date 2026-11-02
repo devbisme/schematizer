@@ -482,6 +482,9 @@ LABEL_TEXT_BAND_HALF_W = 300.0  # horizontal half-width of the value/ref text ba
 LABEL_TEXT_BAND_HALF_H = 70.0  # vertical half-height of the value/ref text band.
 
 
+_PIN_OUT_BASE = {"U": (0, 1), "D": (0, -1), "L": (-1, 0), "R": (1, 0)}
+
+
 def _pin_out_dir(pin):
     """Return the outward unit Point for a pin under its part's current tx.
 
@@ -490,58 +493,65 @@ def _pin_out_dir(pin):
     (translation stripped from part.tx).
     """
     tx = pin.part.tx
-    rot = Tx(a=tx.a, b=tx.b, c=tx.c, d=tx.d)  # strip translation, keep rot/flip.
-    base = {
-        "U": Point(0, 1),
-        "D": Point(0, -1),
-        "L": Point(-1, 0),
-        "R": Point(1, 0),
-    }[pin.orientation]
-    v = base * rot
+    x, y = _PIN_OUT_BASE[pin.orientation]
+    # Rotate/flip only: no translation for a direction. Written out because this
+    # runs for every labeled pin in every orientation tried.
+    vx = x * tx.a + y * tx.c
+    vy = x * tx.b + y * tx.d
     # Snap to a clean axis-aligned unit vector.
     return Point(
-        1 if v.x > 0.5 else (-1 if v.x < -0.5 else 0),
-        1 if v.y > 0.5 else (-1 if v.y < -0.5 else 0),
+        1 if vx > 0.5 else (-1 if vx < -0.5 else 0),
+        1 if vy > 0.5 else (-1 if vy < -0.5 else 0),
     )
 
 
 def _label_box(anchor, out_dir):
     """Build the flag bbox for a net label anchored at `anchor` extending
     `LABEL_REACH` outward along `out_dir`, with `LABEL_HALF_H` to each side."""
-    far = anchor + out_dir * LABEL_REACH
-    box = BBox(anchor, far)
+    far_x = anchor.x + out_dir.x * LABEL_REACH
+    far_y = anchor.y + out_dir.y * LABEL_REACH
     # Widen perpendicular to the reach direction.
-    if out_dir.y == 0:
-        # Horizontal label: pad in y.
-        return box.resize(Vector(0, LABEL_HALF_H))
-    elif out_dir.x == 0:
-        # Vertical label: pad in x.
-        return box.resize(Vector(LABEL_HALF_H, 0))
-    return box.resize(Vector(LABEL_HALF_H, LABEL_HALF_H))
+    pad_x = 0 if out_dir.y == 0 else LABEL_HALF_H
+    pad_y = LABEL_HALF_H if out_dir.y == 0 or out_dir.x != 0 else 0
+    box = BBox.__new__(BBox)
+    box.min = Point(min(anchor.x, far_x) - pad_x, min(anchor.y, far_y) - pad_y)
+    box.max = Point(max(anchor.x, far_x) + pad_x, max(anchor.y, far_y) + pad_y)
+    return box
 
 
-def _body_box(part):
+def _label_geometry(part):
+    """Return what label_overlap_cost() needs that doesn't change with part.tx.
+
+    Returns:
+        tuple: The stubbed, connected, label-bearing pins and the BBox of all the
+        part's pin points (None if it has no pin points).
+    """
+    lbl_pins = [
+        pin
+        for pin in part
+        if getattr(pin, "stub", False)
+        and getattr(pin, "pt", None) is not None
+        and pin.is_connected()
+    ]
+    pts = [pin.pt for pin in part if getattr(pin, "pt", None) is not None]
+    return lbl_pins, BBox(*pts) if pts else None
+
+
+def _body_box(part, pin_span):
     """Estimate the part's own body box (graphics + pin-name letters) under its
     current tx, derived from the span of its pin points so it stays
     backend-agnostic.  A margin covers the pin-name letters."""
-    pts = [pin.pt for pin in part if getattr(pin, "pt", None) is not None]
-    if not pts:
-        return None
-    body = BBox(*pts)
-    body = body.resize(Vector(LABEL_BODY_MARGIN, LABEL_BODY_MARGIN))
+    body = pin_span.resize(Vector(LABEL_BODY_MARGIN, LABEL_BODY_MARGIN))
     return body * part.tx
 
 
-def _text_band_box(part):
+def _text_band_box(part, pin_span):
     """Axis-aligned box approximating the part's reference/value text, which
     renders HORIZONTALLY in sheet space centered on the body regardless of part
     rotation.  Net labels pointing up/down cross this band (and pile onto the
     value text); labels pointing left/right clear it.  Returns the band in
     sheet coordinates (only its CENTER is transformed, not its orientation)."""
-    pts = [pin.pt for pin in part if getattr(pin, "pt", None) is not None]
-    if not pts:
-        return None
-    ctr = (BBox(*pts) * part.tx).ctr
+    ctr = (pin_span * part.tx).ctr
     return BBox(
         Point(ctr.x - LABEL_TEXT_BAND_HALF_W, ctr.y - LABEL_TEXT_BAND_HALF_H),
         Point(ctr.x + LABEL_TEXT_BAND_HALF_W, ctr.y + LABEL_TEXT_BAND_HALF_H),
@@ -561,13 +571,11 @@ def label_overlap_cost(part, **options):
     pin.orientation, pin.stub, pin.is_connected(), part.tx, part.place_bbox).
     """
     # Collect the stubbed, connected, label-bearing pins.
-    lbl_pins = [
-        pin
-        for pin in part
-        if getattr(pin, "stub", False)
-        and getattr(pin, "pt", None) is not None
-        and pin.is_connected()
-    ]
+    neighbors = options.get("_label_neighbors", None)
+    if isinstance(neighbors, OrientationCosts):
+        lbl_pins, pin_span = neighbors.label_geometry(part)
+    else:
+        lbl_pins, pin_span = _label_geometry(part)
     if not lbl_pins:
         return 0.0
 
@@ -583,26 +591,23 @@ def label_overlap_cost(part, **options):
     cost = 0.0
 
     # (b) Label flag over this part's OWN body.
-    own_body = _body_box(part)
-    if own_body is not None:
-        for box in boxes:
-            if box.intersects(own_body):
-                cost += 1.0
+    own_body = _body_box(part, pin_span)
+    for box in boxes:
+        if box.intersects(own_body):
+            cost += 1.0
 
     # (b2) Label flag crossing the part's horizontal reference/value text band.
     # This is what discriminates between rotations: a label pointing up/down
     # cuts across the always-horizontal value text; a left/right label clears
     # it.  Without this term the own-body/own-label geometry is rotation
     # invariant (labels rotate with the part) and gives no preference.
-    text_band = _text_band_box(part)
-    if text_band is not None:
-        for out_dir, box in zip(out_dirs, boxes):
-            # Only vertical labels (no horizontal component) cross the band.
-            if out_dir.x == 0 and box.intersects(text_band):
-                cost += 1.0
+    text_band = _text_band_box(part, pin_span)
+    for out_dir, box in zip(out_dirs, boxes):
+        # Only vertical labels (no horizontal component) cross the band.
+        if out_dir.x == 0 and box.intersects(text_band):
+            cost += 1.0
 
     # (a) Label flag over a NEIGHBOR part's placement bbox.
-    neighbors = options.get("_label_neighbors", None)
     if isinstance(neighbors, OrientationCosts):
         cost += neighbors.neighbor_hits(part, boxes)
     elif neighbors:
@@ -700,6 +705,8 @@ class OrientationCosts:
     """
 
     def __init__(self, parts, neighbors=None):
+        self.label_geom = {}
+
         # Parts whose tx changes are tracked, with the cached entries that depend on them.
         self.owners = []
         self.owner_txs = []
@@ -804,6 +811,13 @@ class OrientationCosts:
                 dists.extend((anchor_pt - pt).magnitude for pt in own_pts)
                 tension += min(dists)
         return tension
+
+    def label_geometry(self, part):
+        """Cached _label_geometry(): pins and stubs stay put while orientations are tried."""
+        cached = self.label_geom.get(id(part))
+        if cached is None:
+            cached = self.label_geom[id(part)] = _label_geometry(part)
+        return cached
 
     def neighbor_hits(self, part, label_boxes):
         """Count (label box, neighbor bbox) overlaps, skipping the part itself."""

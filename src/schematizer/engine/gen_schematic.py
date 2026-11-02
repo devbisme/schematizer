@@ -277,11 +277,13 @@ def _stub_nets_for_erc_errors(circuit, errors):
                     if str(pin.num) == str(pin_num):
                         net = pin.net
                         if net and not getattr(net, "_stub_explicit", False):
+                            pins = net.get_pins()
+                            if not net._stub or not all(p.stub for p in pins):
+                                stubbed_any = True
                             net._stub = True
                             net._stub_explicit = False
-                            for p in net.get_pins():
+                            for p in pins:
                                 p.stub = True
-                            stubbed_any = True
                 break
     return stubbed_any
 
@@ -643,7 +645,11 @@ def _write_output(circuit, node, filepath, top_name, title, options):
             circuit, node, filepath, top_name, title,
             fit=options.get("svg_fit", True),
         )
-    return write_top_schematic(circuit, node, filepath, top_name, title)
+    # The ERC correction loop checks every sheet it writes, so don't check twice.
+    erc_loop = options.get("auto_stub", False) and options.get("erc_max_iterations", 3) > 0
+    return write_top_schematic(
+        circuit, node, filepath, top_name, title, validate=not erc_loop
+    )
 
 
 def gen_schematic(
@@ -823,22 +829,35 @@ def gen_schematic(
             and shutil.which("kicad-cli")
         ):
             max_erc_iterations = options.get("erc_max_iterations", 3)
+            prev_errors = None
             for erc_attempt in range(max_erc_iterations):
                 erc_report = _run_erc(output_file)
                 errors = _parse_erc_report(erc_report)
                 fixable = [e for e in errors if e[0] in FIXABLE_ERROR_TYPES]
 
                 if not fixable:
+                    if errors:
+                        active_logger.warning(
+                            f"KiCad ERC found {len(errors)} issues in {output_file}"
+                        )
                     active_logger.info(
                         f"ERC clean after {erc_attempt + 1} iteration(s)"
                     )
                     break
 
-                if not _stub_nets_for_erc_errors(circuit, fixable):
-                    active_logger.info(
-                        f"ERC: {len(fixable)} unfixable errors remain after {erc_attempt + 1} iteration(s)"
+                # Regenerating can't help if the last pass changed nothing, or if
+                # there is nothing left to stub. Classification undoes ERC stubs
+                # on deferred nets, so the second check alone wouldn't catch this.
+                if sorted(errors) == prev_errors or not _stub_nets_for_erc_errors(
+                    circuit, fixable
+                ):
+                    active_logger.warning(
+                        f"KiCad ERC found {len(errors)} issues in {output_file}: "
+                        f"{len(fixable)} unfixable errors remain after "
+                        f"{erc_attempt + 1} iteration(s)"
                     )
                     break
+                prev_errors = sorted(errors)
 
                 active_logger.info(
                     f"ERC correction: stubbed nets for {len(fixable)} errors, regenerating (iteration {erc_attempt + 1})"

@@ -86,3 +86,10 @@ def test_power_symbol_tracks_shared_angle_table(symtx):
             f"symtx={symtx!r} {net_name}: power symbol angle {angle} != "
             f"expected {expected} from shared _PIN_LABEL_ANGLE"
         )
+
+
+def test_power_library_is_parsed_once():
+    sexp_schematic.init_power_symbol_data()
+    first = sexp_schematic.pwr_symbol_sexp_dict
+    sexp_schematic.init_power_symbol_data()
+    assert sexp_schematic.pwr_symbol_sexp_dict is first
