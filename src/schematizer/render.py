@@ -12,8 +12,15 @@ depends only on the vendored engine in :mod:`schematizer.engine` — no skidl.
 
 import json
 import os
+import random
+import shutil
+import tempfile
 
 from .loader import load_netlist
+from .quality import score_files
+
+# Wire length (mm) one bend is worth when comparing layouts for ``tries``.
+LAYOUT_BEND_COST = 5
 
 # KiCad versions this tool can target. The engine is one modern writer plus a
 # small KiCad-8 format toggle; every version routes through it.
@@ -80,6 +87,7 @@ def render(
     format="kicad",
     mode="normal",
     seed=None,
+    tries=1,
     **options,
 ):
     """Generate schematic files from a generic netlist document.
@@ -109,6 +117,11 @@ def render(
             existing random behavior. Useful for regression-testing a drawing,
             for filing a bug against a specific bad layout, and for re-rolling
             a layout you don't like by trying successive seeds.
+        tries (int): Number of layouts to generate, keeping the one with the
+            lowest ``LAYOUT_BEND_COST``-weighted wiring score from
+            :mod:`schematizer.quality`. Takes about ``tries`` times as long.
+            The seed still makes the result reproducible. Ignored when
+            ``mode="labels"``, which has no layout to vary.
         **options: Passed through to the placement/routing/writer engine
             (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
             controls hierarchy for both formats: 0 keeps every subcircuit on
@@ -136,7 +149,14 @@ def render(
     if mode == "labels" and format != "kicad":
         raise ValueError("Labels-only mode writes KiCad files only (format='kicad').")
 
+    if tries < 1:
+        raise ValueError(f"tries must be at least 1, not {tries}.")
+
     doc = _load_document(netlist)
+    if tries > 1 and mode == "normal":
+        kwargs = dict(tool=tool, top_name=top_name, title=title, format=format)
+        return _render_best_layout(doc, filepath, seed, tries, kwargs, options)
+
     top_name = top_name or doc.get("top_name") or "schematic"
     title = title or doc.get("title") or "SKiDL-Generated Schematic"
 
@@ -170,3 +190,42 @@ def render(
     )
 
     return filepath
+
+
+def _render_best_layout(doc, filepath, seed, tries, kwargs, options):
+    """Render several layouts and keep the files of the one with the best score."""
+    from .engine.place import PlacementFailure
+    from .engine.route import RoutingFailure
+
+    if seed is None:
+        seed = random.getrandbits(64)
+
+    # A labels-only fallback has no wires, so it would always score best. Let
+    # such a layout fail here; it's the last resort if no layout can be routed.
+    fallback = options.get("auto_stub_fallback", "labels")
+    trial_options = {**options, "auto_stub_fallback": "raise"}
+
+    work_dir = tempfile.mkdtemp()
+    try:
+        best_dir, best_cost = None, float("inf")
+        for i in range(tries):
+            trial_dir = os.path.join(work_dir, str(i))
+            try:
+                render(doc, filepath=trial_dir, seed=f"{seed}:{i}", **kwargs, **trial_options)
+            except (PlacementFailure, RoutingFailure):
+                continue
+            score = score_files(trial_dir)
+            cost = score["wirelength"] + LAYOUT_BEND_COST * score["bends"]
+            if cost < best_cost:
+                best_dir, best_cost = trial_dir, cost
+
+        if best_dir is None:
+            # Every layout failed, so handle that as the caller asked.
+            final_options = {**options, "auto_stub_fallback": fallback}
+            return render(doc, filepath=filepath, seed=seed, **kwargs, **final_options)
+
+        os.makedirs(filepath, exist_ok=True)
+        shutil.copytree(best_dir, filepath, dirs_exist_ok=True)
+        return filepath
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)

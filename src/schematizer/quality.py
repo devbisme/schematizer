@@ -32,21 +32,24 @@ __all__ = ["score_schematic", "score_files"]
 _WIRE_RE = re.compile(
     r"\(wire\s*\(pts\s*\(xy\s+([-\d.]+)\s+([-\d.]+)\)\s*\(xy\s+([-\d.]+)\s+([-\d.]+)\)"
 )
+_SVG_WIRE_RE = re.compile(
+    r'<line x1="([-\d.]+)" y1="([-\d.]+)" x2="([-\d.]+)" y2="([-\d.]+)"'
+)
 
 
 def _wires(sch_text):
-    """Extract wire segments as ((x1, y1), (x2, y2)) tuples rounded to 0.01 mm."""
+    """Extract wire segments, from either format, as ((x1, y1), (x2, y2)) tuples rounded to 0.01 mm."""
     return [
         ((round(float(x1), 2), round(float(y1), 2)), (round(float(x2), 2), round(float(y2), 2)))
-        for x1, y1, x2, y2 in _WIRE_RE.findall(sch_text)
+        for x1, y1, x2, y2 in _WIRE_RE.findall(sch_text) + _SVG_WIRE_RE.findall(sch_text)
     ]
 
 
 def score_schematic(sch_text):
-    """Score the wiring in the text of one .kicad_sch file.
+    """Score the wiring in the text of one schematic file.
 
     Args:
-        sch_text (str): Contents of a .kicad_sch file.
+        sch_text (str): Contents of a .kicad_sch or .svg file.
 
     Returns:
         dict: Counts of segments and bends, plus wirelength in mm.
@@ -76,21 +79,23 @@ def score_schematic(sch_text):
 
 
 def score_files(*paths):
-    """Score and total the .kicad_sch files in the given files or directories.
+    """Score and total the schematic files in the given files or directories.
 
     Args:
-        paths (str): .kicad_sch files or directories containing them.
+        paths (str): Schematic files or directories containing them. A directory's
+            .svg files are only scored if it has no .kicad_sch files, since both
+            formats draw the same wires.
 
     Returns:
         dict: Summed scores across all the files.
     """
     total = {"segments": 0, "bends": 0, "wirelength": 0.0}
     for path in paths:
-        files = (
-            sorted(glob.glob(os.path.join(path, "*.kicad_sch")))
-            if os.path.isdir(path)
-            else [path]
-        )
+        files = [path]
+        if os.path.isdir(path):
+            files = sorted(glob.glob(os.path.join(path, "*.kicad_sch"))) or sorted(
+                glob.glob(os.path.join(path, "*.svg"))
+            )
         for f in files:
             with open(f) as fp:
                 for key, value in score_schematic(fp.read()).items():

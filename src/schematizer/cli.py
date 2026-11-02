@@ -76,6 +76,13 @@ def build_parser():
         "different (equally valid) layout each run.",
     )
     parser.add_argument(
+        "--tries",
+        type=int,
+        default=1,
+        help="Generate this many layouts and keep the one with the best wiring "
+        "score. Takes about this many times as long.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -96,6 +103,7 @@ def main(argv=None):
             mode=args.mode,
             flatness=args.flatness,
             seed=args.seed,
+            tries=args.tries,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)
