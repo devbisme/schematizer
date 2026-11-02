@@ -1722,6 +1722,236 @@ def evolve_placement(anchored_parts, mobile_parts, nets, force_func, **options):
     for part in parts:
         snap_to_grid(part)
 
+    # Nudge parts so connected pins line up for straight wires.
+    align_parts(anchored_parts, mobile_parts, nets, **options)
+
+
+# Pins offset by no more than this from sharing a row/column are near misses
+# that align_parts() will try to straighten.
+NEAR_MISS_DIST = 150  # 3 * GRID in mils.
+
+
+# Direction a wire leaves a pin, by pin orientation, in unrotated part coordinates.
+# (Matches add_place_pt(): a "U" pin has its tip on the bottom of the part.)
+_PIN_EXIT = {"U": Vector(0, -1), "D": Vector(0, 1), "L": Vector(1, 0), "R": Vector(-1, 0)}
+
+
+def _pin_pt_exit(pin):
+    """Get a pin's position and the direction a wire leaves it, after the part's transform."""
+    tx = pin.part.tx
+    pt = pin.pt * tx
+    exit_pt = (pin.pt + _PIN_EXIT.get(pin.orientation, Vector(0, 0))) * tx
+    return pt, exit_pt - pt
+
+
+def _facing_offset(pt1, exit1, pt2, exit2):
+    """Get how far two pins are from being joined by a straight wire.
+
+    Returns:
+        float | None: The sideways offset between the pins if each one's wire
+            exit points toward the other, else None (a straight wire can't join
+            them however they're shifted sideways).
+    """
+    d = pt2 - pt1
+    if abs(d.x) < 1 and abs(d.y) < 1:
+        return 0  # Pins touch.
+    if exit1.x * exit2.x + exit1.y * exit2.y > -0.5:
+        return None  # Exits aren't opposed.
+    if abs(exit1.x) > abs(exit1.y):
+        along, sideways = d.x * exit1.x, d.y
+    else:
+        along, sideways = d.y * exit1.y, d.x
+    if along <= 0:
+        return None  # Pins face away from each other.
+    return abs(sideways)
+
+
+def alignment_net_pins(parts, nets):
+    """Get the routed (non-stub) pins on each net that are on the given parts.
+
+    Args:
+        parts (list): Parts whose pins are of interest.
+        nets (list): Nets connecting the parts.
+
+    Returns:
+        dict: Net -> list of its pins on the parts, for nets with pins on 2+ parts.
+    """
+    part_set = set(parts)
+    net_pins = {}
+    for net in nets:
+        pins = [
+            pin
+            for pin in net.pins
+            if pin.part in part_set and not getattr(pin, "stub", False)
+        ]
+        if len({id(pin.part) for pin in pins}) >= 2:
+            net_pins[net] = pins
+    return net_pins
+
+
+def net_alignment_score(pins):
+    """Score how well the pins of a net line up with each other.
+
+    Args:
+        pins (list): Pins on a net. Their positions are pin.pt * pin.part.tx.
+
+    Returns:
+        tuple: (number of pins that face a pin of another part along a straight line,
+            number of pins facing another pin but offset sideways by no more than
+            NEAR_MISS_DIST, half-perimeter wirelength of the net).
+    """
+    pt_exits = [_pin_pt_exit(pin) for pin in pins]
+    aligned = near_miss = 0
+    for pin, (pt, exit) in zip(pins, pt_exits):
+        offsets = [
+            _facing_offset(pt, exit, o_pt, o_exit)
+            for other, (o_pt, o_exit) in zip(pins, pt_exits)
+            if other.part is not pin.part
+        ]
+        offsets = [off for off in offsets if off is not None]
+        if any(off < 1 for off in offsets):
+            aligned += 1
+        elif any(off <= NEAR_MISS_DIST for off in offsets):
+            near_miss += 1
+    pts = [pt for pt, _ in pt_exits]
+    xs = [pt.x for pt in pts]
+    ys = [pt.y for pt in pts]
+    hpwl = (max(xs) - min(xs)) + (max(ys) - min(ys))
+    return aligned, near_miss, hpwl
+
+
+@export_to_all
+def alignment_stats(parts, nets):
+    """Summarize pin alignment across a placed group of parts.
+
+    Args:
+        parts (list): Placed parts.
+        nets (list): Nets connecting the parts.
+
+    Returns:
+        dict: Totals of aligned pins, near-miss pins (offset by at most
+            NEAR_MISS_DIST from a straight connection), and wirelength.
+    """
+    stats = {"pins": 0, "aligned": 0, "near_miss": 0, "hpwl": 0}
+    for pins in alignment_net_pins(parts, nets).values():
+        aligned, near_miss, hpwl = net_alignment_score(pins)
+        stats["pins"] += len(pins)
+        stats["aligned"] += aligned
+        stats["near_miss"] += near_miss
+        stats["hpwl"] += hpwl
+    return stats
+
+
+def align_parts(anchored_parts, mobile_parts, nets, **options):
+    """Shift parts slightly so connected pins face each other along a straight line.
+
+    Force-directed placement pulls connected pins toward each other but nothing
+    rewards making them collinear, so it settles with pins a grid step or two
+    apart. The router then has to put a jog in each of those connections. This
+    pass greedily moves each mobile part by the offset that aligns the most
+    pins on its nets, as long as the move doesn't create a new overlap.
+
+    Args:
+        anchored_parts (list): Immobile parts whose pins can be aligned to.
+        mobile_parts (list): Parts that can be moved.
+        nets (list): Nets connecting the parts.
+        options (dict): align_parts (bool, default True) enables the pass;
+            align_max_offset (int, default 3) is the largest move in grid steps.
+    """
+
+    if not options.get("align_parts", True) or not nets or not mobile_parts:
+        return
+
+    max_offset = options.get("align_max_offset", 3) * GRID
+    parts = anchored_parts + mobile_parts
+    net_pins = alignment_net_pins(parts, nets)
+    if not net_pins:
+        return
+
+    # Nets touching each part, in a stable order.
+    part_nets = defaultdict(list)
+    for net, pins in net_pins.items():
+        for part in dict.fromkeys(pin.part for pin in pins):
+            part_nets[part].append(net)
+
+    bboxes = {part: part.place_bbox * part.tx for part in parts}
+
+    def score(part):
+        """Aligned pins (more is better) and wirelength (less is better) on a part's nets."""
+        aligned = hpwl = 0
+        for net in part_nets[part]:
+            a, _, h = net_alignment_score(net_pins[net])
+            aligned += a
+            hpwl += h
+        return aligned, hpwl
+
+    def candidate_moves(part):
+        """Moves that would line up one of the part's pins with a connected pin facing it."""
+        dxs, dys = set(), set()
+        for net in part_nets[part]:
+            pins = net_pins[net]
+            mine = [_pin_pt_exit(pin) for pin in pins if pin.part is part]
+            others = [_pin_pt_exit(pin) for pin in pins if pin.part is not part]
+            for m_pt, m_exit in mine:
+                for o_pt, o_exit in others:
+                    if _facing_offset(m_pt, m_exit, o_pt, o_exit) is None:
+                        continue
+                    # Shift sideways to the pins' common axis, keeping the part on the grid.
+                    if abs(m_exit.x) > abs(m_exit.y):
+                        dy = round(o_pt.y - m_pt.y)
+                        if 0 < abs(dy) <= max_offset and dy % GRID == 0:
+                            dys.add(dy)
+                    else:
+                        dx = round(o_pt.x - m_pt.x)
+                        if 0 < abs(dx) <= max_offset and dx % GRID == 0:
+                            dxs.add(dx)
+        dxs, dys = sorted(dxs), sorted(dys)
+        moves = [(dx, 0) for dx in dxs] + [(0, dy) for dy in dys]
+        # Combined x & y moves let a part line up on two sides at once, but the
+        # number of combinations grows quickly for parts with many pins.
+        if len(dxs) * len(dys) <= 64:
+            moves += [(dx, dy) for dx in dxs for dy in dys]
+        return moves
+
+    def overlapping(part, bbox):
+        return {
+            id(other)
+            for other in parts
+            if other is not part and bbox.intersects(bboxes[other])
+        }
+
+    # Move the smallest parts first: they disturb the least when they move.
+    order = sorted(mobile_parts, key=lambda part: len(part.pins))
+
+    for _ in range(10):  # Limit passes in case moves keep trading off.
+        moved = False
+        for part in order:
+            if not part_nets[part]:
+                continue
+            base_tx, base_bbox = part.tx, bboxes[part]
+            base_overlaps = overlapping(part, base_bbox)
+            base_aligned, _ = score(part)
+            best_key, best_move = None, None
+            for dx, dy in candidate_moves(part):
+                move_tx = Tx(dx=dx, dy=dy)
+                bbox = base_bbox * move_tx
+                # Don't create overlaps that weren't already there.
+                if not overlapping(part, bbox) <= base_overlaps:
+                    continue
+                part.tx = base_tx * move_tx
+                aligned, hpwl = score(part)
+                part.tx = base_tx
+                # Must align more pins; break ties by wirelength, then move size.
+                key = (aligned, -hpwl, -(abs(dx) + abs(dy)))
+                if aligned > base_aligned and (best_key is None or key > best_key):
+                    best_key, best_move = key, move_tx
+            if best_move:
+                part.tx = base_tx * best_move
+                bboxes[part] = base_bbox * best_move
+                moved = True
+        if not moved:
+            break
+
 
 def place_net_terminals(net_terminals, placed_parts, nets, force_func, **options):
     """Place net terminals around already-placed parts.
