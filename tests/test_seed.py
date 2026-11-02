@@ -187,3 +187,35 @@ def test_cli_accepts_seed(tmp_path):
         )
         digests.add(_digest(out))
     assert len(digests) == 1
+
+
+_RENDER_IN_FRESH_PROCESS = """
+import glob, json, sys, tempfile
+# Fragment the heap by an amount that varies, shifting every later id().
+count = int(sys.argv[2])
+ballast = [object() for _ in range(count)] + [[None] * (i % 37) for i in range(count)]
+del ballast[::3]
+from schematizer import render
+with open(sys.argv[1]) as f:
+    doc = json.load(f)
+out = tempfile.mkdtemp()
+render(doc, tool="kicad9", filepath=out, top_name="sch", seed=1)
+print(open(glob.glob(out + "/*.kicad_sch")[0]).read())
+"""
+
+
+def test_seed_reproduces_whatever_the_memory_layout():
+    """Routing mustn't depend on where objects happen to be allocated.
+
+    Sets of objects iterate in id() order, which a single unrelated allocation
+    can change, so this varies the layout across separate processes.
+    """
+    path = os.path.join(os.path.dirname(__file__), "data", "opamp_circ.json")
+    outputs = {
+        subprocess.run(
+            [sys.executable, "-c", _RENDER_IN_FRESH_PROCESS, path, str(ballast)],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        for ballast in (0, 1, 3, 7, 20, 50, 100, 300, 1000, 5000)
+    }
+    assert len(outputs) == 1

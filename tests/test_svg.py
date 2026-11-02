@@ -236,7 +236,7 @@ def test_svg_and_kicad_draw_the_same_connectivity(
     """Both writers, given one placed and routed design, draw the same sheet."""
     from schematizer.engine import gen_schematic, svg_schematic
 
-    # Write both formats from the same node: separate runs may route differently.
+    # Write both formats from the same node so auto_stub's ERC pass can't intervene.
     write_kicad = gen_schematic._write_output
 
     def write_both(circuit, node, filepath, top_name, title, options):

@@ -1073,10 +1073,10 @@ class Target:
 
         # Targets in the left-most columns are given priority since they will be reached
         # first as the switchbox router proceeds from left-to-right.
-        return (self.col, self.row, id(self.net)) < (
+        return (self.col, self.row, _net_key(self.net)) < (
             other.col,
             other.row,
-            id(other.net),
+            _net_key(other.net),
         )
 
 
@@ -2643,7 +2643,9 @@ class Router:
             adj_pts = dict()
             for pt, segs in adj_segs.items():
                 # Store endpoints of all segments adjacent to endpoint, then remove the endpoint.
-                adj_pts[pt] = list({p for seg in segs for p in (seg.p1, seg.p2)})
+                # Sorted because `segs` is a set: this order decides which
+                # segment of a cycle gets cut.
+                adj_pts[pt] = sorted({p for seg in segs for p in (seg.p1, seg.p2)})
                 adj_pts[pt].remove(pt)
 
             # Start at any endpoint and visit adjacent endpoints until all have been visited.
@@ -2737,7 +2739,7 @@ class Router:
                     # oseg vert, seg horz. Do they intersect?
                     elif contains_pt(oseg, Point(oseg.p2.x, seg.p1.y)):
                         touch_segs.add(oseg)
-                return list(touch_segs)  # Convert to list with no dups.
+                return sorted(touch_segs, key=_seg_key)  # List with no dups.
 
             def get_overlap(*segs):
                 """Find extent of overlap of parallel horz/vert segments and return as (min, max) tuple."""
@@ -2985,7 +2987,7 @@ class Router:
                         start_stop_pts.discard(segment.p2)
 
                         # Send the jog that was found.
-                        yield list(jog_segs), list(start_stop_pts)
+                        yield sorted(jog_segs, key=_seg_key), list(start_stop_pts)
 
             # Shuffle segments to vary the order of detected jogs.
             rng.shuffle(segments)
