@@ -289,3 +289,45 @@ def test_svg_hides_power_symbol_references(tmp_path):
     text = "".join(open(tmp_path / name).read() for name in _svgs(str(tmp_path)))
     assert 'data-ref="#PWR1"' in text
     assert ">#PWR" not in text
+
+
+def _with_pin_names(style):
+    doc = _doc("and_gate.json")
+    for symbol in doc["symbols"].values():
+        symbol["pin_names"] = style
+    return doc
+
+
+def _pin_names_in(path):
+    return re.findall(
+        r'class="pin_name" x="([\d.]+)".*?>([^<]+)<',
+        "".join(open(os.path.join(path, name)).read() for name in _svgs(str(path))),
+    )
+
+
+def test_svg_hides_pin_names_the_symbol_hides(tmp_path):
+    doc = _with_pin_names({"offset": 1.016, "hide": True})
+    render(doc, filepath=str(tmp_path), top_name="sch", seed=1, format="svg")
+    assert not _pin_names_in(tmp_path)
+
+
+def test_svg_moves_pin_names_by_the_symbols_offset(tmp_path):
+    placed = {}
+    for offset in (0, 1):
+        path = tmp_path / str(offset)
+        doc = _with_pin_names({"offset": offset, "hide": False})
+        render(doc, filepath=str(path), top_name="sch", seed=1, format="svg")
+        placed[offset] = [float(x) for x, _ in _pin_names_in(path)]
+    assert placed[0] and placed[0] != placed[1]
+
+
+def test_svg_draws_pin_names_over_a_filled_body(tmp_path):
+    doc = _doc("and_gate.json")
+    symbol = doc["symbols"]["Transistor_BJT:Q_PNP_CBE"]
+    fill = ["fill", ["type", "background"]]
+    body = ["rectangle", ["start", -5, -5], ["end", 5, 5], fill]
+    symbol["draw_cmds"]["1"].append(body)  # After the pins, as SKiDL leaves it.
+    render(doc, filepath=str(tmp_path), top_name="sch", seed=1, format="svg")
+    page = open(tmp_path / "sch.svg").read()
+    q1 = page[page.index('data-ref="Q1"') :]
+    assert q1.index("<rect") < q1.index('class="pin_name"')

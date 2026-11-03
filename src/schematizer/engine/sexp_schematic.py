@@ -893,11 +893,17 @@ def part_to_lib_symbol_definition(part):
         else ["pin_numbers", ["hide", "yes"]]
     )
 
+    # A document from before symbols carried this says nothing, so draw as before.
+    style = getattr(part, "pin_names", None) or {}
+    pin_names = ["pin_names", ["offset", style.get("offset", 0)]]
+    if style.get("hide"):
+        pin_names.append("hide" if TARGET_TOOL == "kicad8" else ["hide", "yes"])
+
     symbol_def = [
         "symbol",
         lib_id,
         pin_numbers,
-        ["pin_names", ["offset", 0]],
+        pin_names,
         ["exclude_from_sim", "no"],
         ["in_bom", "yes"],
         ["on_board", "yes"],

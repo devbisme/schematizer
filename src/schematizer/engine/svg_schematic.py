@@ -119,7 +119,8 @@ def _part_draw_cmds(part):
     cmds = []
     for key in (0, unit_num):
         cmds.extend(draw_cmds.get(key, []))
-    return cmds
+    # Pins go last: a filled body drawn after them would cover their names.
+    return sorted(cmds, key=lambda cmd: str(cmd[0]).lower() == "pin")
 
 
 def _halo_text(cls, text, x, y, size, color, anchor="middle", rotate=0):
@@ -203,7 +204,7 @@ def part_to_svg(part, sheet_tx):
         # author put it (dead centre of the body, for Device:R), while the
         # KiCad writer re-places both fields relative to the part origin.
         # Drawing the definition's copy would disagree with the .kicad_sch.
-        s, bb = draw_cmd_to_svg(cmd, tx)
+        s, bb = draw_cmd_to_svg(cmd, tx, pin_names=getattr(part, "pin_names", None))
         if s:
             svg.append(s)
             bbox.add(bb)

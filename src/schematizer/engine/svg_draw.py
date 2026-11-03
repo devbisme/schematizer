@@ -166,7 +166,7 @@ def _fill_style(fill_type):
     return "none"
 
 
-def draw_cmd_to_svg(draw_cmd, tx, field_text=None, show_pin_numbers=False):
+def draw_cmd_to_svg(draw_cmd, tx, field_text=None, show_pin_numbers=False, pin_names=None):
     """Convert one symbol draw command into SVG plus its bounding box.
 
     Args:
@@ -178,6 +178,8 @@ def draw_cmd_to_svg(draw_cmd, tx, field_text=None, show_pin_numbers=False):
             hidden fields like Footprint and Datasheet are dropped.
         show_pin_numbers (bool): Draw pin numbers. Default False, matching the
             ``(pin_numbers hide)`` that the KiCad writer always emits.
+        pin_names (dict, optional): The symbol's pin name style: ``offset``, the
+            gap in mm between a pin's inner end and its name, and ``hide``.
 
     Returns:
         tuple[str, BBox]: SVG fragment and its bounding box in page mm. Both
@@ -311,11 +313,15 @@ def draw_cmd_to_svg(draw_cmd, tx, field_text=None, show_pin_numbers=False):
         name_wid *= tx_scale
         name_hgt *= tx_scale
         # "~" is KiCad's "no name"; it is never drawn.
-        if pin_name and pin_name != "~" and "hide" not in shape["name"]["effects"]:
+        style = pin_names or {}
+        hidden = style.get("hide") or "hide" in shape["name"]["effects"]
+        if pin_name and pin_name != "~" and not hidden:
+            inward = (end - start).norm
+            name_pt = end + inward * (style.get("offset", 0) * tx_scale)
             svg += _text_svg(
-                pin_name, side, end, name_wid, "pin_name", COLORS["pin_name"]
+                pin_name, side, name_pt, name_wid, "pin_name", COLORS["pin_name"]
             )
-            bbox += _text_bbox(pin_name, end, (end - start).norm, name_wid, name_hgt)
+            bbox += _text_bbox(pin_name, name_pt, inward, name_wid, name_hgt)
 
         if show_pin_numbers:
             pin_num = shape["number"]["misc"]

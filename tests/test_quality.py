@@ -261,3 +261,25 @@ def test_planning_field_text_doesnt_renumber_power_symbols(tmp_path):
         doc = json.load(f)
     render(doc, filepath=str(tmp_path), top_name="sch", seed=1)
     assert '"#PWR1"' in (tmp_path / "sch.kicad_sch").read_text()
+
+
+def _pin_names_of(doc, path):
+    render(doc, filepath=str(path), top_name="sch", seed=1)
+    sch = Sexp((path / "sch.kicad_sch").read_text())
+    return [_field(sym, "pin_names") for sym in _fields(_field(sch, "lib_symbols"), "symbol")]
+
+
+def test_kicad_keeps_the_symbols_pin_name_style(tmp_path):
+    with open(os.path.join(DATA, "and_gate.json")) as f:
+        doc = json.load(f)
+    for symbol in doc["symbols"].values():
+        symbol["pin_names"] = {"offset": 1.016, "hide": True}
+    styles = _pin_names_of(doc, tmp_path)
+    assert styles and all(_field(s, "offset")[1] == 1.016 and _field(s, "hide") for s in styles)
+
+
+def test_documents_without_a_pin_name_style_draw_as_before(tmp_path):
+    with open(os.path.join(DATA, "and_gate.json")) as f:
+        doc = json.load(f)
+    styles = _pin_names_of(doc, tmp_path)
+    assert styles and all(_field(s, "offset")[1] == 0 and not _field(s, "hide") for s in styles)
