@@ -8,10 +8,11 @@ import json
 import os
 
 import pytest
+from simp_sexp import Sexp
 
 from schematizer import RoutingFailure, render
 from schematizer.engine.sch_node import SchNode
-from schematizer.quality import score_files, score_overlaps, score_schematic
+from schematizer.quality import _field, _fields, score_files, score_overlaps, score_schematic
 from schematizer.render import layout_cost
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
@@ -235,6 +236,24 @@ def test_moving_field_text_leaves_the_wiring_alone(and_gate, tmp_path):
     default = _text_overlaps(and_gate, tmp_path / "off", place_fields=False)
     for key in ("segments", "bends", "wirelength"):
         assert fixed[key] == default[key]
+
+
+def test_power_symbol_references_are_hidden(tmp_path):
+    with open(os.path.join(DATA, "and_gate.json")) as f:
+        doc = json.load(f)
+    render(doc, filepath=str(tmp_path), top_name="sch", seed=1)
+    sch = Sexp((tmp_path / "sch.kicad_sch").read_text())
+    refs = [
+        field
+        for symbol in _fields(sch, "symbol")
+        for field in _fields(symbol, "property")
+        if field[1] == "Reference"
+    ]
+    power = [field for field in refs if field[2].startswith("#")]
+    assert power and all(_field(_field(f, "effects"), "hide") for f in power)
+    assert not any(
+        _field(_field(f, "effects"), "hide") for f in refs if not f[2].startswith("#")
+    )
 
 
 def test_planning_field_text_doesnt_renumber_power_symbols(tmp_path):

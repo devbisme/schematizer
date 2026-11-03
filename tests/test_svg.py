@@ -282,3 +282,10 @@ def test_svg_and_kicad_put_field_text_in_the_same_place(tmp_path, monkeypatch):
     kicad = _field_positions(monkeypatch, tmp_path / "kicad", "kicad")
     svg = _field_positions(monkeypatch, tmp_path / "svg", "svg")
     assert kicad and kicad == svg
+
+
+def test_svg_hides_power_symbol_references(tmp_path):
+    render(_doc("and_gate.json"), filepath=str(tmp_path), top_name="sch", seed=1, format="svg")
+    text = "".join(open(tmp_path / name).read() for name in _svgs(str(tmp_path)))
+    assert 'data-ref="#PWR1"' in text
+    assert ">#PWR" not in text

@@ -43,6 +43,7 @@ from .sexp_schematic import (
     _calc_sheet_tx,
     _round_mm,
     calc_field_layout,
+    reference_is_hidden,
     calc_pin_dir,
     init_power_symbol_data,
 )
@@ -211,7 +212,7 @@ def part_to_svg(part, sheet_tx):
         ref_pos, val_pos = _field_positions(part, sheet_tx)
         value = str(getattr(part, "value", "") or "")
         for text, (x, y, anchor, rotate) in (
-            (base_ref, ref_pos),
+            ("" if reference_is_hidden(base_ref) else base_ref, ref_pos),
             (value, val_pos),
         ):
             if not text:

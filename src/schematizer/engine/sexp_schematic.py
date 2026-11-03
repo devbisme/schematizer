@@ -406,6 +406,11 @@ FIELD_GAP_MM = 0.9  # Clearance between a symbol body and its Ref/Value text.
 FIELD_PITCH_MM = 1.27  # Center-to-center spacing of stacked Ref/Value text.
 
 
+def reference_is_hidden(ref):
+    """True for KiCad's "#" references (#PWR, #FLG), which are never shown."""
+    return str(ref).startswith("#")
+
+
 def _field_body(part, sheet_tx):
     """Get a part's pin points and body bbox in sheet mm."""
     tx = getattr(part, "tx", Tx()) * sheet_tx
@@ -560,7 +565,7 @@ def _choose_field_layouts(placed, elements, sheet_boxes):
 
     def text_boxes(part, layout):
         ref = str(getattr(getattr(part, "parent", None), "ref", None) or part.ref)
-        texts = (ref, str(getattr(part, "value", "") or ""))
+        texts = ("" if reference_is_hidden(ref) else ref, str(getattr(part, "value", "") or ""))
         return [_field_box(t, *pos) for t, pos in zip(texts, layout) if t]
 
     chosen = {}
@@ -746,7 +751,7 @@ def part_to_sexp(part, uuid_path, tx=Tx()):
                 "Reference",
                 base_ref,
                 ["at", _round_mm(ref_x), _round_mm(ref_y), ref_angle],
-                _field_effects(ref_just),
+                _field_effects(ref_just, hide=reference_is_hidden(base_ref)),
             ]
         )
     )
