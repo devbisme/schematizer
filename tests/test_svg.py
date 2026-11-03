@@ -258,3 +258,27 @@ def test_svg_and_kicad_draw_the_same_connectivity(
     assert kicad.count("(junction") == svg.count('r="0.45"')
     assert kicad.count("(global_label") == svg.count('class="net_label"')
     assert kicad.count('(lib_id "power:') == svg.count('class="power"')
+
+
+def _field_positions(monkeypatch, tmp_path, format):
+    """Render one layout and collect where each part's fields were put."""
+    from schematizer.engine import sexp_schematic
+
+    layouts = {}
+    calc = sexp_schematic.calc_field_layout
+
+    def spy(part, sheet_tx):
+        layouts[part.ref] = calc(part, sheet_tx)
+        return layouts[part.ref]
+
+    monkeypatch.setattr(sexp_schematic, "calc_field_layout", spy)
+    monkeypatch.setattr("schematizer.engine.svg_schematic.calc_field_layout", spy)
+    with open(os.path.join(os.path.dirname(__file__), "data", "and_gate_nopwr.json")) as f:
+        render(json.load(f), tool="kicad9", format=format, filepath=str(tmp_path), seed=1)
+    return layouts
+
+
+def test_svg_and_kicad_put_field_text_in_the_same_place(tmp_path, monkeypatch):
+    kicad = _field_positions(monkeypatch, tmp_path / "kicad", "kicad")
+    svg = _field_positions(monkeypatch, tmp_path / "svg", "svg")
+    assert kicad and kicad == svg

@@ -594,7 +594,7 @@ def node_to_svg(node, parent=None, top_node=None, sheet_tx=Tx(), title="", fit=T
 
 
 @export_to_all
-def write_top_svg(circuit, node, filepath, top_name, title, fit=True):
+def write_top_svg(circuit, node, filepath, top_name, title, fit=True, place_fields=True):
     """Write the complete schematic as one or more linked SVG pages.
 
     This is the SVG counterpart of ``write_top_schematic``.
@@ -608,6 +608,7 @@ def write_top_svg(circuit, node, filepath, top_name, title, fit=True):
         fit: Shrink each page to its drawing instead of using a full A-size
             sheet. Default True, since an SVG is displayed at the size it
             declares. Geometry is unchanged either way.
+        place_fields: Move Reference and Value text off whatever it collides with.
 
     Returns:
         str: Path of the top-level SVG file.
@@ -620,6 +621,10 @@ def write_top_svg(circuit, node, filepath, top_name, title, fit=True):
 
     # The top node has no parent to absorb its contents, so it always gets a page.
     node.flattened = False
+
+    if place_fields:
+        _sexp.plan_field_layouts(node)
+        _sexp._pwr_counter[0] = 0  # Planning numbers power symbols, so start over.
 
     _, _, written, _ = node_to_svg(
         node, parent=None, top_node=node, title=title, fit=fit

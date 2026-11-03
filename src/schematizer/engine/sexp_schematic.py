@@ -28,6 +28,7 @@ from simp_sexp import Sexp
 from ..geometry import BBox, Point, Tx, Vector
 from ..ir import NCNet
 from .. import __version__
+from .. import quality as _quality
 from .net_terminal import NetTerminal
 from .._utils import export_to_all
 
@@ -405,6 +406,23 @@ FIELD_GAP_MM = 0.9  # Clearance between a symbol body and its Ref/Value text.
 FIELD_PITCH_MM = 1.27  # Center-to-center spacing of stacked Ref/Value text.
 
 
+def _field_body(part, sheet_tx):
+    """Get a part's pin points and body bbox in sheet mm."""
+    tx = getattr(part, "tx", Tx()) * sheet_tx
+    pin_pts = [pin.pt * tx for pin in part.pins if getattr(pin, "pt", None) is not None]
+
+    body = getattr(part, "body_bbox", None)
+    if body is not None and body.w >= 0:
+        body = body * tx
+    elif pin_pts:
+        # No symbol bbox (e.g., labels-only mode), so estimate it from the pins.
+        body = BBox(*pin_pts).resize(Vector(1.27, 1.27))
+    else:
+        org = tx.origin
+        body = BBox(org, org).resize(Vector(1.27, 1.27))
+    return pin_pts, body
+
+
 def calc_field_layout(part, sheet_tx):
     """Place a part's Reference and Value text on sides of its body that have no pins.
 
@@ -422,18 +440,12 @@ def calc_field_layout(part, sheet_tx):
         tuple: ((ref_x, ref_y, justify), (val_x, val_y, justify)) in sheet mm,
             where justify is "left", "right" or None (centered).
     """
-    tx = getattr(part, "tx", Tx()) * sheet_tx
-    pin_pts = [pin.pt * tx for pin in part.pins if getattr(pin, "pt", None) is not None]
+    # plan_field_layouts() may have found a spot clear of everything else.
+    planned = getattr(part, "field_layout", None)
+    if planned:
+        return planned
 
-    body = getattr(part, "body_bbox", None)
-    if body is not None and body.w >= 0:
-        body = body * tx
-    elif pin_pts:
-        # No symbol bbox (e.g., labels-only mode), so estimate it from the pins.
-        body = BBox(*pin_pts).resize(Vector(1.27, 1.27))
-    else:
-        org = tx.origin
-        body = BBox(org, org).resize(Vector(1.27, 1.27))
+    pin_pts, body = _field_body(part, sheet_tx)
 
     # Find which sides of the body have pins on them (pins sit on the body bbox edges).
     eps = 0.1
@@ -468,6 +480,149 @@ def calc_field_layout(part, sheet_tx):
         return (ctr.x, below, None), (ctr.x, below + FIELD_PITCH_MM, None)
     # Pins on every side: tuck the fields just outside the top-left/bottom-left corners.
     return (body.min.x, above, "left"), (body.min.x, below, "left")
+
+
+def _field_box(text, x, y, justify):
+    """Sheet box of one line of horizontal field text."""
+    w = len(text) * _quality._FONT_SIZE * _quality._CHAR_W
+    h = _quality._FONT_SIZE
+    x1 = {"left": x, "right": x - w}.get(justify, x - w / 2)
+    return x1, y - h / 2, x1 + w, y + h / 2
+
+
+def _field_candidates(part, sheet_tx):
+    """List the places a part's Reference and Value could go, best first."""
+    planned = getattr(part, "field_layout", None)
+    part.field_layout = None
+    candidates = [calc_field_layout(part, sheet_tx)]
+    part.field_layout = planned
+
+    body = _field_body(part, sheet_tx)[1]
+    ctr = body.ctr
+    above = body.min.y - FIELD_GAP_MM - FIELD_PITCH_MM / 2
+    below = body.max.y + FIELD_GAP_MM + FIELD_PITCH_MM / 2
+    half, pitch = FIELD_PITCH_MM / 2, FIELD_PITCH_MM
+    candidates += [
+        ((ctr.x, above, None), (ctr.x, below, None)),
+        ((ctr.x, above - pitch, None), (ctr.x, above, None)),
+        ((ctr.x, below, None), (ctr.x, below + pitch, None)),
+    ]
+    for out in (FIELD_GAP_MM, FIELD_GAP_MM + 2 * pitch):
+        right, left = body.max.x + out, body.min.x - out
+        candidates += [
+            ((right, ctr.y - half, "left"), (right, ctr.y + half, "left")),
+            ((left, ctr.y - half, "right"), (left, ctr.y + half, "right")),
+            ((right, above - pitch, "left"), (right, above, "left")),
+            ((left, above - pitch, "right"), (left, above, "right")),
+            ((right, below, "left"), (right, below + pitch, "left")),
+            ((left, below, "right"), (left, below + pitch, "right")),
+        ]
+    return candidates
+
+
+def _sheet_obstacles(elements):
+    """Get the boxes and wires that field text should stay off, from a sheet's elements."""
+    q = _quality
+    boxes = [q._label_box(label) for label in q._fields(elements, "global_label")]
+    for symbol in q._fields(elements, "symbol"):  # Only power symbols are listed.
+        to_sheet = q._instance_map(symbol)
+        for field in q._fields(symbol, "property"):
+            if field[1] in ("Reference", "Value"):
+                boxes.append(q._field_box(symbol, field, to_sheet))
+        name = q._field(symbol, "lib_id")[1].split(":", 1)[1]
+        pts = q._symbol_points(pwr_symbol_sexp_dict.get(name, []), 1)
+        if pts:
+            xs, ys = zip(*(to_sheet(x, y) for x, y in pts))
+            boxes.append((min(xs), min(ys), max(xs), max(ys)))
+    wires = []
+    for wire in q._fields(elements, "wire"):
+        (_, x1, y1), (_, x2, y2) = q._fields(q._field(wire, "pts"), "xy")
+        wires.append((min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)))
+    return boxes, wires
+
+
+def _choose_field_layouts(placed, elements, sheet_boxes):
+    """Move each part's Reference and Value to the spot with the fewest collisions.
+
+    Args:
+        placed (list): (part, sheet transform) of the real parts on a sheet.
+        elements (list): The sheet's connectivity elements.
+        sheet_boxes (list): Boxes of the child sheets drawn on this sheet.
+    """
+    q = _quality
+    fixed, wires = _sheet_obstacles(elements)
+    fixed += sheet_boxes
+
+    def box_of(bbox):
+        return bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y
+
+    bodies = [box_of(_field_body(part, tx)[1]) for part, tx in placed]
+
+    def text_boxes(part, layout):
+        ref = str(getattr(getattr(part, "parent", None), "ref", None) or part.ref)
+        texts = (ref, str(getattr(part, "value", "") or ""))
+        return [_field_box(t, *pos) for t, pos in zip(texts, layout) if t]
+
+    chosen = {}
+    for i, (part, tx) in enumerate(placed):
+        chosen[i] = text_boxes(part, calc_field_layout(part, tx))
+
+    def collisions(i, boxes):
+        others = [b for j, group in chosen.items() if j != i for b in group]
+        return sum(
+            sum(q._overlap(box, other) for other in fixed + others + bodies)
+            + sum(q._crosses(box, wire) for wire in wires)
+            for box in boxes
+        )
+
+    # A part's move can free up a better spot for one placed earlier.
+    for _ in range(2):
+        for i, (part, tx) in enumerate(placed):
+            best_cost, best = float("inf"), None
+            for layout in _field_candidates(part, tx):
+                boxes = text_boxes(part, layout)
+                cost = collisions(i, boxes)
+                if cost < best_cost:
+                    best_cost, best = cost, (layout, boxes)
+                if not cost:
+                    break
+            part.field_layout, chosen[i] = best
+
+
+def plan_field_layouts(node, sheet_tx=Tx()):
+    """Choose where each part's Reference and Value go, on every sheet of a tree.
+
+    This walks the tree the way the writers do, so the text can avoid the labels
+    and wires they'll draw. calc_field_layout() then hands the results to both.
+
+    Returns:
+        tuple: For a flattened node, its elements and (part, sheet transform)
+            pairs for its parent's sheet. Empty otherwise.
+    """
+    if node.flattened:
+        tx = node.tx * sheet_tx
+    else:
+        tx = _calc_sheet_tx(node.internal_bbox())[0]
+
+    elements, placed, sheet_boxes = [], [], []
+    for child in node.children.values():
+        child_elements, child_placed = plan_field_layouts(child, tx)
+        elements.extend(child_elements)
+        placed.extend(child_placed)
+        if not child.flattened:
+            bbox = child.bbox * child.tx * tx
+            sheet_boxes.append((bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y))
+
+    placed += [(p, tx) for p in node.parts if not isinstance(p, NetTerminal)]
+    for part, _ in placed:
+        part.field_layout = None
+    elements = sheet_connectivity(node, elements, tx)
+    if node.flattened:
+        return elements, placed
+
+    deconflict_sheet_labels(elements, node, tx)
+    _choose_field_layouts(placed, elements, sheet_boxes)
+    return [], []
 
 
 def _kicad_field_orient(part_tx, sheet_tx, justify):
@@ -1796,7 +1951,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
 
 @export_to_all
 def write_top_schematic(
-    circuit, node, filepath, top_name, title, version=None, validate=True
+    circuit, node, filepath, top_name, title, version=None, validate=True, place_fields=True
 ):
     """Generate and write the complete schematic from a placed+routed node tree.
 
@@ -1810,6 +1965,7 @@ def write_top_schematic(
         title: Schematic title.
         version: S-expression version number.
         validate: Run kicad-cli ERC on the result, if kicad-cli is available.
+        place_fields: Move Reference and Value text off whatever it collides with.
     """
 
     global PROJECT_NAME
@@ -1822,6 +1978,10 @@ def write_top_schematic(
 
     # Top node is never flattened because it has no parent to accept its contents, so it must always generate a sheet.
     node.flattened = False
+
+    if place_fields:
+        plan_field_layouts(node)
+        _pwr_counter[0] = 0  # Planning numbers power symbols, so start over.
 
     # Generate a deterministic UUID for the top node based on its name. The top
     # node's name is the empty string (it is the root of the hierarchy), which

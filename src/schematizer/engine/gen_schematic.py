@@ -640,15 +640,23 @@ def _write_output(circuit, node, filepath, top_name, title, options):
     Placement and routing are format-agnostic -- only this final step differs,
     so the SVG pages have exactly the layout of the KiCad sheets.
     """
+    place_fields = options.get("place_fields", True)
     if options.get("output_format", "kicad") == "svg":
         return write_top_svg(
             circuit, node, filepath, top_name, title,
             fit=options.get("svg_fit", True),
+            place_fields=place_fields,
         )
     # The ERC correction loop checks every sheet it writes, so don't check twice.
     erc_loop = options.get("auto_stub", False) and options.get("erc_max_iterations", 3) > 0
     return write_top_schematic(
-        circuit, node, filepath, top_name, title, validate=not erc_loop
+        circuit,
+        node,
+        filepath,
+        top_name,
+        title,
+        validate=not erc_loop,
+        place_fields=place_fields,
     )
 
 

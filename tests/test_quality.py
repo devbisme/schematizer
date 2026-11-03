@@ -215,3 +215,30 @@ def test_pin_names_count_as_part_of_the_symbol():
     parts = _resistor("R1", 0, 0, value_at=(50, 0)), _resistor("R2", 50, 0, value_at=(1.1, 4))
     named = f"(kicad_sch (lib_symbols {lib}) {parts[0]} {parts[1]})"
     assert score_overlaps(named)["text_overlaps"] > score_overlaps(_sch(*parts))["text_overlaps"]
+
+
+def _text_overlaps(doc, tmp_path, **options):
+    render(doc, filepath=str(tmp_path), top_name="sch", seed=1, **options)
+    return score_files(str(tmp_path))
+
+
+def test_field_text_moves_off_what_it_collides_with(tmp_path):
+    with open(os.path.join(DATA, "and_gate.json")) as f:
+        doc = json.load(f)
+    fixed = _text_overlaps(doc, tmp_path / "on")
+    default = _text_overlaps(doc, tmp_path / "off", place_fields=False)
+    assert fixed["text_overlaps"] < default["text_overlaps"]
+
+
+def test_moving_field_text_leaves_the_wiring_alone(and_gate, tmp_path):
+    fixed = _text_overlaps(and_gate, tmp_path / "on")
+    default = _text_overlaps(and_gate, tmp_path / "off", place_fields=False)
+    for key in ("segments", "bends", "wirelength"):
+        assert fixed[key] == default[key]
+
+
+def test_planning_field_text_doesnt_renumber_power_symbols(tmp_path):
+    with open(os.path.join(DATA, "and_gate.json")) as f:
+        doc = json.load(f)
+    render(doc, filepath=str(tmp_path), top_name="sch", seed=1)
+    assert '"#PWR1"' in (tmp_path / "sch.kicad_sch").read_text()
