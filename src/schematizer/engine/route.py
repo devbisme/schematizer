@@ -222,7 +222,10 @@ class Terminal:
         """
 
         from_face = self.face
-        if next_face.track in (from_face.beg, from_face.end):
+        # (Tracks compare equal if their coordinates match, even when one is
+        # horizontal and the other vertical, so compare orientations instead of
+        # checking whether the next face's track is one that bounds this face.)
+        if next_face.track.orientation != from_face.track.orientation:
             # The next face bounds the interval of the terminals's face, so
             # they're at right angles. With right angle faces, we want to
             # select a terminal on the next face that's close to this corner
@@ -1372,8 +1375,8 @@ class SwitchBox:
                     break
                 # Get the box which will be added if expansion occurs.
                 # Every face borders two switchboxes, so the adjacent box is the other one.
-                adj_box = (box_face.switchboxes - {box}).pop()
-                if adj_box not in switchboxes:
+                adj_boxes = box_face.switchboxes - {box}
+                if not adj_boxes or adj_boxes.pop() not in switchboxes:
                     # This box cannot be added, so expansion in this direction is blocked.
                     active_directions.remove(direction)
                     break
