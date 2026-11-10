@@ -13,8 +13,10 @@ import os
 import re
 import shutil
 import subprocess
+from collections import defaultdict
 
 from ..geometry import BBox, Point, Tx, Vector
+from ..ir import NCNet
 from .net_terminal import NetTerminal
 from .rng import seed as rng_seed
 from .snap import snap_two_pin_parts as _snap_two_pin_parts
@@ -140,6 +142,49 @@ def auto_stub_nets(circuit, **options):
     )
 
 
+def stub_lone_pins(circuit):
+    """Stub a pin that's the only one of its net on a sheet, so it's drawn with a label.
+
+    The label is what connects such a pin to the rest of its net on other
+    sheets. Putting it on the pin saves placing a label somewhere else on the
+    sheet and routing a wire to it.
+
+    Args:
+        circuit: The Circuit object containing the nets.
+    """
+    for net in circuit.nets:
+        if net._stub or not net.valid or isinstance(net, NCNet):
+            continue
+        sheets = defaultdict(list)
+        for pin in net.pins:
+            if not isinstance(pin.part, NetTerminal):
+                sheets[pin.part.hiertuple].append(pin)
+        if len(sheets) < 2 and len(net.pins) != 1:
+            # All of the net is on one sheet, where it's wired.
+            continue
+        for pins in sheets.values():
+            # (A power symbol labels its net by itself.)
+            if len(pins) == 1 and not getattr(pins[0].part, "is_power_symbol", False):
+                pins[0].stub = True
+
+
+def _new_node(circuit, tool_module, filepath, top_name, title, flatness, options):
+    """Get the circuit ready for placement and build its tree of nodes."""
+    from .sch_node import SchNode
+
+    stub_lone_pins(circuit)
+    preprocess_circuit(circuit, **options)
+    return SchNode(
+        circuit,
+        tool_module,
+        filepath,
+        top_name,
+        title,
+        flatness,
+        label_local_nets=options.get("label_local_nets", False),
+    )
+
+
 def _apply_deferred_stubs(node, circuit, **options):
     """Apply deferred stubs per-subcircuit after placement.
 
@@ -199,6 +244,9 @@ def _apply_deferred_stubs(node, circuit, **options):
             if not has_unstubbed:
                 net._stub = True
                 net._stub_explicit = False
+
+    # Resetting the deferred nets above also unstubbed their lone pins.
+    stub_lone_pins(circuit)
 
 
 def _run_erc(schematic_path):
@@ -294,7 +342,9 @@ def _stub_nets_for_erc_errors(circuit, errors):
                         net = pin.net
                         if net and not getattr(net, "_stub_explicit", False):
                             pins = net.get_pins()
-                            if not net._stub or not all(p.stub for p in pins):
+                            # (If every pin already has a label, regenerating
+                            # the drawing wouldn't change it.)
+                            if not all(p.stub for p in pins):
                                 stubbed_any = True
                             net._stub = True
                             net._stub_explicit = False
@@ -403,7 +453,13 @@ def _classify_and_stub_complex_nets(circuit, node, **options):
         # Stub all remaining nets in small subcircuits (<=6 routeable nets).
         # Only large chain structures (switch->R->IC grids) benefit from wiring.
         # A flattened subcircuit shares its parent's page, so wires still fit.
-        if not child.flattened and len(non_stubbed) <= 6:
+        # (Pre-placed parts sit beside the pins they're wired to, so their
+        # short wires are kept whatever the size of the subcircuit.)
+        if (
+            not options.get("preplace", True)
+            and not child.flattened
+            and len(non_stubbed) <= 6
+        ):
             for net in non_stubbed:
                 net._stub = True
                 net._stub_explicit = False
@@ -468,8 +524,7 @@ def _handle_fallback(
             stubbed_nets.append(net.name)
     _stub_all_non_explicit(circuit)
 
-    preprocess_circuit(circuit, **options)
-    node = SchNode(circuit, tool_module, filepath, top_name, title, flatness)
+    node = _new_node(circuit, tool_module, filepath, top_name, title, flatness, options)
     node.place(expansion_factor=1.0, **options)
     node.route(**options)
     _snap_two_pin_parts(node)
@@ -611,6 +666,18 @@ def _place_and_classify(node, circuit, expansion_factor, classify=True, **option
     if classify and options.get("auto_stub", False):
         _apply_deferred_stubs(node, circuit, **options)
         _classify_and_stub_complex_nets(circuit, node, **options)
+
+
+def _snap_unwired_parts(node, options):
+    """Snap two-pin parts onto the pins they connect to, if auto-stubbing left them loose.
+
+    Snapping moves parts after routing and turns their wires into labels. It's
+    for force-directed placement, which drops such parts anywhere. Pre-placed
+    parts are already beside their pins with wires routed to them, and
+    snapping would undo that and can land them on top of each other.
+    """
+    if options.get("auto_stub", False) and not options.get("preplace", True):
+        _snap_two_pin_parts(node)
 
 
 @export_to_all
@@ -757,9 +824,9 @@ def gen_schematic(
             # while deriving it keeps the whole run reproducible.
             rng_seed(f"{base_seed}:{attempt}")
 
-        preprocess_circuit(circuit, **options)
-
-        node = SchNode(circuit, tool_module, filepath, top_name, title, flatness)
+        node = _new_node(
+            circuit, tool_module, filepath, top_name, title, flatness, options
+        )
 
         try:
             _place_and_classify(node, circuit, expansion_factor, **options)
@@ -778,9 +845,8 @@ def gen_schematic(
                 # the rebuild starts clean. It does NOT touch pin.stub/net._stub,
                 # so the frozen stub set survives.
                 finalize_parts_and_nets(circuit, **options)
-                preprocess_circuit(circuit, **options)
-                node = SchNode(
-                    circuit, tool_module, filepath, top_name, title, flatness
+                node = _new_node(
+                    circuit, tool_module, filepath, top_name, title, flatness, options
                 )
                 _place_and_classify(
                     node, circuit, expansion_factor, classify=False, **options
@@ -804,8 +870,7 @@ def gen_schematic(
             )
             continue
 
-        if options.get("auto_stub", False):
-            _snap_two_pin_parts(node)
+        _snap_unwired_parts(node, options)
 
         # Serialize in the requested output format (KiCad s-expression or SVG).
         output_file = _write_output(
@@ -862,19 +927,18 @@ def gen_schematic(
                 erc_regen_ok = False
                 for erc_expansion in [1.0, 1.5, 2.25]:
                     try:
-                        preprocess_circuit(circuit, **options)
-                        node = SchNode(
+                        node = _new_node(
                             circuit,
                             tool_module,
                             filepath,
                             top_name,
                             title,
                             flatness,
+                            options,
                         )
                         _place_and_classify(node, circuit, erc_expansion, **options)
                         node.route(**options)
-                        if options.get("auto_stub", False):
-                            _snap_two_pin_parts(node)
+                        _snap_unwired_parts(node, options)
                         output_file = _write_output(
                             circuit, node, filepath, top_name, title, options
                         )

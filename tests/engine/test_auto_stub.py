@@ -832,6 +832,9 @@ class TestSharedIcPinFan:
                     filepath=output_dir,
                     top_name="shared_pin_fan",
                     auto_stub=True,
+                    # Snapping is only for force-directed placement. Pre-placed
+                    # parts are already wired beside their pins.
+                    preplace=False,
                 )
         finally:
             snap_mod.snap_two_pin_parts = orig

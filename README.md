@@ -153,7 +153,15 @@ Wired parts are placed by the drafting conventions a person would follow:
   symbol on each pin instead of being wired across the sheet. A power net that
   already has a power symbol part of its own in the netlist is left wired.
 
+- **Labels go on pins, not out in space.** A net that leaves the sheet is
+  labeled at its pin if it has only one there. If it has several, they're
+  wired together and the label goes beside one of them.
+
 A part whose orientation is set in the netlist (`symtx`) keeps it.
+
+A named net that stays on one sheet is wired but its name isn't shown, since
+routing a wire to a label makes a crowded sheet harder to route. Pass
+`label_local_nets=True` to label those nets too.
 
 Two options turn parts of this off (CLI: `--no-preplace`, `--no-power-symbols`):
 
@@ -163,6 +171,11 @@ render(netlist, filepath="out", power_symbols=False)  # wire the power nets
 ```
 
 Groups of more than 20 wired parts are still laid out in plain rows.
+
+With `auto_stub`, parts placed this way keep the short wires routed to them.
+Only nets with many pins or far-apart pins become labels. (With
+`preplace=False`, auto-stubbing works as before: it labels every net of a small
+subcircuit and snaps two-pin parts onto the pins they connect to.)
 
 ## Reproducible drawings
 

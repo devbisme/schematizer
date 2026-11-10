@@ -22,6 +22,7 @@ from .conventions import PIN_EXIT, best_orientations
 from .preplace import (
     attach_satellites,
     find_satellites,
+    place_terminals,
     release_satellites,
     seed_placement,
     spread_parts,
@@ -2124,6 +2125,9 @@ def place_net_terminals(net_terminals, placed_parts, nets, force_func, **options
                     anchored_parts, mobile_terminals, nets, total_part_force, **options
                 )
 
+    if not net_terminals:
+        return
+
     bbox = get_enclosing_bbox(placed_parts)
     save_anchor_pull_pins(net_terminals)
     trim_pull_pins(net_terminals, bbox)
@@ -2321,11 +2325,14 @@ class Placer:
             # Put the parts where a person would (see preplace.py) instead of
             # letting forces pull them in from random starting points.
 
-            # Fix satellites beside the pins they're wired to. Their hosts carry them.
-            for host, sats in satellites.items():
-                attach_satellites(
-                    host, sats, nets, options.get("expansion_factor", 1.0)
-                )
+            # Fix satellites beside the pins they're wired to. Their hosts carry
+            # them. Any that don't fit there are placed like the other parts.
+            expansion_factor = options.get("expansion_factor", 1.0)
+            satellites = {
+                host: attach_satellites(host, sats, nets, expansion_factor)
+                for host, sats in satellites.items()
+            }
+            riders = {sat for sats in satellites.values() for sat, _, _ in sats}
             hosts = [part for part in real_parts if part not in riders]
             add_anchor_pull_pins(hosts + net_terminals, nets, **options)
 
@@ -2340,6 +2347,14 @@ class Placer:
             for sat in riders:
                 snap_to_grid(sat)
             add_anchor_pull_pins(parts, nets, **options)
+
+            # Put each net label beside a pin of its net. Any that there's no
+            # room for are left for the forces below to place, with the ones
+            # that are down held in place.
+            net_terminals = place_terminals(
+                net_terminals, real_parts, nets, expansion_factor
+            )
+            real_parts = [part for part in parts if part not in net_terminals]
 
         else:
             # Set anchor and pull pins that determine attractive forces between parts.

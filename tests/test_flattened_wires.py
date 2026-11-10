@@ -39,14 +39,24 @@ def test_auto_stub_keeps_wires_in_flattened_small_subcircuits(doc, tmp_path, mon
     monkeypatch.setattr(gen_schematic, "_snap_two_pin_parts", lambda node: None)
     render(
         doc, tool="kicad9", format="svg", filepath=str(tmp_path),
-        flatness=1.0, seed=1, auto_stub=True,
+        flatness=1.0, seed=1, auto_stub=True, preplace=False,
     )
     assert _count(tmp_path, "*.svg", "<line") > 0
 
 
 def test_auto_stub_still_labels_small_subcircuits_on_their_own_sheets(doc, tmp_path):
+    # With force-directed placement, that is. Its parts can end up anywhere.
+    render(
+        doc, tool="kicad9", format="svg", filepath=str(tmp_path),
+        flatness=0.0, seed=1, auto_stub=True, preplace=False,
+    )
+    assert _count(tmp_path, "*.svg", "<line") == 0
+
+
+def test_auto_stub_keeps_wires_of_preplaced_small_subcircuits(doc, tmp_path):
+    """Pre-placed parts sit beside the pins they're wired to, so the wires stay."""
     render(
         doc, tool="kicad9", format="svg", filepath=str(tmp_path),
         flatness=0.0, seed=1, auto_stub=True,
     )
-    assert _count(tmp_path, "*.svg", "<line") == 0
+    assert _count(tmp_path, "*.svg", "<line") > 0

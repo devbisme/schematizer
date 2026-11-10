@@ -32,6 +32,7 @@ class SchNode(Placer, Router):
         top_name="",
         title="",
         flatness=0.0,
+        label_local_nets=False,
     ):
         # Initialize using the Node superclass.
         # super().__init__(None)
@@ -46,6 +47,8 @@ class SchNode(Placer, Router):
         self.sheet_filename = None
         self.title = title
         self.flatness = flatness
+        # Whether a named net that stays on one sheet gets a label wired to it there.
+        self.label_local_nets = label_local_nets
         self.flattened = False
         self.tool_module = tool_module  # Backend tool.
         self.wires = defaultdict(list)
@@ -161,12 +164,14 @@ class SchNode(Placer, Router):
                 if len(net.pins) == 1:
                     # Single pin on net and not stubbed, so add a terminal to it below.
                     pass
-                elif not net.is_implicit():
+                elif not net.is_implicit() and self.label_local_nets:
                     # The net has a user-assigned name, so add a terminal to it below.
                     pass
                 else:
                     # No need for net terminal because there are multiple pins
-                    # and they are all in the same node.
+                    # and they are all in the same node. (Routing a wire to a
+                    # label just to show the net's name makes a sheet that much
+                    # harder to route, so that's only done if asked for.)
                     continue
 
             # Add a single terminal to each node that contains one or more pins of the net.
@@ -292,6 +297,14 @@ class SchNode(Placer, Router):
         bbox = BBox(Point(0, 0), Point(500, 500))
         bbox.add(Point(len("File: " + self.sheet_filename) * self.filename_sz, 0))
         bbox.add(Point(len("Sheet: " + self.name) * self.name_sz, 0))
+
+        # Make the sheet tall enough for its pins, which the writer puts one
+        # grid apart down its left side. Any that hung below it would land on
+        # whatever is placed there and short nets together.
+        num_pins = sum(
+            1 for net in self.get_boundary_nets() if not getattr(net, "stub", False)
+        )
+        bbox.add(Point(0, num_pins * 100))
 
         # Pad the bounding box for extra spacing when placed.
         bbox = bbox.resize(Vector(100, 100))

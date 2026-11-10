@@ -130,7 +130,8 @@ def render(
             ``preplace=False`` goes back to force-directed placement from
             random starting positions (see :mod:`schematizer.engine.preplace`).
             ``power_symbols=False`` wires power nets instead of putting a
-            power symbol on each of their pins.
+            power symbol on each of their pins. ``label_local_nets=True``
+            also labels the named nets that stay on one sheet.
 
     Returns:
         str: The output directory (``filepath``).

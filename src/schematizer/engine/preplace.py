@@ -17,9 +17,14 @@ stages that spread parts apart:
   two pins level so the wire between them is straight. With signals leaving
   parts on the right and entering on the left, that makes signals flow left to
   right.
+* Spread: seeded parts that landed on each other are moved apart.
+
+Once the parts are down, each net label is put beside a pin of its net.
 """
 
+import heapq
 from collections import defaultdict
+from functools import lru_cache
 from itertools import combinations
 
 import numpy as np
@@ -32,6 +37,7 @@ __all__ = [
     "find_satellites",
     "attach_satellites",
     "release_satellites",
+    "place_terminals",
     "seed_placement",
     "spread_parts",
 ]
@@ -42,14 +48,19 @@ SEED_GAP = 2 * GRID
 # How far (in grid steps) a part can be moved at a time to get it off of other
 # parts, and the wire length a bend is worth when choosing where it goes.
 SPREAD_MAX_STEPS = 20
+# If that isn't enough to find room for a part, how far out the search for some
+# goes (in grid steps). It's far enough to get past anything on a sheet.
+SPREAD_MAX_RADIUS = 1000
 SPREAD_BEND_COST = 4 * GRID
 # Wire length it's worth for a wire not to have to double back behind its pin.
 SPREAD_UTURN_COST = 8 * GRID
 # Times each part gets to move again after all the parts are down.
 SPREAD_PASSES = 2
 
-# Search limits (in grid steps) for a satellite's spot beside its host pin.
-SAT_MAX_OUT = 12
+# Search limits (in grid steps) for a spot beside a pin. They're wide enough
+# for the satellites on a row of IC pins to be staggered one beyond the other
+# when they're too tall to sit in a column.
+SAT_MAX_OUT = 40
 SAT_MAX_SIDE = 10
 
 # Wire length (in grid steps) that a satellite's wire is penalized for
@@ -66,10 +77,12 @@ SAT_CONVENTION_COST = 1.0
 # Space kept between a satellite and other parts so the router can get a wire through.
 SAT_CLEARANCE = GRID
 
-# Length of the corridor kept clear where a wire leaves a part. It's as long
-# as the satellite search is wide, so a satellite hanging from one pin never
-# cuts across the wire from another pin on the same side.
-SAT_EXIT_CLEARANCE = SAT_MAX_OUT * GRID
+# Length of the corridor kept clear where a wire leaves a part, so a satellite
+# hanging from one pin doesn't cut across the wire from another pin on the same side.
+SAT_EXIT_CLEARANCE = 12 * GRID
+
+# The same for net labels, which only need to stay off the ends of other pins.
+TERMINAL_EXIT_CLEARANCE = 3 * GRID
 
 
 def _is_wired(pin, nets):
@@ -173,63 +186,166 @@ def _unit(vec):
     return Vector(round(vec.x), round(vec.y))
 
 
-def _satellite_spots(sat, sat_pin, host_pt, out):
-    """List the places a satellite could go beside the pin it's wired to.
+@lru_cache(maxsize=None)
+def _spot_offsets(out, exit_vec):
+    """List where a part's pin could go relative to the pin it's wired to.
+
+    Args:
+        out (tuple): Direction (x, y) a wire leaves the pin it's wired to.
+        exit_vec (tuple): Direction a wire leaves the part's own pin.
+
+    Returns:
+        tuple: (wire cost, offset is leftward, offset is downward, offset in
+            grid steps, corner of the wire in grid steps or None), cheapest first.
+    """
+    out, exit_vec = Vector(*out), Vector(*exit_vec)
+    side = Vector(-out.y, out.x)
+    facing = exit_vec.x * out.x + exit_vec.y * out.y
+    if facing < 0:
+        # Pins face each other: a straight wire, or a jog if stepped sideways.
+        offsets = [
+            (k + SAT_SIDE_COST * abs(j), out * k + side * j, None)
+            for k in range(2, SAT_MAX_OUT + 1)
+            for j in range(-SAT_MAX_SIDE, SAT_MAX_SIDE + 1)
+        ]
+    elif facing == 0:
+        # Pins at right angles: the wire goes out, then turns into the part.
+        offsets = [
+            (k + m + SAT_BEND_COST, out * k - exit_vec * m, out * k)
+            for k in range(1, SAT_MAX_OUT + 1)
+            for m in range(1, SAT_MAX_SIDE + 1)
+        ]
+    else:
+        # Pins point the same way: the wire has to double back.
+        offsets = [
+            (k + abs(j) + SAT_UTURN_COST, out * k + side * j, None)
+            for k in range(0, SAT_MAX_OUT + 1)
+            for j in range(-SAT_MAX_SIDE, SAT_MAX_SIDE + 1)
+            if abs(j) >= 2
+        ]
+    # Break ties the same way every time: positive side first.
+    keyed = [
+        (cost, offset.x < 0, offset.y < 0, n, offset, corner)
+        for n, (cost, offset, corner) in enumerate(offsets)
+    ]
+    keyed.sort(key=lambda entry: entry[:4])
+    return tuple((cost, left, down, offset, corner) for cost, left, down, _, offset, corner in keyed)
+
+
+def _spots(part, pin, host_pt, out, lins):
+    """List the places a part could go beside the pin that one of its pins is wired to.
 
     Orientations that break the drafting conventions cost extra, so a
     decoupling cap stays upright with its ground pin down, even with a bend in
     its wire, unless that would push it far from its pin.
 
     Args:
-        sat (Part): The satellite.
-        sat_pin (Pin): Its wired pin.
+        part (Part): The part to place.
+        pin (Pin): Its wired pin.
         host_pt (Point): Position of the pin it's wired to.
         out (Vector): Direction a wire leaves that pin.
+        lins (list): Orientations (rotation/flip transforms) the part can have.
 
     Yields:
-        tuple: (transform for the satellite, corner of its wire or None), best first.
+        tuple: (transform for the part, corner of its wire or None), best first.
     """
-    side = Vector(-out.y, out.x)
-    spots = []
-    lins = orientations(sat.tx)
-    least_broken = min(orientation_cost(sat, lin) for lin in lins)
-    for lin in lins:
-        broken = (orientation_cost(sat, lin) - least_broken) * SAT_CONVENTION_COST
-        exit_vec = _unit(pin_exit(sat_pin, lin))
-        facing = exit_vec.x * out.x + exit_vec.y * out.y
-        if facing < 0:
-            # Pins face each other: a straight wire, or a jog if stepped sideways.
-            offsets = [
-                (k + SAT_SIDE_COST * abs(j), out * k + side * j, None)
-                for k in range(2, SAT_MAX_OUT + 1)
-                for j in range(-SAT_MAX_SIDE, SAT_MAX_SIDE + 1)
-            ]
-        elif facing == 0:
-            # Pins at right angles: the wire goes out, then turns into the satellite.
-            offsets = [
-                (k + m + SAT_BEND_COST, out * k - exit_vec * m, out * k)
-                for k in range(1, SAT_MAX_OUT + 1)
-                for m in range(1, SAT_MAX_SIDE + 1)
-            ]
-        else:
-            # Pins point the same way: the wire has to double back.
-            offsets = [
-                (k + abs(j) + SAT_UTURN_COST, out * k + side * j, None)
-                for k in range(0, SAT_MAX_OUT + 1)
-                for j in range(-SAT_MAX_SIDE, SAT_MAX_SIDE + 1)
-                if abs(j) >= 2
-            ]
-        for cost, offset, corner in offsets:
-            # Break ties the same way every time: positive side first.
-            key = (cost + broken, offset.x < 0, offset.y < 0, len(spots))
-            spots.append((key, lin, offset, corner))
-    spots.sort(key=lambda spot: spot[0])
+    least_broken = min(orientation_cost(part, lin) for lin in lins)
 
-    # Only a few spots get looked at before one is free, so work out their
-    # transforms as they're asked for.
-    for _, lin, offset, corner in spots:
-        shift = host_pt + offset * GRID - sat_pin.pt * lin
+    def spots_for(turn, lin):
+        """Spots for one orientation, cheapest first."""
+        broken = (orientation_cost(part, lin) - least_broken) * SAT_CONVENTION_COST
+        exit_vec = _unit(pin_exit(pin, lin))
+        offsets = _spot_offsets((out.x, out.y), (exit_vec.x, exit_vec.y))
+        for n, (cost, left, down, offset, corner) in enumerate(offsets):
+            yield (cost + broken, left, down, turn, n), lin, offset, corner
+
+    # Only a few spots get looked at before one is free, so merge the
+    # orientations' lists and work out transforms as they're asked for.
+    streams = [spots_for(turn, lin) for turn, lin in enumerate(lins)]
+    for _, lin, offset, corner in heapq.merge(*streams, key=lambda spot: spot[0]):
+        shift = host_pt + offset * GRID - pin.pt * lin
         yield lin.move(shift), None if corner is None else host_pt + corner * GRID
+
+
+class _Keepouts:
+    """The boxes that parts placed beside pins, and their wires, have to keep out of.
+
+    Each box has an owner (a part, or a pin for the wires from it) that's
+    allowed to touch it. Parts keep their distance from other parts so the
+    router can get wires between them, but a wire can run right alongside a part.
+    """
+
+    def __init__(self, clearance, exit_clearance):
+        self.clearance = clearance
+        self.exit_clearance = exit_clearance
+        self.for_parts = []  # (owner, box) that a part can't overlap.
+        self.for_wires = []  # (owner, box) that a wire can't cross.
+
+    def add_part(self, part, box):
+        self.for_parts.append((part, _grow(box, self.clearance)))
+        self.for_wires.append((part, box))
+
+    def add_wire(self, pin, box):
+        self.for_parts.append((pin, box))
+        self.for_wires.append((pin, box))
+
+    def add_exit(self, pin, tx):
+        """Keep clear of where a wire leaves a pin and passes its part's labels.
+
+        Args:
+            pin (Pin): The pin.
+            tx (Tx): Transform of the pin's part.
+        """
+        pt = pin.pt * tx
+        out = _unit(pin_exit(pin, tx))
+        box = pin.part.lbl_bbox * tx
+        reach = max(
+            (box.max.x - pt.x) * out.x,
+            (box.min.x - pt.x) * out.x,
+            (box.max.y - pt.y) * out.y,
+            (box.min.y - pt.y) * out.y,
+        )
+        tip = pt + out * (reach + self.exit_clearance)
+        self.add_wire(pin, _grow(BBox(pt, tip), GRID / 2))
+
+    def find_spot(self, part, pin, host_pin, host_tx, lins, same_net=()):
+        """Find the best free spot for a part beside the pin it's wired to, and take it.
+
+        Args:
+            part (Part): The part to place.
+            pin (Pin): Its wired pin.
+            host_pin (Pin): The pin it's wired to.
+            host_tx (Tx): Transform of the host pin's part.
+            lins (list): Orientations the part can have.
+            same_net (collection): Other pins whose wires the part can share
+                the way with, because they're on its net.
+
+        Returns:
+            Tx | None: Transform for the part, or None if every spot is taken.
+        """
+        host_pt = host_pin.pt * host_tx
+        out = _unit(pin_exit(host_pin, host_tx))
+        for tx, corner in _spots(part, pin, host_pt, out, lins):
+            box = part.lbl_bbox * tx
+            wire_pts = [host_pt, pin.pt * tx] + ([] if corner is None else [corner])
+            wire = _grow(BBox(*wire_pts), GRID / 4)
+            # The wire has to touch the part it comes from and can share the
+            # way with other wires from the same pin, but nothing else.
+            if not any(
+                box.intersects(b)
+                for owner, b in self.for_parts
+                if owner is not host_pin and owner not in same_net
+            ) and not any(
+                wire.intersects(b)
+                for owner, b in self.for_wires
+                if owner is not host_pin
+                and owner is not host_pin.part
+                and owner not in same_net
+            ):
+                self.add_part(part, box)
+                self.add_wire(host_pin, wire)
+                return tx
+        return None
 
 
 def attach_satellites(host, satellites, nets, expansion_factor=1.0):
@@ -246,9 +362,14 @@ def attach_satellites(host, satellites, nets, expansion_factor=1.0):
         nets (list): Nets that will be wired between parts.
         expansion_factor (float): Multiplies the space left around satellites,
             for when routing failed and is being tried again with more room.
+
+    Returns:
+        list: The entries of the satellites that were attached. One that there
+            was no room for beside its pin is left out (along with any wired to
+            it), to be placed like any other part.
     """
     nets = set(nets)
-    clearance = SAT_CLEARANCE * expansion_factor
+    keepouts = _Keepouts(SAT_CLEARANCE * expansion_factor, SAT_EXIT_CLEARANCE)
 
     # Everything is laid out around the host as it's oriented now, with the
     # host's origin at (0, 0).
@@ -256,72 +377,100 @@ def attach_satellites(host, satellites, nets, expansion_factor=1.0):
     to_host = _inverse(host_lin)
     txs = {host: host_lin}
 
-    def exit_corridor(pin):
-        """Box covering where a wire leaves a pin and then its part's labels."""
-        tx = txs[pin.part]
-        pt = pin.pt * tx
-        out = _unit(pin_exit(pin, tx))
-        box = pin.part.lbl_bbox * tx
-        reach = max(
-            (box.max.x - pt.x) * out.x,
-            (box.min.x - pt.x) * out.x,
-            (box.max.y - pt.y) * out.y,
-            (box.min.y - pt.y) * out.y,
-        )
-        tip = pt + out * (reach + SAT_EXIT_CLEARANCE)
-        return _grow(BBox(pt, tip), GRID / 2)
-
-    def wire_box(*pts):
-        return _grow(BBox(*pts), GRID / 4)
-
-    # Boxes that satellites have to keep out of. Each has an owner (a part, or
-    # a pin for the wires from it) that's allowed to touch it. Satellites keep
-    # their distance from parts, but their wires can run right alongside.
-    blocked = [(host, _grow(host.lbl_bbox * host_lin, clearance))]
-    wire_blocked = [(host, host.lbl_bbox * host_lin)]
-    # Keep clear of where the host's wires leave it.
+    keepouts.add_part(host, host.lbl_bbox * host_lin)
     for pin in _wired_pins(host, nets):
-        corridor = exit_corridor(pin)
-        blocked.append((pin, corridor))
-        wire_blocked.append((pin, corridor))
+        keepouts.add_exit(pin, host_lin)
 
     host.preplace_bbox = host.place_bbox
     bbox = BBox(host.place_bbox.min, host.place_bbox.max)
     host.riders = []
+    attached = []
     for sat, sat_pin, host_pin in satellites:
-        host_tx = txs[host_pin.part]
-        host_pt = host_pin.pt * host_tx
-        out = _unit(pin_exit(host_pin, host_tx))
-        for tx, corner in _satellite_spots(sat, sat_pin, host_pt, out):
-            box = sat.lbl_bbox * tx
-            wire_pts = [host_pt, sat_pin.pt * tx] + ([] if corner is None else [corner])
-            wire = wire_box(*wire_pts)
-            # The wire has to touch the part it comes from and can share the
-            # way with other wires from the same pin, but nothing else.
-            if not any(
-                box.intersects(b) for owner, b in blocked if owner is not host_pin
-            ) and not any(
-                wire.intersects(b)
-                for owner, b in wire_blocked
-                if owner is not host_pin and owner is not host_pin.part
-            ):
-                break
-        # If every spot was blocked, the last (farthest) one is used and the
-        # placer's overlap forces are left to deal with it.
+        if host_pin.part not in txs:
+            continue  # What it's wired to didn't fit, so it has nothing to sit beside.
+        tx = keepouts.find_spot(
+            sat, sat_pin, host_pin, txs[host_pin.part], orientations(sat.tx)
+        )
+        if tx is None:
+            continue
         txs[sat] = tx
         sat.rel_tx = tx * to_host
         host.riders.append(sat)
-        blocked.append((sat, _grow(box, clearance)))
-        blocked.append((host_pin, wire))
-        wire_blocked.append((sat, box))
-        wire_blocked.append((host_pin, wire))
+        attached.append((sat, sat_pin, host_pin))
         for pin in _wired_pins(sat, nets):
             if pin is not sat_pin:
-                corridor = exit_corridor(pin)
-                blocked.append((pin, corridor))
-                wire_blocked.append((pin, corridor))
+                keepouts.add_exit(pin, tx)
         bbox.add(sat.place_bbox * sat.rel_tx)
     host.place_bbox = bbox
+    return attached
+
+
+# The ways a net label can be turned: one for each direction its wire can leave it.
+_TERMINAL_LINS = [Tx(), Tx().flip_x(), Tx().rot_90cw(), Tx().rot_90cw().rot_90cw().rot_90cw()]
+
+
+def place_terminals(terminals, parts, nets, expansion_factor=1.0):
+    """Put each net label beside one of the pins of its net.
+
+    The label goes straight out from a pin if there's room, so its wire is
+    short and doesn't have to find a way to some open space at the edge of the
+    sheet. Pins nearer the outside of the placed parts are tried first.
+
+    Args:
+        terminals (list): NetTerminals to place.
+        parts (list): Placed parts (no NetTerminals).
+        nets (list): Nets that will be wired between parts.
+        expansion_factor (float): Multiplies the space left around labels.
+
+    Returns:
+        list: The NetTerminals that there was no room for beside any pin. They
+            still need placing.
+    """
+    if not terminals:
+        return []
+
+    net_set = set(nets)
+    part_set = set(parts)
+    keepouts = _Keepouts(SAT_CLEARANCE * expansion_factor, TERMINAL_EXIT_CLEARANCE)
+    area = BBox()
+    for part in parts:
+        box = part.lbl_bbox * part.tx
+        keepouts.add_part(part, box)
+        area.add(box)
+        for pin in _wired_pins(part, net_set):
+            keepouts.add_exit(pin, part.tx)
+
+    def inset(pin):
+        """How far inside the placed parts a wire leaving a pin starts."""
+        pt = pin.pt * pin.part.tx
+        out = _unit(pin_exit(pin, pin.part.tx))
+        return min(
+            (area.max.x - pt.x) if out.x > 0 else float("inf"),
+            (pt.x - area.min.x) if out.x < 0 else float("inf"),
+            (area.max.y - pt.y) if out.y > 0 else float("inf"),
+            (pt.y - area.min.y) if out.y < 0 else float("inf"),
+        )
+
+    unplaced = []
+    for terminal in terminals:
+        pin = terminal.pins[0]
+        if getattr(terminal, "orientation_locked", False):
+            lins = [linear(terminal.tx)]  # An input or output label keeps its direction.
+        else:
+            lins = _TERMINAL_LINS
+        host_pins = [
+            p for p in pin.net.pins if p.part in part_set and _is_wired(p, net_set)
+        ]
+        for host_pin in sorted(host_pins, key=inset):
+            tx = keepouts.find_spot(
+                terminal, pin, host_pin, host_pin.part.tx, lins, same_net=host_pins
+            )
+            if tx is not None:
+                terminal.tx = tx
+                break
+        else:
+            unplaced.append(terminal)
+    return unplaced
 
 
 def release_satellites(hosts):
@@ -458,6 +607,15 @@ def _turned(part):
     return txs
 
 
+def _ring(radius):
+    """Moves (as an array) to the grid points on a square this many grid steps out."""
+    steps = range(-radius, radius + 1)
+    edge = [(i, j) for i in steps for j in (-radius, radius)]
+    edge += [(i, j) for i in (-radius, radius) for j in steps[1:-1]]
+    edge.sort(key=lambda v: (abs(v[0]) + abs(v[1]), v[1] < 0, v[0] < 0, abs(v[0])))
+    return np.array(edge, dtype=float) * GRID
+
+
 def spread_parts(parts, nets):
     """Move seeded parts off of each other and onto the grid.
 
@@ -508,8 +666,13 @@ def spread_parts(parts, nets):
             # The part's current orientation is tried first and wins ties.
             if cost < best_cost:
                 best_cost, part.tx = cost, tx.move(offset)
-        # (If there was no room nearby, the part stays where it is and the
-        # router is left to fail and ask for more space.)
+        if best_cost == float("inf"):
+            # No room nearby, so look farther and farther out until there is.
+            for radius in range(SPREAD_MAX_STEPS + 1, SPREAD_MAX_RADIUS, 2):
+                _, offset = _best_spot(part, part.tx, _ring(radius), partners, boxes)
+                if offset is not None:
+                    part.tx = part.tx.move(offset)
+                    break
         bbox = part.place_bbox * part.tx
         placed[part] = (bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y)
 
