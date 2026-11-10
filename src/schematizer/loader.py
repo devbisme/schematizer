@@ -139,6 +139,14 @@ def load_netlist(doc, tool="kicad9"):
     for comp in doc.get("components", []):
         _make_part(comp, symbols, nets, circuit)
 
+    # Record each pin's electrical type; placement uses it for signal flow.
+    pins = {(part.ref, str(pin.num)): pin for part in circuit.parts for pin in part.pins}
+    for n in doc.get("nets", []):
+        for node in n.get("nodes", []):
+            pin = pins.get((node.get("ref"), str(node.get("pin"))))
+            if pin is not None:
+                pin.func = (node.get("pintype") or "").upper()
+
     # Apply explicit stub hints after pins are connected so the cascade to pins
     # takes effect. (Automatic stubbing is a layout concern handled downstream.)
     for n in doc.get("nets", []):

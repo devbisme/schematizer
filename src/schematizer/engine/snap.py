@@ -29,6 +29,7 @@ import re
 from collections import defaultdict
 
 from ..geometry import Point, Tx
+from .conventions import is_power_net_name
 from .net_terminal import NetTerminal
 
 # PROPOSAL FLAG (default OFF): when True, _stagger_tjunctions drops a junction
@@ -38,13 +39,6 @@ from .net_terminal import NetTerminal
 # board that actually triggers staggered T-junction fans before being enabled,
 # because the IC-pin label is currently load-bearing (see finding #7).
 _ENABLE_IC_FAN_PIN_REWIRE = False
-
-
-# Pattern matching common power net names (kept in sync with the gen wrapper).
-_POWER_NET_RE = re.compile(
-    r"^(\+\d[\d.]*V[\d]*|GND|AGND|DGND|PGND|VCC|VDD|VSS|VEE|VBUS|VBAT|AVCC|AVDD|DVCC|DVDD)$",
-    re.IGNORECASE,
-)
 
 
 def _is_two_pin_part(part):
@@ -76,8 +70,7 @@ def _stub_snapped_part(part):
 
 def _is_power_net(net):
     """Return True if net is a power rail (GND, VCC, +3.3V, etc.)."""
-    name = getattr(net, "name", "")
-    return name.startswith("+") or bool(_POWER_NET_RE.match(name))
+    return is_power_net_name(getattr(net, "name", ""))
 
 
 _GND_NET_RE = re.compile(r"^(A|D|P)?GND$|^(VSS|VEE|GROUND)$", re.I)

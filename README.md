@@ -134,11 +134,41 @@ keys they don't use):
 - `netclasses`: net class definitions referenced by `nets[].attrs`.
 - A net with `"nc": true` is the no-connect net; its pins get no-connect flags.
 
+## Placement
+
+Wired parts are placed by the drafting conventions a person would follow:
+
+- **Rails up, grounds down.** A pin on a supply net (`VCC`, `+3V3`, `VBAT`, ...)
+  points up and a pin on a ground or negative supply (`GND`, `VSS`, `-12V`, ...)
+  points down, so decoupling caps and pull-ups stand upright.
+- **Signals flow left to right.** Parts aren't mirrored if that would put their
+  inputs on the right or their outputs on the left, and each part goes on the
+  side of the pin it's wired to.
+- **ICs stay upright.** A part with more than three pins can be mirrored but
+  isn't turned on its side.
+- **Passives sit beside their pins.** A two-pin part that hangs off the circuit
+  by one pin (a pull-up, a series resistor, an LED with its resistor) is fixed
+  next to the pin it's wired to.
+- **Power nets get power symbols.** Nets with power names are drawn with a power
+  symbol on each pin instead of being wired across the sheet. A power net that
+  already has a power symbol part of its own in the netlist is left wired.
+
+A part whose orientation is set in the netlist (`symtx`) keeps it.
+
+Two options turn parts of this off (CLI: `--no-preplace`, `--no-power-symbols`):
+
+```python
+render(netlist, filepath="out", preplace=False)       # force-directed placement from random positions
+render(netlist, filepath="out", power_symbols=False)  # wire the power nets
+```
+
+Groups of more than 20 wired parts are still laid out in plain rows.
+
 ## Reproducible drawings
 
-Placement starts parts at random positions and the router breaks ties randomly,
-so the same netlist normally produces a different — equally valid — drawing on
-every run. Pass a seed to pin it down:
+Unwired parts and the blocks of a sheet start at random positions, and the
+router breaks ties randomly, so the same netlist normally produces a different
+— equally valid — drawing on every run. Pass a seed to pin it down:
 
 ```bash
 schematizer netlist.json --tool kicad9 --seed 42 -o out

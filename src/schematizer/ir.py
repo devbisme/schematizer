@@ -61,6 +61,8 @@ class SchPin:
         self.orientation = orientation
         self.part = part
         self.net = net
+        # Electrical type from the netlist ("INPUT", "OUTPUT", "PASSIVE", ...), or "".
+        self.func = ""
         # Layout state, set/overwritten during preprocessing and routing.
         self.stub = False
         self.routed = False

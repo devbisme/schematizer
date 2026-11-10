@@ -127,6 +127,10 @@ def render(
             (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
             controls hierarchy for both formats: 0 keeps every subcircuit on
             its own sheet, 1 collapses everything onto one.
+            ``preplace=False`` goes back to force-directed placement from
+            random starting positions (see :mod:`schematizer.engine.preplace`).
+            ``power_symbols=False`` wires power nets instead of putting a
+            power symbol on each of their pins.
 
     Returns:
         str: The output directory (``filepath``).

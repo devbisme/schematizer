@@ -41,7 +41,16 @@ def _bends(doc, tmp_path, align):
     total = 0
     for seed in (1, 2, 3):
         out = tmp_path / f"{align}-{seed}"
-        render(doc, tool="kicad9", filepath=str(out), top_name="sch", seed=seed, align_parts=align)
+        # Force-directed placement is what leaves pins misaligned, so use that.
+        render(
+            doc,
+            tool="kicad9",
+            filepath=str(out),
+            top_name="sch",
+            seed=seed,
+            align_parts=align,
+            preplace=False,
+        )
         total += score_files(str(out))["bends"]
     return total
 

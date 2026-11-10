@@ -24,6 +24,7 @@ class _Pin:
         self.place_pt = Point(pt.x, pt.y)
         self.orientation = orientation
         self.stub = stub
+        self.net = None
 
     def is_connected(self):
         return True
@@ -49,6 +50,7 @@ class _Part(list):
         self.orientation_locked = False
         self.anchor_pins = defaultdict(list)
         self.pull_pins = defaultdict(list)
+        self.pins = self  # The drafting conventions look at a part's pins.
         for _ in range(rnd.randint(1, 4)):
             pt = Point(rnd.randint(-w // 50, w // 50) * 50, rnd.randint(-h // 50, h // 50) * 50)
             self.append(_Pin(self, pt, rnd.choice("UDLR"), rnd.random() < 0.8))

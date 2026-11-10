@@ -13,7 +13,6 @@ import os
 import re
 import shutil
 import subprocess
-from collections import Counter
 
 from ..geometry import BBox, Point, Tx, Vector
 from .net_terminal import NetTerminal
@@ -25,6 +24,7 @@ from .._utils import export_to_all, rmv_attr
 from .sexp_schematic import write_top_schematic
 from .svg_schematic import write_top_svg
 from .bboxes import calc_hier_label_bbox, calc_symbol_bbox
+from .conventions import conventional_orientation, is_power_net_name
 
 __all__ = []
 
@@ -59,15 +59,44 @@ warnings.filterwarnings("ignore", message=".*fp-lib-table.*")
 
 
 # Pattern matching common power net names.
-_POWER_NET_RE = re.compile(
-    r"^(\+\d[\d.]*V[\d]*|GND|AGND|DGND|PGND|VCC|VDD|VSS|VEE|VBUS|VBAT|AVCC|AVDD|DVCC|DVDD)$",
-    re.IGNORECASE,
-)
-
-# ERC error types that can be fixed by stubbing nets.
 FIXABLE_ERROR_TYPES = frozenset(
     {"pin_not_connected", "pin_not_driven", "wire_not_connected"}
 )
+
+
+def stub_power_nets(circuit, keep_drawn=False):
+    """Stub the power nets so they're drawn with power symbols instead of wires.
+
+    A supply rail or ground usually goes to most of the parts on a sheet.
+    People don't wire those together; they put a power symbol on each pin.
+    Nets whose stubbing was set explicitly by the user are left alone.
+
+    Args:
+        circuit: The Circuit object containing the nets.
+        keep_drawn (bool): Also leave alone the nets that already have a power
+            symbol part of their own, since that's how the user drew them.
+
+    Returns:
+        list: The nets that were stubbed.
+    """
+    stubbed = []
+    for net in circuit.nets:
+        if getattr(net, "_stub_explicit", False):
+            continue
+        if not net.valid or len(net.pins) == 0:
+            continue
+        if not is_power_net_name(net.name):
+            continue
+        if keep_drawn and any(
+            getattr(pin.part, "is_power_symbol", False) for pin in net.pins
+        ):
+            continue
+        net._stub = True
+        net._stub_explicit = False
+        for pin in net.get_pins():
+            pin.stub = True
+        stubbed.append(net)
+    return stubbed
 
 
 def auto_stub_nets(circuit, **options):
@@ -76,7 +105,7 @@ def auto_stub_nets(circuit, **options):
     Only modifies nets that haven't been explicitly set by the user.
     Called when auto_stub=True is passed to gen_schematic().
 
-    Power nets are always stubbed immediately (they'd overwhelm the placer).
+    Power nets are always stubbed immediately (see stub_power_nets()).
     Fanout-based stubbing is DEFERRED: nets are marked ``_deferred_stub`` so
     the placer still uses them for connectivity-based grouping, then they get
     stubbed after placement via ``_apply_deferred_stubs()``. Stubbing them up
@@ -87,29 +116,16 @@ def auto_stub_nets(circuit, **options):
         circuit: The Circuit object containing nets to analyze.
         options: Dict of options. Recognizes 'auto_stub_fanout' (default 5).
     """
-    import sys
-
     fanout_threshold = options.get("auto_stub_fanout", 5)
-    stubbed_power = []
     deferred_fanout = []
+    stubbed_power = [f"{net.name}({len(net.pins)})" for net in stub_power_nets(circuit)]
 
     for net in circuit.nets:
-        if getattr(net, "_stub_explicit", False):
+        if getattr(net, "_stub_explicit", False) or net._stub:
             continue
         if not net.valid or len(net.pins) == 0:
             continue
 
-        # Power nets: anything starting with "+" or matching common power names.
-        if net.name.startswith("+") or _POWER_NET_RE.match(net.name):
-            net._stub = True
-            net._stub_explicit = False
-            for pin in net.get_pins():
-                pin.stub = True
-            stubbed_power.append(f"{net.name}({len(net.pins)})")
-            continue
-
-        # High fanout nets: defer — keep connectivity for grouping during
-        # placement, stub after placement (see _apply_deferred_stubs).
         if len(net.pins) >= fanout_threshold:
             net._deferred_stub = True
             deferred_fanout.append(f"{net.name}({len(net.pins)})")
@@ -524,55 +540,19 @@ def preprocess_circuit(circuit, **options):
                 pin.pt = Point(pin.x * MM_TO_MILS, pin.y * MM_TO_MILS)
                 pin.routed = False
 
-    def rotate_power_pins(part):
-        """Rotate a part so its voltage-rail pins face up and its ground pins face down."""
+    def orient_conventionally(part):
+        """Orient a part so rail pins face up, ground pins down, and signals flow left to right."""
 
-        # Don't rotate parts that are already explicitly rotated/flipped.
         if getattr(part, "symtx", ""):
+            # The user set this part's orientation, so leave it alone.
             return
-
-        def is_pwr(net_name):
-            return net_name.startswith("+")
-
-        def is_gnd(net_name):
-            return "gnd" in net_name.lower()
 
         dont_rotate_pin_cnt = options.get("dont_rotate_pin_count", 10000)
 
         for part_unit in units(part):
             if len(part_unit) > dont_rotate_pin_cnt:
                 return
-
-            rotation_tally = Counter()
-            for pin in part_unit:
-                net_name = getattr(pin.net, "name", "").lower()
-                if is_gnd(net_name):
-                    if pin.orientation == "U":
-                        rotation_tally[0] += 1
-                    if pin.orientation == "D":
-                        rotation_tally[180] += 1
-                    if pin.orientation == "L":
-                        rotation_tally[90] += 1
-                    if pin.orientation == "R":
-                        rotation_tally[270] += 1
-                elif is_pwr(net_name):
-                    if pin.orientation == "D":
-                        rotation_tally[0] += 1
-                    if pin.orientation == "U":
-                        rotation_tally[180] += 1
-                    if pin.orientation == "L":
-                        rotation_tally[270] += 1
-                    if pin.orientation == "R":
-                        rotation_tally[90] += 1
-
-            try:
-                rotation = rotation_tally.most_common()[0][0]
-            except IndexError:
-                pass
-            else:
-                tx_cw_90 = Tx(a=0, b=-1, c=1, d=0)
-                for _ in range(int(round(rotation / 90))):
-                    part_unit.tx = part_unit.tx * tx_cw_90
+            part_unit.tx = conventional_orientation(part_unit)
 
     def calc_part_bbox(part):
         """Calculate the labeled bounding boxes and store it in the part."""
@@ -601,7 +581,7 @@ def preprocess_circuit(circuit, **options):
 
     for part in circuit.parts:
         initialize(part)
-        rotate_power_pins(part)
+        orient_conventionally(part)
         calc_part_bbox(part)
 
 
@@ -750,9 +730,16 @@ def gen_schematic(
     options["pt_to_pt_mult"] = 5
     options["pin_normalize"] = True
 
-    # Phase 1: Heuristic auto-stubbing before first generation pass.
     if options.get("auto_stub", False):
+        # Phase 1: Heuristic auto-stubbing before first generation pass.
         auto_stub_nets(circuit, **options)
+    elif options.get("power_symbols", True):
+        # Draw power nets with power symbols rather than wires, as auto-stubbing does.
+        power_nets = stub_power_nets(circuit, keep_drawn=True)
+        active_logger.info(
+            f"  [power_symbols] {', '.join(net.name for net in power_nets[:10])}"
+            f"{'...' if len(power_nets) > 10 else ''}"
+        )
 
     expansion_factor = 1.0
     failure_type = None

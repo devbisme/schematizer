@@ -21,7 +21,7 @@ from skidl import get_default_tool
 tool = get_default_tool()
 gen_schematic = importlib.import_module("schematizer.engine.gen_schematic")
 FIXABLE_ERROR_TYPES = gen_schematic.FIXABLE_ERROR_TYPES
-_POWER_NET_RE = gen_schematic._POWER_NET_RE
+from schematizer.engine.conventions import is_power_net_name
 _classify_and_stub_complex_nets = gen_schematic._classify_and_stub_complex_nets
 _parse_erc_report = gen_schematic._parse_erc_report
 _setup_kicad_env = gen_schematic._setup_kicad_env
@@ -68,11 +68,11 @@ class TestPowerNetRegex:
         ],
     )
     def test_power_nets_match(self, name):
-        assert _POWER_NET_RE.match(name), f"{name} should match power net pattern"
+        assert is_power_net_name(name), f"{name} should match power net pattern"
 
     @pytest.mark.parametrize("name", ["DATA", "CLK", "SDA", "SCL", "RESET", "N$1"])
     def test_signal_nets_no_match(self, name):
-        assert not _POWER_NET_RE.match(
+        assert not is_power_net_name(
             name
         ), f"{name} should NOT match power net pattern"
 

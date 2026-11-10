@@ -18,6 +18,14 @@ import numpy as np
 from ..ir import SchPin as Pin
 from .._utils import active_logger
 from .._utils import export_to_all, rmv_attr, sgn
+from .conventions import PIN_EXIT, best_orientations
+from .preplace import (
+    attach_satellites,
+    find_satellites,
+    release_satellites,
+    seed_placement,
+    spread_parts,
+)
 from .rng import rng
 from .debug_draw import (
     draw_end,
@@ -334,7 +342,7 @@ def adjust_orientations(parts, **options):
                     starting_cost = orientation_cost(part)
                     # Skip the starting orientation but set flag to process the others.
                     calc_starting_cost = False
-                else:
+                elif tx_key(part.tx) in part.allowed_txs:
                     # Calculate the cost of the current orientation.
                     delta_cost = orientation_cost(part) - starting_cost
                     if delta_cost < best_delta_cost:
@@ -355,11 +363,23 @@ def adjust_orientations(parts, **options):
         # Restore the original orientation.
         part.tx = part.prev_tx
 
-    # Get the list of parts that don't have their orientations locked.
-    movable_parts = [part for part in parts if not part.orientation_locked]
+    def tx_key(tx):
+        """Rotation/flip of a transform as something hashable."""
+        return (round(tx.a), round(tx.b), round(tx.c), round(tx.d))
+
+    # Get the list of parts that don't have their orientations locked and that
+    # have more than one orientation that follows the drafting conventions.
+    movable_parts = []
+    for part in parts:
+        if part.orientation_locked:
+            continue
+        part.allowed_txs = {tx_key(tx) for tx in best_orientations(part)}
+        if part.allowed_txs - {tx_key(part.tx)}:
+            movable_parts.append(part)
 
     if not movable_parts:
         # No movable parts, so exit without doing anything.
+        rmv_attr(parts, ("allowed_txs",))
         return
 
     # Provide neighbor parts to the label-overlap cost so it can penalize a
@@ -418,7 +438,7 @@ def adjust_orientations(parts, **options):
         if min_index == 0:
             break
 
-    rmv_attr(parts, ("prev_tx", "delta_cost", "delta_cost_tx"))
+    rmv_attr(parts, ("prev_tx", "delta_cost", "delta_cost_tx", "allowed_txs"))
 
     # Return True if one or more iterations were done, indicating part orientations were changed.
     return iter_cnt > 0
@@ -1745,16 +1765,11 @@ def evolve_placement(anchored_parts, mobile_parts, nets, force_func, **options):
 NEAR_MISS_DIST = 150  # 3 * GRID in mils.
 
 
-# Direction a wire leaves a pin, by pin orientation, in unrotated part coordinates.
-# (Matches add_place_pt(): a "U" pin has its tip on the bottom of the part.)
-_PIN_EXIT = {"U": Vector(0, -1), "D": Vector(0, 1), "L": Vector(1, 0), "R": Vector(-1, 0)}
-
-
 def _pin_pt_exit(pin):
     """Get a pin's position and the direction a wire leaves it, after the part's transform."""
     tx = pin.part.tx
     pt = pin.pt * tx
-    exit_pt = (pin.pt + _PIN_EXIT.get(pin.orientation, Vector(0, 0))) * tx
+    exit_pt = (pin.pt + PIN_EXIT.get(pin.orientation, Vector(0, 0))) * tx
     return pt, exit_pt - pt
 
 
@@ -2286,52 +2301,83 @@ class Placer:
             # Abort if nothing to place.
             return
 
+        # Separate the NetTerminals from the other parts.
+        net_terminals = [part for part in parts if is_net_terminal(part)]
+        real_parts = [part for part in parts if not is_net_terminal(part)]
+
+        # Satellites ride along with their hosts, so they don't count toward size.
+        preplace = options.get("preplace", True)
+        satellites = find_satellites(real_parts, nets) if preplace else {}
+        riders = {sat for sats in satellites.values() for sat, _, _ in sats}
+
         # Use row-based placement for large groups.
-        real_count = sum(1 for p in parts if not is_net_terminal(p))
-        if real_count > node._ROW_PLACE_THRESHOLD:
+        if len(real_parts) - len(riders) > node._ROW_PLACE_THRESHOLD:
             return node.place_connected_parts_rowbased(parts, nets, **options)
 
         # Add bboxes with surrounding area so parts are not butted against each other.
         add_placement_bboxes(parts, **options)
 
-        # Set anchor and pull pins that determine attractive forces between parts.
-        add_anchor_pull_pins(parts, nets, **options)
+        if preplace:
+            # Put the parts where a person would (see preplace.py) instead of
+            # letting forces pull them in from random starting points.
 
-        # Randomly place connected parts.
-        random_placement(parts)
+            # Fix satellites beside the pins they're wired to. Their hosts carry them.
+            for host, sats in satellites.items():
+                attach_satellites(
+                    host, sats, nets, options.get("expansion_factor", 1.0)
+                )
+            hosts = [part for part in real_parts if part not in riders]
+            add_anchor_pull_pins(hosts + net_terminals, nets, **options)
 
-        if options.get("draw_placement"):
-            # Draw the placement for debug purposes.
-            bbox = get_enclosing_bbox(parts)
-            draw_scr, draw_tx, draw_font = draw_start(bbox)
-            options.update(
-                {"draw_scr": draw_scr, "draw_tx": draw_tx, "draw_font": draw_font}
-            )
+            # Put each part beside the pins it's wired to, then move the parts
+            # off of each other and line up their pins.
+            seed_placement(hosts, nets)
+            spread_parts(hosts, nets)
+            align_parts([], hosts, nets, **options)
 
-        if options.get("compress_before_place"):
-            central_placement(parts, **options)
+            # Bring the satellites back and include them when placing NetTerminals.
+            release_satellites(satellites)
+            for sat in riders:
+                snap_to_grid(sat)
+            add_anchor_pull_pins(parts, nets, **options)
 
-        # Do force-directed placement of the parts in the parts.
+        else:
+            # Set anchor and pull pins that determine attractive forces between parts.
+            add_anchor_pull_pins(parts, nets, **options)
 
-        # Separate the NetTerminals from the other parts.
-        net_terminals = [part for part in parts if is_net_terminal(part)]
-        real_parts = [part for part in parts if not is_net_terminal(part)]
+            # Randomly place connected parts.
+            random_placement(parts)
 
-        # Do the first trial placement.
-        evolve_placement([], real_parts, nets, total_part_force, **options)
+            if options.get("draw_placement"):
+                # Draw the placement for debug purposes.
+                bbox = get_enclosing_bbox(parts)
+                draw_scr, draw_tx, draw_font = draw_start(bbox)
+                options.update(
+                    {"draw_scr": draw_scr, "draw_tx": draw_tx, "draw_font": draw_font}
+                )
 
-        if options.get("rotate_parts"):
-            # Adjust part orientations after first trial placement is done.
-            # Label-aware term is OFF here by default (connected parts) to avoid
-            # pushing a stub label onto an adjacent power node; opt in via
-            # label_aware_connected.
-            conn_opts = dict(options)
-            conn_opts["_label_aware_scope"] = options.get(
-                "label_aware_connected", False
-            )
-            if adjust_orientations(real_parts, **conn_opts):
-                # Some part orientations were changed, so re-do placement.
-                evolve_placement([], real_parts, nets, total_part_force, **options)
+            if options.get("compress_before_place"):
+                central_placement(parts, **options)
+
+            # Do force-directed placement of the parts in the parts.
+
+            # Do the first trial placement.
+            evolve_placement([], real_parts, nets, total_part_force, **options)
+
+            if options.get("rotate_parts"):
+                # Adjust part orientations after first trial placement is done.
+                # Label-aware term is OFF here by default (connected parts) to avoid
+                # pushing a stub label onto an adjacent power node; opt in via
+                # label_aware_connected.
+                conn_opts = dict(options)
+                conn_opts["_label_aware_scope"] = options.get(
+                    "label_aware_connected", False
+                )
+                if adjust_orientations(real_parts, **conn_opts):
+                    # Some part orientations were changed, so re-do placement.
+                    evolve_placement(
+                        [], real_parts, nets, total_part_force, **options
+                    )
 
         # Place NetTerminals after all the other parts.
         place_net_terminals(

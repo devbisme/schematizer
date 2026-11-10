@@ -1,0 +1,13320 @@
+{
+ "format": "skidl-generic-netlist",
+ "version": 1,
+ "title": "",
+ "top_name": "",
+ "sheets": [
+  [
+   "",
+   "power_supply1"
+  ],
+  [
+   ""
+  ],
+  [
+   "",
+   "mcu_esp32s3_1"
+  ],
+  [
+   "",
+   "user_interface1"
+  ],
+  [
+   "",
+   "usb_charger1"
+  ],
+  [
+   "",
+   "audio_output1"
+  ]
+ ],
+ "symbols": {
+  "Connector:USB_C_Receptacle": {
+   "ref_prefix": "J",
+   "name": "USB_C_Receptacle",
+   "lib": "Connector",
+   "description": "USB Full-Featured Type-C Receptacle connector",
+   "datasheet": "https://www.usb.org/sites/default/files/documents/usb_type-c.zip",
+   "draw_cmds": {
+    "1": [
+     [
+      "circle",
+      [
+       "center",
+       -2.54,
+       1.143
+      ],
+      [
+       "radius",
+       0.635
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.27,
+        4.318
+       ],
+       [
+        "xy",
+        0,
+        6.858
+       ],
+       [
+        "xy",
+        1.27,
+        4.318
+       ],
+       [
+        "xy",
+        -1.27,
+        4.318
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        -2.032
+       ],
+       [
+        "xy",
+        2.54,
+        0.508
+       ],
+       [
+        "xy",
+        2.54,
+        1.778
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        -3.302
+       ],
+       [
+        "xy",
+        -2.54,
+        -0.762
+       ],
+       [
+        "xy",
+        -2.54,
+        0.508
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        -5.842
+       ],
+       [
+        "xy",
+        0,
+        4.318
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "circle",
+      [
+       "center",
+       0,
+       -5.842
+      ],
+      [
+       "radius",
+       1.27
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       1.905,
+       1.778
+      ],
+      [
+       "end",
+       3.175,
+       3.048
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -7.62,
+       -40.64,
+       90
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "SHIELD",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "S1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -40.64,
+       90
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -40.64,
+       90
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A12",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -40.64,
+       90
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -40.64,
+       90
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B12",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       15.24,
+       25.4,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "VBUS",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       15.24,
+       25.4,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "VBUS",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A9",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       15.24,
+       25.4,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "VBUS",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       15.24,
+       25.4,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "VBUS",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B9",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       20.32,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "CC1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       17.78,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "CC2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       12.7,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "D-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       10.16,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "D-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       7.62,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "D+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       5.08,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "D+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       0,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "RX1-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B10",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -2.54,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "RX1+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B11",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -7.62,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "TX1-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -10.16,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "TX1+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -15.24,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "RX2-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A10",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -17.78,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "RX2+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A11",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -22.86,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "TX2-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -25.4,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "TX2+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -30.48,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "SBU1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "A8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -33.02,
+       180
+      ],
+      [
+       "length",
+       5.08
+      ],
+      [
+       "name",
+       "SBU2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "B8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -0.254,
+       -35.56
+      ],
+      [
+       "end",
+       0.254,
+       -34.544
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       25.654
+      ],
+      [
+       "end",
+       9.144,
+       25.146
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       20.574
+      ],
+      [
+       "end",
+       9.144,
+       20.066
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       18.034
+      ],
+      [
+       "end",
+       9.144,
+       17.526
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       12.954
+      ],
+      [
+       "end",
+       9.144,
+       12.446
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       10.414
+      ],
+      [
+       "end",
+       9.144,
+       9.906
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       7.874
+      ],
+      [
+       "end",
+       9.144,
+       7.366
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       5.334
+      ],
+      [
+       "end",
+       9.144,
+       4.826
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       0.254
+      ],
+      [
+       "end",
+       9.144,
+       -0.254
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -2.286
+      ],
+      [
+       "end",
+       9.144,
+       -2.794
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -7.366
+      ],
+      [
+       "end",
+       9.144,
+       -7.874
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -9.906
+      ],
+      [
+       "end",
+       9.144,
+       -10.414
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -14.986
+      ],
+      [
+       "end",
+       9.144,
+       -15.494
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -17.526
+      ],
+      [
+       "end",
+       9.144,
+       -18.034
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -22.606
+      ],
+      [
+       "end",
+       9.144,
+       -23.114
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -25.146
+      ],
+      [
+       "end",
+       9.144,
+       -25.654
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -30.226
+      ],
+      [
+       "end",
+       9.144,
+       -30.734
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -32.766
+      ],
+      [
+       "end",
+       9.144,
+       -33.274
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -10.16,
+       27.94
+      ],
+      [
+       "end",
+       10.16,
+       -35.56
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -8.89,
+        -3.81
+       ],
+       [
+        "xy",
+        -8.89,
+        3.81
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -7.62,
+       -3.81
+      ],
+      [
+       "end",
+       -6.35,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -7.62,
+       3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       4.4423
+      ],
+      [
+       "end",
+       -6.35,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -7.62,
+       3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       4.4423
+      ],
+      [
+       "end",
+       -6.35,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -8.89,
+       3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       5.7067
+      ],
+      [
+       "end",
+       -5.08,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -5.08,
+       -3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       -5.7067
+      ],
+      [
+       "end",
+       -8.89,
+       -3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -6.35,
+       -3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       -4.4423
+      ],
+      [
+       "end",
+       -7.62,
+       -3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -6.35,
+       -3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       -4.4423
+      ],
+      [
+       "end",
+       -7.62,
+       -3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -5.08,
+        3.81
+       ],
+       [
+        "xy",
+        -5.08,
+        -3.81
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "J",
+      [
+       "at",
+       -10.16,
+       29.21,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "USB_C_Receptacle",
+      [
+       "at",
+       10.16,
+       29.21,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "right"
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "rectangle",
+      [
+       "start",
+       -0.254,
+       -35.56
+      ],
+      [
+       "end",
+       0.254,
+       -34.544
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       25.654
+      ],
+      [
+       "end",
+       9.144,
+       25.146
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       20.574
+      ],
+      [
+       "end",
+       9.144,
+       20.066
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       18.034
+      ],
+      [
+       "end",
+       9.144,
+       17.526
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       12.954
+      ],
+      [
+       "end",
+       9.144,
+       12.446
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       10.414
+      ],
+      [
+       "end",
+       9.144,
+       9.906
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       7.874
+      ],
+      [
+       "end",
+       9.144,
+       7.366
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       5.334
+      ],
+      [
+       "end",
+       9.144,
+       4.826
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       0.254
+      ],
+      [
+       "end",
+       9.144,
+       -0.254
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -2.286
+      ],
+      [
+       "end",
+       9.144,
+       -2.794
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -7.366
+      ],
+      [
+       "end",
+       9.144,
+       -7.874
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -9.906
+      ],
+      [
+       "end",
+       9.144,
+       -10.414
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -14.986
+      ],
+      [
+       "end",
+       9.144,
+       -15.494
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -17.526
+      ],
+      [
+       "end",
+       9.144,
+       -18.034
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -22.606
+      ],
+      [
+       "end",
+       9.144,
+       -23.114
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -25.146
+      ],
+      [
+       "end",
+       9.144,
+       -25.654
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -30.226
+      ],
+      [
+       "end",
+       9.144,
+       -30.734
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       10.16,
+       -32.766
+      ],
+      [
+       "end",
+       9.144,
+       -33.274
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -10.16,
+       27.94
+      ],
+      [
+       "end",
+       10.16,
+       -35.56
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -8.89,
+        -3.81
+       ],
+       [
+        "xy",
+        -8.89,
+        3.81
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -7.62,
+       -3.81
+      ],
+      [
+       "end",
+       -6.35,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -7.62,
+       3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       4.4423
+      ],
+      [
+       "end",
+       -6.35,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -7.62,
+       3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       4.4423
+      ],
+      [
+       "end",
+       -6.35,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -8.89,
+       3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       5.7067
+      ],
+      [
+       "end",
+       -5.08,
+       3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -5.08,
+       -3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       -5.7067
+      ],
+      [
+       "end",
+       -8.89,
+       -3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -6.35,
+       -3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       -4.4423
+      ],
+      [
+       "end",
+       -7.62,
+       -3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "arc",
+      [
+       "start",
+       -6.35,
+       -3.81
+      ],
+      [
+       "mid",
+       -6.985,
+       -4.4423
+      ],
+      [
+       "end",
+       -7.62,
+       -3.81
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -5.08,
+        3.81
+       ],
+       [
+        "xy",
+        -5.08,
+        -3.81
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "S1",
+       "name": "SHIELD",
+       "x": -7.62,
+       "y": -40.64,
+       "orient": "U",
+       "rotation": 90,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "A1",
+       "name": "GND",
+       "x": 0,
+       "y": -40.64,
+       "orient": "U",
+       "rotation": 90,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "A12",
+       "name": "GND",
+       "x": 0,
+       "y": -40.64,
+       "orient": "U",
+       "rotation": 90,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "B1",
+       "name": "GND",
+       "x": 0,
+       "y": -40.64,
+       "orient": "U",
+       "rotation": 90,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "B12",
+       "name": "GND",
+       "x": 0,
+       "y": -40.64,
+       "orient": "U",
+       "rotation": 90,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "A4",
+       "name": "VBUS",
+       "x": 15.24,
+       "y": 25.4,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "A9",
+       "name": "VBUS",
+       "x": 15.24,
+       "y": 25.4,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "B4",
+       "name": "VBUS",
+       "x": 15.24,
+       "y": 25.4,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "B9",
+       "name": "VBUS",
+       "x": 15.24,
+       "y": 25.4,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "5"
+      },
+      {
+       "num": "A5",
+       "name": "CC1",
+       "x": 15.24,
+       "y": 20.32,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B5",
+       "name": "CC2",
+       "x": 15.24,
+       "y": 17.78,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A7",
+       "name": "D-",
+       "x": 15.24,
+       "y": 12.7,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B7",
+       "name": "D-",
+       "x": 15.24,
+       "y": 10.16,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A6",
+       "name": "D+",
+       "x": 15.24,
+       "y": 7.62,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B6",
+       "name": "D+",
+       "x": 15.24,
+       "y": 5.08,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B10",
+       "name": "RX1-",
+       "x": 15.24,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B11",
+       "name": "RX1+",
+       "x": 15.24,
+       "y": -2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A3",
+       "name": "TX1-",
+       "x": 15.24,
+       "y": -7.62,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A2",
+       "name": "TX1+",
+       "x": 15.24,
+       "y": -10.16,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A10",
+       "name": "RX2-",
+       "x": 15.24,
+       "y": -15.24,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A11",
+       "name": "RX2+",
+       "x": 15.24,
+       "y": -17.78,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B3",
+       "name": "TX2-",
+       "x": 15.24,
+       "y": -22.86,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B2",
+       "name": "TX2+",
+       "x": 15.24,
+       "y": -25.4,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "A8",
+       "name": "SBU1",
+       "x": 15.24,
+       "y": -30.48,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      },
+      {
+       "num": "B8",
+       "name": "SBU2",
+       "x": 15.24,
+       "y": -33.02,
+       "orient": "L",
+       "rotation": 180,
+       "length": 5.08,
+       "func": "3"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 1.016,
+    "hide": false
+   }
+  },
+  "Device:R": {
+   "ref_prefix": "R",
+   "name": "R",
+   "lib": "Device",
+   "description": "Resistor",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       3.81,
+       270
+      ],
+      [
+       "length",
+       1.27
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -3.81,
+       90
+      ],
+      [
+       "length",
+       1.27
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -1.016,
+       -2.54
+      ],
+      [
+       "end",
+       1.016,
+       2.54
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "R",
+      [
+       "at",
+       2.032,
+       0,
+       90
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "R",
+      [
+       "at",
+       0,
+       0,
+       90
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "rectangle",
+      [
+       "start",
+       -1.016,
+       -2.54
+      ],
+      [
+       "end",
+       1.016,
+       2.54
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "~",
+       "x": 0,
+       "y": 3.81,
+       "orient": "D",
+       "rotation": 270,
+       "length": 1.27,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "~",
+       "x": 0,
+       "y": -3.81,
+       "orient": "U",
+       "rotation": 90,
+       "length": 1.27,
+       "func": "5"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0,
+    "hide": false
+   }
+  },
+  "Battery_Management:TP4056-42-ESOP8": {
+   "ref_prefix": "U",
+   "name": "TP4056-42-ESOP8",
+   "lib": "Battery_Management",
+   "description": "1A Standalone Linear Li-ion/LiPo single-cell battery charger, 4.2V \u00c2\u00b11% charge voltage, VCC = 4.0..8.0V, SOIC-8 (SOP-8)",
+   "datasheet": "https://www.lcsc.com/datasheet/lcsc_datasheet_2410121619_TOPPOWER-Nanjing-Extension-Microelectronics-TP4056-42-ESOP8_C16581.pdf",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -10.16,
+       5.08,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "CE",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "open_collector",
+      "line",
+      [
+       "at",
+       -10.16,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "~{CHRG}",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "open_collector",
+      "line",
+      [
+       "at",
+       -10.16,
+       -2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "~{STDBY}",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -2.54,
+       -12.7,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "EPAD",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "9",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       12.7,
+       270
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "V_{CC}",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       -12.7,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_out",
+      "line",
+      [
+       "at",
+       10.16,
+       5.08,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "BAT",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       10.16,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "TEMP",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       10.16,
+       -2.54,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "PROG",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -7.62,
+       10.16
+      ],
+      [
+       "end",
+       7.62,
+       -10.16
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       -6.604,
+       11.684,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "TP4056-42-ESOP8",
+      [
+       "at",
+       10.16,
+       11.684,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "8",
+       "name": "CE",
+       "x": -10.16,
+       "y": 5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "7",
+       "name": "~{CHRG}",
+       "x": -10.16,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "9"
+      },
+      {
+       "num": "6",
+       "name": "~{STDBY}",
+       "x": -10.16,
+       "y": -2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "9"
+      },
+      {
+       "num": "9",
+       "name": "EPAD",
+       "x": -2.54,
+       "y": -12.7,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "4",
+       "name": "V_{CC}",
+       "x": 0,
+       "y": 12.7,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "3",
+       "name": "GND",
+       "x": 0,
+       "y": -12.7,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "5",
+       "name": "BAT",
+       "x": 10.16,
+       "y": 5.08,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "8"
+      },
+      {
+       "num": "1",
+       "name": "TEMP",
+       "x": 10.16,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "2",
+       "name": "PROG",
+       "x": 10.16,
+       "y": -2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "5"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0.508,
+    "hide": false
+   }
+  },
+  "Device:LED": {
+   "ref_prefix": "D",
+   "name": "LED",
+   "lib": "Device",
+   "description": "Light emitting diode",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -3.81,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "K",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       3.81,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "A",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -3.048,
+        -0.762
+       ],
+       [
+        "xy",
+        -4.572,
+        -2.286
+       ],
+       [
+        "xy",
+        -3.81,
+        -2.286
+       ],
+       [
+        "xy",
+        -4.572,
+        -2.286
+       ],
+       [
+        "xy",
+        -4.572,
+        -1.524
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.778,
+        -0.762
+       ],
+       [
+        "xy",
+        -3.302,
+        -2.286
+       ],
+       [
+        "xy",
+        -2.54,
+        -2.286
+       ],
+       [
+        "xy",
+        -3.302,
+        -2.286
+       ],
+       [
+        "xy",
+        -3.302,
+        -1.524
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.27,
+        0
+       ],
+       [
+        "xy",
+        1.27,
+        0
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.27,
+        -1.27
+       ],
+       [
+        "xy",
+        -1.27,
+        1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -1.27
+       ],
+       [
+        "xy",
+        1.27,
+        1.27
+       ],
+       [
+        "xy",
+        -1.27,
+        0
+       ],
+       [
+        "xy",
+        1.27,
+        -1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "D",
+      [
+       "at",
+       0,
+       2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "LED",
+      [
+       "at",
+       0,
+       -2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -3.048,
+        -0.762
+       ],
+       [
+        "xy",
+        -4.572,
+        -2.286
+       ],
+       [
+        "xy",
+        -3.81,
+        -2.286
+       ],
+       [
+        "xy",
+        -4.572,
+        -2.286
+       ],
+       [
+        "xy",
+        -4.572,
+        -1.524
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.778,
+        -0.762
+       ],
+       [
+        "xy",
+        -3.302,
+        -2.286
+       ],
+       [
+        "xy",
+        -2.54,
+        -2.286
+       ],
+       [
+        "xy",
+        -3.302,
+        -2.286
+       ],
+       [
+        "xy",
+        -3.302,
+        -1.524
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.27,
+        0
+       ],
+       [
+        "xy",
+        1.27,
+        0
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -1.27,
+        -1.27
+       ],
+       [
+        "xy",
+        -1.27,
+        1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -1.27
+       ],
+       [
+        "xy",
+        1.27,
+        1.27
+       ],
+       [
+        "xy",
+        -1.27,
+        0
+       ],
+       [
+        "xy",
+        1.27,
+        -1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "K",
+       "x": -3.81,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "A",
+       "x": 3.81,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "5"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 1.016,
+    "hide": true
+   }
+  },
+  "Device:C": {
+   "ref_prefix": "C",
+   "name": "C",
+   "lib": "Device",
+   "description": "Unpolarized capacitor",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       3.81,
+       270
+      ],
+      [
+       "length",
+       2.794
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -3.81,
+       90
+      ],
+      [
+       "length",
+       2.794
+      ],
+      [
+       "name",
+       "~",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        0.762
+       ],
+       [
+        "xy",
+        2.032,
+        0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        -0.762
+       ],
+       [
+        "xy",
+        2.032,
+        -0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "C",
+      [
+       "at",
+       0.635,
+       2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "C",
+      [
+       "at",
+       0.635,
+       -2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        0.762
+       ],
+       [
+        "xy",
+        2.032,
+        0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        -2.032,
+        -0.762
+       ],
+       [
+        "xy",
+        2.032,
+        -0.762
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.508
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "~",
+       "x": 0,
+       "y": 3.81,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.794,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "~",
+       "x": 0,
+       "y": -3.81,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.794,
+       "func": "5"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0.254,
+    "hide": false
+   }
+  },
+  "Connector:Conn_01x02_Pin": {
+   "ref_prefix": "J",
+   "name": "Conn_01x02_Pin",
+   "lib": "Connector",
+   "description": "Generic connector, single row, 01x02, script generated",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "rectangle",
+      [
+       "start",
+       0.8636,
+       0.127
+      ],
+      [
+       "end",
+       0,
+       -0.127
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       0.8636,
+       -2.413
+      ],
+      [
+       "end",
+       0,
+       -2.667
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "outline"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        0
+       ],
+       [
+        "xy",
+        0.8636,
+        0
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -2.54
+       ],
+       [
+        "xy",
+        0.8636,
+        -2.54
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.1524
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       5.08,
+       0,
+       180
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       5.08,
+       -2.54,
+       180
+      ],
+      [
+       "length",
+       3.81
+      ],
+      [
+       "name",
+       "Pin_2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "J",
+      [
+       "at",
+       0,
+       2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "Conn_01x02_Pin",
+      [
+       "at",
+       0,
+       -5.08,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "Pin_1",
+       "x": 5.08,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 3.81,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "Pin_2",
+       "x": 5.08,
+       "y": -2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 3.81,
+       "func": "5"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 1.016,
+    "hide": true
+   }
+  },
+  "Regulator_Linear:AP2112K-3.3": {
+   "ref_prefix": "U",
+   "name": "AP2112K-3.3",
+   "lib": "Regulator_Linear",
+   "description": "600mA low dropout linear regulator, with enable pin, 3.8V-6V input voltage range, 3.3V fixed positive output, SOT-23-5",
+   "datasheet": "https://www.diodes.com/assets/Datasheets/AP2112.pdf",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       -7.62,
+       2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "VIN",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -7.62,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "EN",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       -7.62,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "no_connect",
+      "line",
+      [
+       "at",
+       5.08,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "NC",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_out",
+      "line",
+      [
+       "at",
+       7.62,
+       2.54,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "VOUT",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -5.08,
+       4.445
+      ],
+      [
+       "end",
+       5.08,
+       -5.08
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       -5.08,
+       5.715,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "AP2204K-1.5",
+      [
+       "at",
+       0,
+       5.715,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       -5.08,
+       5.715,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "AP2112K-3.3",
+      [
+       "at",
+       0,
+       5.715,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "rectangle",
+      [
+       "start",
+       -5.08,
+       4.445
+      ],
+      [
+       "end",
+       5.08,
+       -5.08
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "VIN",
+       "x": -7.62,
+       "y": 2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "3",
+       "name": "EN",
+       "x": -7.62,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "2",
+       "name": "GND",
+       "x": 0,
+       "y": -7.62,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "4",
+       "name": "NC",
+       "x": 5.08,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "13"
+      },
+      {
+       "num": "5",
+       "name": "VOUT",
+       "x": 7.62,
+       "y": 2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "8"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0.254,
+    "hide": false
+   }
+  },
+  "RF_Module:ESP32-S3-WROOM-1": {
+   "ref_prefix": "U",
+   "name": "ESP32-S3-WROOM-1",
+   "lib": "RF_Module",
+   "description": "RF Module, ESP32-S3 SoC, Wi-Fi 802.11b/g/n, Bluetooth, BLE, 32-bit, 3.3V, onboard antenna, SMD",
+   "datasheet": "https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -15.24,
+       22.86,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "EN",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       17.78,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO0",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "27",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       15.24,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "39",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       12.7,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "38",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       10.16,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "15",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       7.62,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       5.08,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "12",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -5.08,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO9",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "17",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -7.62,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO10",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "18",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -10.16,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO11",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "19",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -12.7,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO12",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "20",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -15.24,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO13",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "21",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -17.78,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO14",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "22",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -20.32,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO15",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       -15.24,
+       -22.86,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO16",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "9",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       27.94,
+       270
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "3V3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       -27.94,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -27.94,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "40",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       -27.94,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "41",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       22.86,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "TXD0",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "37",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       20.32,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "RXD0",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "36",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       17.78,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO17",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "10",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       15.24,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO18",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "11",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       12.7,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "USB_D-",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "13",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "alternate",
+       "IO19",
+       "bidirectional",
+       "line"
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       10.16,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "USB_D+",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "14",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "alternate",
+       "IO20",
+       "bidirectional",
+       "line"
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       7.62,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO21",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "23",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       5.08,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO35",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "28",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       2.54,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO36",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "29",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO37",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "30",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -2.54,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO38",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "31",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -5.08,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO39",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "32",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -7.62,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO40",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "33",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -10.16,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO41",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "34",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -12.7,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO42",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "35",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -15.24,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO45",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "26",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -17.78,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO46",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "16",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -20.32,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO47",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "24",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "bidirectional",
+      "line",
+      [
+       "at",
+       15.24,
+       -22.86,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "IO48",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "25",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       -12.7,
+       25.4
+      ],
+      [
+       "end",
+       12.7,
+       -25.4
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "text",
+      "PSRAM",
+      [
+       "at",
+       5.08,
+       2.54,
+       900
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        7.62,
+        -1.27
+       ],
+       [
+        "xy",
+        6.35,
+        -1.27
+       ],
+       [
+        "xy",
+        6.35,
+        6.35
+       ],
+       [
+        "xy",
+        7.62,
+        6.35
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       -12.7,
+       26.67,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "ESP32-S3-WROOM-1",
+      [
+       "at",
+       12.7,
+       26.67,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "rectangle",
+      [
+       "start",
+       -12.7,
+       25.4
+      ],
+      [
+       "end",
+       12.7,
+       -25.4
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "text",
+      "PSRAM",
+      [
+       "at",
+       5.08,
+       2.54,
+       900
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        7.62,
+        -1.27
+       ],
+       [
+        "xy",
+        6.35,
+        -1.27
+       ],
+       [
+        "xy",
+        6.35,
+        6.35
+       ],
+       [
+        "xy",
+        7.62,
+        6.35
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "3",
+       "name": "EN",
+       "x": -15.24,
+       "y": 22.86,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "27",
+       "name": "IO0",
+       "x": -15.24,
+       "y": 17.78,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "39",
+       "name": "IO1",
+       "x": -15.24,
+       "y": 15.24,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "38",
+       "name": "IO2",
+       "x": -15.24,
+       "y": 12.7,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "15",
+       "name": "IO3",
+       "x": -15.24,
+       "y": 10.16,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "4",
+       "name": "IO4",
+       "x": -15.24,
+       "y": 7.62,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "5",
+       "name": "IO5",
+       "x": -15.24,
+       "y": 5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "6",
+       "name": "IO6",
+       "x": -15.24,
+       "y": 2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "7",
+       "name": "IO7",
+       "x": -15.24,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "12",
+       "name": "IO8",
+       "x": -15.24,
+       "y": -2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "17",
+       "name": "IO9",
+       "x": -15.24,
+       "y": -5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "18",
+       "name": "IO10",
+       "x": -15.24,
+       "y": -7.62,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "19",
+       "name": "IO11",
+       "x": -15.24,
+       "y": -10.16,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "20",
+       "name": "IO12",
+       "x": -15.24,
+       "y": -12.7,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "21",
+       "name": "IO13",
+       "x": -15.24,
+       "y": -15.24,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "22",
+       "name": "IO14",
+       "x": -15.24,
+       "y": -17.78,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "8",
+       "name": "IO15",
+       "x": -15.24,
+       "y": -20.32,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "9",
+       "name": "IO16",
+       "x": -15.24,
+       "y": -22.86,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "2",
+       "name": "3V3",
+       "x": 0,
+       "y": 27.94,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "1",
+       "name": "GND",
+       "x": 0,
+       "y": -27.94,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "40",
+       "name": "GND",
+       "x": 0,
+       "y": -27.94,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "41",
+       "name": "GND",
+       "x": 0,
+       "y": -27.94,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "37",
+       "name": "TXD0",
+       "x": 15.24,
+       "y": 22.86,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "36",
+       "name": "RXD0",
+       "x": 15.24,
+       "y": 20.32,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "10",
+       "name": "IO17",
+       "x": 15.24,
+       "y": 17.78,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "11",
+       "name": "IO18",
+       "x": 15.24,
+       "y": 15.24,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "13",
+       "name": "USB_D-",
+       "x": 15.24,
+       "y": 12.7,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "14",
+       "name": "USB_D+",
+       "x": 15.24,
+       "y": 10.16,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "23",
+       "name": "IO21",
+       "x": 15.24,
+       "y": 7.62,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "28",
+       "name": "IO35",
+       "x": 15.24,
+       "y": 5.08,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "29",
+       "name": "IO36",
+       "x": 15.24,
+       "y": 2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "30",
+       "name": "IO37",
+       "x": 15.24,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "31",
+       "name": "IO38",
+       "x": 15.24,
+       "y": -2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "32",
+       "name": "IO39",
+       "x": 15.24,
+       "y": -5.08,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "33",
+       "name": "IO40",
+       "x": 15.24,
+       "y": -7.62,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "34",
+       "name": "IO41",
+       "x": 15.24,
+       "y": -10.16,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "35",
+       "name": "IO42",
+       "x": 15.24,
+       "y": -12.7,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "26",
+       "name": "IO45",
+       "x": 15.24,
+       "y": -15.24,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "16",
+       "name": "IO46",
+       "x": 15.24,
+       "y": -17.78,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "24",
+       "name": "IO47",
+       "x": 15.24,
+       "y": -20.32,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      },
+      {
+       "num": "25",
+       "name": "IO48",
+       "x": 15.24,
+       "y": -22.86,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "3"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0.508,
+    "hide": false
+   }
+  },
+  "Audio:MAX98357A": {
+   "ref_prefix": "U",
+   "name": "MAX98357A",
+   "lib": "Audio",
+   "description": "Mono DAC with amplifier, I2S, PCM, TDM, 32-bit, 96khz, 3.2W, TQFP-16",
+   "datasheet": "https://www.analog.com/media/en/technical-documentation/data-sheets/MAX98357A-MAX98357B.pdf",
+   "draw_cmds": {
+    "1": [
+     [
+      "rectangle",
+      [
+       "start",
+       -10.16,
+       10.16
+      ],
+      [
+       "end",
+       10.16,
+       -10.16
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -12.7,
+       7.62,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "DIN",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -12.7,
+       5.08,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "BCLK",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "16",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -12.7,
+       2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "LRCLK",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "14",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -12.7,
+       -2.54,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "~{SD_MODE}",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -12.7,
+       -5.08,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "GAIN_SLOT",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -2.54,
+       -12.7,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "11",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -2.54,
+       -12.7,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "15",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       -2.54,
+       -12.7,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "GND",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       12.7,
+       270
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "VDD",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "7",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       0,
+       12.7,
+       270
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "VDD",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "8",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "unspecified",
+      "line",
+      [
+       "at",
+       2.54,
+       -12.7,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "PAD",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "17",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "no_connect",
+      "line",
+      [
+       "at",
+       10.16,
+       2.54,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "NC",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "5",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "no_connect",
+      "line",
+      [
+       "at",
+       10.16,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "NC",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "6",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "no_connect",
+      "line",
+      [
+       "at",
+       10.16,
+       -5.08,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "NC",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "12",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "no_connect",
+      "line",
+      [
+       "at",
+       10.16,
+       -7.62,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "hide",
+       "yes"
+      ],
+      [
+       "name",
+       "NC",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "13",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "output",
+      "line",
+      [
+       "at",
+       12.7,
+       7.62,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "OUTP",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "9",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "output",
+      "line",
+      [
+       "at",
+       12.7,
+       5.08,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "OUTN",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "10",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "U",
+      [
+       "at",
+       -8.89,
+       11.43,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "MAX98357A",
+      [
+       "at",
+       10.16,
+       11.43,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "DIN",
+       "x": -12.7,
+       "y": 7.62,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "16",
+       "name": "BCLK",
+       "x": -12.7,
+       "y": 5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "14",
+       "name": "LRCLK",
+       "x": -12.7,
+       "y": 2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "4",
+       "name": "~{SD_MODE}",
+       "x": -12.7,
+       "y": -2.54,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "2",
+       "name": "GAIN_SLOT",
+       "x": -12.7,
+       "y": -5.08,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "11",
+       "name": "GND",
+       "x": -2.54,
+       "y": -12.7,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "15",
+       "name": "GND",
+       "x": -2.54,
+       "y": -12.7,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "3",
+       "name": "GND",
+       "x": -2.54,
+       "y": -12.7,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "7",
+       "name": "VDD",
+       "x": 0,
+       "y": 12.7,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "8",
+       "name": "VDD",
+       "x": 0,
+       "y": 12.7,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "17",
+       "name": "PAD",
+       "x": 2.54,
+       "y": -12.7,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "6"
+      },
+      {
+       "num": "5",
+       "name": "NC",
+       "x": 10.16,
+       "y": 2.54,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "13"
+      },
+      {
+       "num": "6",
+       "name": "NC",
+       "x": 10.16,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "13"
+      },
+      {
+       "num": "12",
+       "name": "NC",
+       "x": 10.16,
+       "y": -5.08,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "13"
+      },
+      {
+       "num": "13",
+       "name": "NC",
+       "x": 10.16,
+       "y": -7.62,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "13"
+      },
+      {
+       "num": "9",
+       "name": "OUTP",
+       "x": 12.7,
+       "y": 7.62,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "2"
+      },
+      {
+       "num": "10",
+       "name": "OUTN",
+       "x": 12.7,
+       "y": 5.08,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "2"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0.508,
+    "hide": false
+   }
+  },
+  "Switch:SW_Push": {
+   "ref_prefix": "SW",
+   "name": "SW_Push",
+   "lib": "Switch",
+   "description": "Push button switch, generic, two pins",
+   "datasheet": "~",
+   "draw_cmds": {
+    "1": [
+     [
+      "circle",
+      [
+       "center",
+       -2.032,
+       0
+      ],
+      [
+       "radius",
+       0.508
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        1.27
+       ],
+       [
+        "xy",
+        0,
+        3.048
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "circle",
+      [
+       "center",
+       2.032,
+       0
+      ],
+      [
+       "radius",
+       0.508
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        2.54,
+        1.27
+       ],
+       [
+        "xy",
+        -2.54,
+        1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       5.08,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "SW",
+      [
+       "at",
+       1.27,
+       2.54,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "SW_Push",
+      [
+       "at",
+       0,
+       -1.524,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "circle",
+      [
+       "center",
+       -2.032,
+       0
+      ],
+      [
+       "radius",
+       0.508
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        0,
+        1.27
+       ],
+       [
+        "xy",
+        0,
+        3.048
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "circle",
+      [
+       "center",
+       2.032,
+       0
+      ],
+      [
+       "radius",
+       0.508
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        2.54,
+        1.27
+       ],
+       [
+        "xy",
+        -2.54,
+        1.27
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       -5.08,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "passive",
+      "line",
+      [
+       "at",
+       5.08,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "1",
+       "name": "1",
+       "x": -5.08,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "5"
+      },
+      {
+       "num": "2",
+       "name": "2",
+       "x": 5.08,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "5"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 1.016,
+    "hide": true
+   }
+  },
+  "LED:WS2812B": {
+   "ref_prefix": "D",
+   "name": "WS2812B",
+   "lib": "LED",
+   "description": "RGB LED with integrated controller",
+   "datasheet": "https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf",
+   "draw_cmds": {
+    "1": [
+     [
+      "pin",
+      "input",
+      "line",
+      [
+       "at",
+       -7.62,
+       0,
+       0
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "DIN",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "4",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       7.62,
+       270
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "VDD",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "1",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "power_in",
+      "line",
+      [
+       "at",
+       0,
+       -7.62,
+       90
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "VSS",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "3",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "pin",
+      "output",
+      "line",
+      [
+       "at",
+       7.62,
+       0,
+       180
+      ],
+      [
+       "length",
+       2.54
+      ],
+      [
+       "name",
+       "DOUT",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ],
+      [
+       "number",
+       "2",
+       [
+        "effects",
+        [
+         "font",
+         [
+          "size",
+          1.27,
+          1.27
+         ]
+        ]
+       ]
+      ]
+     ],
+     [
+      "text",
+      "RGB",
+      [
+       "at",
+       2.286,
+       -4.191,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         0.762,
+         0.762
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -2.54
+       ],
+       [
+        "xy",
+        1.778,
+        -2.54
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -3.556
+       ],
+       [
+        "xy",
+        1.778,
+        -3.556
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        2.286,
+        -1.524
+       ],
+       [
+        "xy",
+        1.27,
+        -2.54
+       ],
+       [
+        "xy",
+        1.27,
+        -2.032
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        2.286,
+        -2.54
+       ],
+       [
+        "xy",
+        1.27,
+        -3.556
+       ],
+       [
+        "xy",
+        1.27,
+        -3.048
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        3.683,
+        -1.016
+       ],
+       [
+        "xy",
+        3.683,
+        -3.556
+       ],
+       [
+        "xy",
+        3.683,
+        -4.064
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        4.699,
+        -1.524
+       ],
+       [
+        "xy",
+        2.667,
+        -1.524
+       ],
+       [
+        "xy",
+        3.683,
+        -3.556
+       ],
+       [
+        "xy",
+        4.699,
+        -1.524
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        4.699,
+        -3.556
+       ],
+       [
+        "xy",
+        2.667,
+        -3.556
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       5.08,
+       5.08
+      ],
+      [
+       "end",
+       -5.08,
+       -5.08
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Reference",
+      "D",
+      [
+       "at",
+       5.08,
+       5.715,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "right",
+        "bottom"
+       ]
+      ]
+     ],
+     [
+      "property",
+      "Value",
+      "WS2812B",
+      [
+       "at",
+       1.27,
+       -5.715,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         1.27,
+         1.27
+        ]
+       ],
+       [
+        "justify",
+        "left",
+        "top"
+       ]
+      ]
+     ]
+    ],
+    "0": [
+     [
+      "text",
+      "RGB",
+      [
+       "at",
+       2.286,
+       -4.191,
+       0
+      ],
+      [
+       "effects",
+       [
+        "font",
+        [
+         "size",
+         0.762,
+         0.762
+        ]
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -2.54
+       ],
+       [
+        "xy",
+        1.778,
+        -2.54
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        1.27,
+        -3.556
+       ],
+       [
+        "xy",
+        1.778,
+        -3.556
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        2.286,
+        -1.524
+       ],
+       [
+        "xy",
+        1.27,
+        -2.54
+       ],
+       [
+        "xy",
+        1.27,
+        -2.032
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        2.286,
+        -2.54
+       ],
+       [
+        "xy",
+        1.27,
+        -3.556
+       ],
+       [
+        "xy",
+        1.27,
+        -3.048
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        3.683,
+        -1.016
+       ],
+       [
+        "xy",
+        3.683,
+        -3.556
+       ],
+       [
+        "xy",
+        3.683,
+        -4.064
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        4.699,
+        -1.524
+       ],
+       [
+        "xy",
+        2.667,
+        -1.524
+       ],
+       [
+        "xy",
+        3.683,
+        -3.556
+       ],
+       [
+        "xy",
+        4.699,
+        -1.524
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "polyline",
+      [
+       "pts",
+       [
+        "xy",
+        4.699,
+        -3.556
+       ],
+       [
+        "xy",
+        2.667,
+        -3.556
+       ]
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "none"
+       ]
+      ]
+     ],
+     [
+      "rectangle",
+      [
+       "start",
+       5.08,
+       5.08
+      ],
+      [
+       "end",
+       -5.08,
+       -5.08
+      ],
+      [
+       "stroke",
+       [
+        "width",
+        0.254
+       ],
+       [
+        "type",
+        "default"
+       ]
+      ],
+      [
+       "fill",
+       [
+        "type",
+        "background"
+       ]
+      ]
+     ]
+    ]
+   },
+   "units": {
+    "1": {
+     "pins": [
+      {
+       "num": "4",
+       "name": "DIN",
+       "x": -7.62,
+       "y": 0,
+       "orient": "R",
+       "rotation": 0,
+       "length": 2.54,
+       "func": "1"
+      },
+      {
+       "num": "1",
+       "name": "VDD",
+       "x": 0,
+       "y": 7.62,
+       "orient": "D",
+       "rotation": 270,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "3",
+       "name": "VSS",
+       "x": 0,
+       "y": -7.62,
+       "orient": "U",
+       "rotation": 90,
+       "length": 2.54,
+       "func": "7"
+      },
+      {
+       "num": "2",
+       "name": "DOUT",
+       "x": 7.62,
+       "y": 0,
+       "orient": "L",
+       "rotation": 180,
+       "length": 2.54,
+       "func": "2"
+      }
+     ]
+    }
+   },
+   "pin_names": {
+    "offset": 0.254,
+    "hide": false
+   }
+  }
+ },
+ "components": [
+  {
+   "ref": "C1",
+   "lib_id": "Device:C",
+   "value": "10uF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C10",
+   "lib_id": "Device:C",
+   "value": "100nF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "audio_output1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C11",
+   "lib_id": "Device:C",
+   "value": "100nF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "user_interface1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C2",
+   "lib_id": "Device:C",
+   "value": "10uF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "power_supply1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C3",
+   "lib_id": "Device:C",
+   "value": "1uF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "power_supply1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C4",
+   "lib_id": "Device:C",
+   "value": "1uF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "power_supply1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C5",
+   "lib_id": "Device:C",
+   "value": "100nF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "mcu_esp32s3_1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$9"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C6",
+   "lib_id": "Device:C",
+   "value": "100nF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "mcu_esp32s3_1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C7",
+   "lib_id": "Device:C",
+   "value": "100nF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "mcu_esp32s3_1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C8",
+   "lib_id": "Device:C",
+   "value": "10uF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "mcu_esp32s3_1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "C9",
+   "lib_id": "Device:C",
+   "value": "10uF",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "audio_output1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "D1",
+   "lib_id": "Device:LED",
+   "value": "LED",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$6"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$5"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "D2",
+   "lib_id": "Device:LED",
+   "value": "LED",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$8"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$7"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "D3",
+   "lib_id": "LED:WS2812B",
+   "value": "WS2812B",
+   "footprint": "LED_SMD:LED_WS2812B_PLCC4_5.0x5.0mm_P3.2mm",
+   "hiertuple": [
+    "",
+    "user_interface1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "4",
+     "unit": 1,
+     "net": "LED_DIN"
+    },
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "LED_DOUT_NC"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "J1",
+   "lib_id": "Connector:USB_C_Receptacle",
+   "value": "USB_C_Receptacle",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "S1",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "A1",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "A12",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "B1",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "B12",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "A4",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "A9",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "B4",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "B9",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "A5",
+     "unit": 1,
+     "net": "N$1"
+    },
+    {
+     "num": "B5",
+     "unit": 1,
+     "net": "N$2"
+    },
+    {
+     "num": "A7",
+     "unit": 1,
+     "net": "USB_DM"
+    },
+    {
+     "num": "B7",
+     "unit": 1,
+     "net": "USB_DM"
+    },
+    {
+     "num": "A6",
+     "unit": 1,
+     "net": "USB_DP"
+    },
+    {
+     "num": "B6",
+     "unit": 1,
+     "net": "USB_DP"
+    },
+    {
+     "num": "B10",
+     "unit": 1,
+     "net": "USB_B10_NC"
+    },
+    {
+     "num": "B11",
+     "unit": 1,
+     "net": "USB_B11_NC"
+    },
+    {
+     "num": "A3",
+     "unit": 1,
+     "net": "USB_A3_NC"
+    },
+    {
+     "num": "A2",
+     "unit": 1,
+     "net": "USB_A2_NC"
+    },
+    {
+     "num": "A10",
+     "unit": 1,
+     "net": "USB_A10_NC"
+    },
+    {
+     "num": "A11",
+     "unit": 1,
+     "net": "USB_A11_NC"
+    },
+    {
+     "num": "B3",
+     "unit": 1,
+     "net": "USB_B3_NC"
+    },
+    {
+     "num": "B2",
+     "unit": 1,
+     "net": "USB_B2_NC"
+    },
+    {
+     "num": "A8",
+     "unit": 1,
+     "net": "USB_A8_NC"
+    },
+    {
+     "num": "B8",
+     "unit": 1,
+     "net": "USB_B8_NC"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "J2",
+   "lib_id": "Connector:Conn_01x02_Pin",
+   "value": "Conn_01x02_Pin",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "power_supply1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "J3",
+   "lib_id": "Connector:Conn_01x02_Pin",
+   "value": "Conn_01x02_Pin",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "audio_output1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$10"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$11"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R1",
+   "lib_id": "Device:R",
+   "value": "5.1K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$1"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R2",
+   "lib_id": "Device:R",
+   "value": "5.1K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$2"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R3",
+   "lib_id": "Device:R",
+   "value": "10K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$3"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R4",
+   "lib_id": "Device:R",
+   "value": "2K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$4"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R5",
+   "lib_id": "Device:R",
+   "value": "1K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$6"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R6",
+   "lib_id": "Device:R",
+   "value": "1K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$8"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R7",
+   "lib_id": "Device:R",
+   "value": "10K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "mcu_esp32s3_1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$9"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R8",
+   "lib_id": "Device:R",
+   "value": "100K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "audio_output1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "AMP_SD"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "R9",
+   "lib_id": "Device:R",
+   "value": "10K",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "user_interface1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "BTN"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "SW1",
+   "lib_id": "Switch:SW_Push",
+   "value": "SW_Push",
+   "footprint": "",
+   "hiertuple": [
+    "",
+    "user_interface1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "BTN"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "U1",
+   "lib_id": "Battery_Management:TP4056-42-ESOP8",
+   "value": "TP4056-42-ESOP8",
+   "footprint": "Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm_ThermalVias",
+   "hiertuple": [
+    "",
+    "usb_charger1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "8",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "7",
+     "unit": 1,
+     "net": "N$5"
+    },
+    {
+     "num": "6",
+     "unit": 1,
+     "net": "N$7"
+    },
+    {
+     "num": "9",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "4",
+     "unit": 1,
+     "net": "VBUS"
+    },
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "5",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "N$3"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "N$4"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "U2",
+   "lib_id": "Regulator_Linear:AP2112K-3.3",
+   "value": "AP2112K-3.3",
+   "footprint": "Package_TO_SOT_SMD:SOT-23-5",
+   "hiertuple": [
+    "",
+    "power_supply1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "4",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "5",
+     "unit": 1,
+     "net": "VCC"
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "U3",
+   "lib_id": "RF_Module:ESP32-S3-WROOM-1",
+   "value": "ESP32-S3-WROOM-1",
+   "footprint": "RF_Module:ESP32-S3-WROOM-1",
+   "hiertuple": [
+    "",
+    "mcu_esp32s3_1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "N$9"
+    },
+    {
+     "num": "27",
+     "unit": 1,
+     "net": "BTN"
+    },
+    {
+     "num": "39",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "38",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "15",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "4",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "5",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "6",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "7",
+     "unit": 1,
+     "net": "I2S_BCLK"
+    },
+    {
+     "num": "12",
+     "unit": 1,
+     "net": "I2S_LRCLK"
+    },
+    {
+     "num": "17",
+     "unit": 1,
+     "net": "I2S_DOUT"
+    },
+    {
+     "num": "18",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "19",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "20",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "21",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "22",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "8",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "9",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "VCC"
+    },
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "40",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "41",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "37",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "36",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "10",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "11",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "13",
+     "unit": 1,
+     "net": "USB_DM"
+    },
+    {
+     "num": "14",
+     "unit": 1,
+     "net": "USB_DP"
+    },
+    {
+     "num": "23",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "28",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "29",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "30",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "31",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "32",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "33",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "34",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "35",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "26",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "16",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "24",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "25",
+     "unit": 1,
+     "net": null
+    }
+   ],
+   "fields": {}
+  },
+  {
+   "ref": "U4",
+   "lib_id": "Audio:MAX98357A",
+   "value": "MAX98357A",
+   "footprint": "Package_DFN_QFN:TQFN-16-1EP_3x3mm_P0.5mm_EP1.23x1.23mm",
+   "hiertuple": [
+    "",
+    "audio_output1"
+   ],
+   "symtx": "",
+   "orientation_locked": false,
+   "pins": [
+    {
+     "num": "1",
+     "unit": 1,
+     "net": "I2S_DOUT"
+    },
+    {
+     "num": "16",
+     "unit": 1,
+     "net": "I2S_BCLK"
+    },
+    {
+     "num": "14",
+     "unit": 1,
+     "net": "I2S_LRCLK"
+    },
+    {
+     "num": "4",
+     "unit": 1,
+     "net": "AMP_SD"
+    },
+    {
+     "num": "2",
+     "unit": 1,
+     "net": "AMP_GAIN_NC"
+    },
+    {
+     "num": "11",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "15",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "3",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "7",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "8",
+     "unit": 1,
+     "net": "VBAT"
+    },
+    {
+     "num": "17",
+     "unit": 1,
+     "net": "GND"
+    },
+    {
+     "num": "5",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "6",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "12",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "13",
+     "unit": 1,
+     "net": null
+    },
+    {
+     "num": "9",
+     "unit": 1,
+     "net": "N$10"
+    },
+    {
+     "num": "10",
+     "unit": 1,
+     "net": "N$11"
+    }
+   ],
+   "fields": {}
+  }
+ ],
+ "nets": [
+  {
+   "name": "AMP_GAIN_NC",
+   "code": 1,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "U4",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "AMP_SD",
+   "code": 2,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "R8",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U4",
+     "pin": "4",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "BTN",
+   "code": 3,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "R9",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "SW1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U3",
+     "pin": "27",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "GND",
+   "code": 4,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "C1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C10",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C11",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C2",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C3",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C4",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C5",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C6",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C7",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C8",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C9",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "D3",
+     "pin": "3",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "J1",
+     "pin": "A1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "A12",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "B1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "B12",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "S1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J2",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R2",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R3",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R4",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "SW1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "3",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "U1",
+     "pin": "9",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U2",
+     "pin": "2",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "U3",
+     "pin": "1",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "U3",
+     "pin": "40",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U3",
+     "pin": "41",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U4",
+     "pin": "11",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U4",
+     "pin": "15",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U4",
+     "pin": "17",
+     "pintype": "UNSPECIFIED"
+    },
+    {
+     "ref": "U4",
+     "pin": "3",
+     "pintype": "POWER-IN"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "I2S_BCLK",
+   "code": 5,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "U3",
+     "pin": "7",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "U4",
+     "pin": "16",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "I2S_DOUT",
+   "code": 6,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "U3",
+     "pin": "17",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "U4",
+     "pin": "1",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "I2S_LRCLK",
+   "code": 7,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "U3",
+     "pin": "12",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "U4",
+     "pin": "14",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "LED_DIN",
+   "code": 8,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "D3",
+     "pin": "4",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "LED_DOUT_NC",
+   "code": 9,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "D3",
+     "pin": "2",
+     "pintype": "OUTPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$1",
+   "code": 10,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A5",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "R1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$10",
+   "code": 11,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "J3",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U4",
+     "pin": "9",
+     "pintype": "OUTPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$11",
+   "code": 12,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "J3",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U4",
+     "pin": "10",
+     "pintype": "OUTPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$2",
+   "code": 13,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "B5",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "R2",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$3",
+   "code": 14,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "R3",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "1",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$4",
+   "code": 15,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "R4",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$5",
+   "code": 16,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "D1",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "7",
+     "pintype": "OPEN-COLLECTOR"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$6",
+   "code": 17,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "D1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R5",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$7",
+   "code": 18,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "D2",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "6",
+     "pintype": "OPEN-COLLECTOR"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$8",
+   "code": 19,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "D2",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R6",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "N$9",
+   "code": 20,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": true,
+   "nodes": [
+    {
+     "ref": "C5",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R7",
+     "pin": "2",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U3",
+     "pin": "3",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_A10_NC",
+   "code": 21,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A10",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_A11_NC",
+   "code": 22,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A11",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_A2_NC",
+   "code": 23,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A2",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_A3_NC",
+   "code": 24,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A3",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_A8_NC",
+   "code": 25,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A8",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_B10_NC",
+   "code": 26,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "B10",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_B11_NC",
+   "code": 27,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "B11",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_B2_NC",
+   "code": 28,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "B2",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_B3_NC",
+   "code": 29,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "B3",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_B8_NC",
+   "code": 30,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "B8",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_DM",
+   "code": 31,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A7",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "J1",
+     "pin": "B7",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "U3",
+     "pin": "13",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "USB_DP",
+   "code": 32,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "J1",
+     "pin": "A6",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "J1",
+     "pin": "B6",
+     "pintype": "BIDIRECTIONAL"
+    },
+    {
+     "ref": "U3",
+     "pin": "14",
+     "pintype": "BIDIRECTIONAL"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "VBAT",
+   "code": 33,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "C10",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C2",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C3",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C9",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J2",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "5",
+     "pintype": "POWER-OUT"
+    },
+    {
+     "ref": "U2",
+     "pin": "1",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "U2",
+     "pin": "3",
+     "pintype": "INPUT"
+    },
+    {
+     "ref": "U4",
+     "pin": "7",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "U4",
+     "pin": "8",
+     "pintype": "PASSIVE"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "VBUS",
+   "code": 34,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "C1",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "A4",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "A9",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "B4",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "J1",
+     "pin": "B9",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R5",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R6",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U1",
+     "pin": "4",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "U1",
+     "pin": "8",
+     "pintype": "INPUT"
+    }
+   ],
+   "attrs": {}
+  },
+  {
+   "name": "VCC",
+   "code": 35,
+   "stub": false,
+   "stub_explicit": false,
+   "netio": "",
+   "implicit": false,
+   "nodes": [
+    {
+     "ref": "C11",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C4",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C6",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C7",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "C8",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "D3",
+     "pin": "1",
+     "pintype": "POWER-IN"
+    },
+    {
+     "ref": "R7",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R8",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "R9",
+     "pin": "1",
+     "pintype": "PASSIVE"
+    },
+    {
+     "ref": "U2",
+     "pin": "5",
+     "pintype": "POWER-OUT"
+    },
+    {
+     "ref": "U3",
+     "pin": "2",
+     "pintype": "POWER-IN"
+    }
+   ],
+   "attrs": {}
+  }
+ ],
+ "netclasses": {}
+}

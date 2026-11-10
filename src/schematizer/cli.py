@@ -83,6 +83,19 @@ def build_parser():
         "score. Takes about this many times as long.",
     )
     parser.add_argument(
+        "--no-preplace",
+        action="store_true",
+        help="Place connected parts with force-directed placement from random "
+        "starting positions, instead of putting each part beside the pins it's "
+        "wired to.",
+    )
+    parser.add_argument(
+        "--no-power-symbols",
+        action="store_true",
+        help="Wire power nets (GND, VCC, +3V3, ...) like any other net instead "
+        "of putting a power symbol on each of their pins.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -104,6 +117,8 @@ def main(argv=None):
             flatness=args.flatness,
             seed=args.seed,
             tries=args.tries,
+            preplace=not args.no_preplace,
+            power_symbols=not args.no_power_symbols,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)
