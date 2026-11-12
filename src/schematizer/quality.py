@@ -231,8 +231,9 @@ def score_overlaps(sch_text):
     lib_symbols = {sym[1]: sym for sym in _fields(_field(sch, "lib_symbols") or [], "symbol")}
 
     bodies, texts = [], []  # Text is stored with its symbol's index, or None for a label.
-    for label in _fields(sch, "global_label"):
-        texts.append((_label_box(label), None))
+    for kind in ("global_label", "hierarchical_label"):
+        for label in _fields(sch, kind):
+            texts.append((_label_box(label), None))
     for symbol in _fields(sch, "symbol"):
         lib_id = _field(symbol, "lib_id")[1]
         lib_symbol = lib_symbols.get(lib_id)

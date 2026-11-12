@@ -380,8 +380,20 @@ A_SIZES = OrderedDict(
 )
 
 
+# Room the drawing must leave on the page: KiCad's frame on every side, and a
+# strip along the bottom for the title block (mm).
+FRAME_MARGIN_MM = 13
+TITLE_BLOCK_H_MM = 33
+
+
+def _usable_area(paper):
+    """Width and height (mm) of the part of a page the drawing can use."""
+    pw, ph = A_SIZES[paper]
+    return pw - 2 * FRAME_MARGIN_MM, ph - 2 * FRAME_MARGIN_MM - TITLE_BLOCK_H_MM
+
+
 def _pick_paper_size(bbox):
-    """Choose the smallest A-size paper that fits *bbox* (in mils)."""
+    """Choose the smallest A-size paper whose frame holds *bbox* (in mils) above the title block."""
     import math
 
     w = abs(bbox.w) if bbox.w and not math.isinf(bbox.w) else 0
@@ -391,8 +403,9 @@ def _pick_paper_size(bbox):
     w_mm = w * 0.0254 if w else 0
     h_mm = h * 0.0254 if h else 0
 
-    for name, (pw, ph) in A_SIZES.items():
-        if w_mm <= pw and h_mm <= ph:
+    for name in A_SIZES:
+        uw, uh = _usable_area(name)
+        if w_mm <= uw and h_mm <= uh:
             return name
     return "A0"
 
@@ -1292,18 +1305,20 @@ def create_title_block_sexp(title):
 def create_hierarchical_sheet_sexp(node, sheet_uuid, sheet_tx):
     """Create a hierarchical sheet S-expression for insertion into a parent sheet.
 
-    Includes sheet pins for boundary nets (nets connecting the child's
-    circuitry to the parent).
+    Includes a sheet pin for each hierarchical label the child's sheet holds,
+    and a label on each pin in the parent so the pin connects to the net
+    there. The labels are global; the parent turns those of its own boundary
+    nets into hierarchical labels when it writes its sheet.
 
     Args:
-        node: SchNode for the child sheet.
+        node: SchNode for the child sheet, already written.
         sheet_uuid: UUID of this sheet (for the "uuid" property).
         sheet_tx: Transformation matrix of the parent sheet.
 
     Returns:
-        Sexp: Sheet S-expression.
+        list[Sexp]: The sheet S-expression, then the labels on its pins.
     """
-    bbox = node.bbox * node.tx * sheet_tx
+    bbox = node.sheet_rect() * node.tx * sheet_tx
     bx = _round_mm(bbox.ll.x)
     by = _round_mm(bbox.ll.y)
     bw = _round_mm(bbox.w)
@@ -1343,40 +1358,78 @@ def create_hierarchical_sheet_sexp(node, sheet_uuid, sheet_tx):
         ]
     )
 
-    # Add sheet pins for boundary nets.
-    if hasattr(node, "get_boundary_nets"):
-        boundary_nets = node.get_boundary_nets()
-        pin_spacing = 2.54  # mm between pins
-        pin_y = by + pin_spacing
-        for net in boundary_nets:
-            # Skip power nets that become power symbols (they don't need sheet pins).
-            if net.name in pwr_symbol_names:
-                continue
-            # Skip stubbed nets (they use global labels).
-            if getattr(net, "stub", False) or getattr(net, "_stub", False):
-                continue
-
-            pin_uuid = _gen_uuid(f"sheet_pin:{node.sheet_filename}:{net.name}")
-            # Place pins along the left edge of the sheet.
-            sheet.append(
-                Sexp(
+    # One pin per hierarchical label in the child, down the sheet's left edge.
+    # A pin with no label inside, or a label with no pin, is an ERC error, so
+    # the pins come from the labels the child's sheet actually got.
+    labels = []
+    pin_spacing = 2.54  # mm between pins
+    pin_y = by + pin_spacing
+    for name in getattr(node, "hier_label_names", []):
+        sheet.append(
+            Sexp(
+                [
+                    "pin",
+                    f'"{name}"',  # Quoted like KiCad writes it; the writer leaves "pin" bare.
+                    "bidirectional",
+                    ["at", bx, _round_mm(pin_y), 180],
                     [
-                        "pin",
-                        net.name,
-                        "bidirectional",
-                        ["at", bx, _round_mm(pin_y), 180],
-                        [
-                            "effects",
-                            ["font", ["size", 1.27, 1.27]],
-                            ["justify", "left"],
-                        ],
-                        ["uuid", pin_uuid],
-                    ]
-                )
+                        "effects",
+                        ["font", ["size", 1.27, 1.27]],
+                        ["justify", "left"],
+                    ],
+                    ["uuid", _gen_uuid(f"sheet_pin:{node.sheet_filename}:{name}")],
+                ]
             )
-            pin_y += pin_spacing
+        )
+        labels.append(
+            Sexp(
+                [
+                    "global_label",
+                    name,
+                    ["shape", "bidirectional"],
+                    ["at", bx, _round_mm(pin_y), 180],
+                    ["effects", ["font", ["size", 1.27, 1.27]], ["justify", "right"]],
+                    ["uuid", _gen_uuid(f"sheet_pin_label:{node.sheet_filename}:{name}")],
+                ]
+            )
+        )
+        pin_y += pin_spacing
 
-    return sheet
+    return [sheet] + labels
+
+
+def hier_label_nets(node):
+    """Names of the nets a child sheet passes to its parent through hierarchical labels.
+
+    These are its boundary nets, less the ones that connect another way:
+    power nets, which become power symbols, and stubbed nets, which travel
+    by global label. The root sheet has no parent, so it has none.
+    """
+    if node.parent is None:
+        return set()
+    return {
+        net.name
+        for net in node.get_boundary_nets()
+        if net.name not in pwr_symbol_names
+        and not getattr(net, "stub", False)
+        and not getattr(net, "_stub", False)
+    }
+
+
+def use_hierarchical_labels(node, elements):
+    """Turn a sheet's global labels for its boundary nets into hierarchical labels.
+
+    Records the names in ``node.hier_label_names``, in order of first
+    appearance, for the sheet pins its parent will draw.
+    """
+    hier_nets = hier_label_nets(node)
+    names = []
+    for elem in elements:
+        if elem[0] == "global_label" and elem[1] in hier_nets:
+            elem[0] = "hierarchical_label"
+            if elem[1] not in names:
+                names.append(elem[1])
+    node.hier_label_names = names
 
 
 def hierarchical_label_to_sexp(net_name, pt_x, pt_y, angle=180):
@@ -1426,7 +1479,8 @@ def _calc_sheet_tx(bbox):
 
     # Apply Y-flip + mils→mm in one transform, then center on page.
     page_bbox = bbox * Tx(a=MILS_TO_MM, d=-MILS_TO_MM)
-    page_ctr = Point(pw / 2, ph / 2)
+    # Center in the area above the title block.
+    page_ctr = Point(pw / 2, (ph - TITLE_BLOCK_H_MM) / 2)
     content_ctr = Point(
         (page_bbox.ll.x + page_bbox.ur.x) / 2,
         (page_bbox.ll.y + page_bbox.ur.y) / 2,
@@ -1917,23 +1971,11 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
     # Add lib_symbols section to schematic.
     schematic.append(lib_symbols_sexp)
 
-    # Collect hierarchical labels for boundary nets (nets that cross the sheet boundary).
-    if hasattr(node, "get_boundary_nets"):
-        boundary_nets = node.get_boundary_nets()
-        hlabel_y = 10.0  # Starting Y position in mm for labels along the left edge.
-        for net in boundary_nets:
-            # Skip power nets and stubbed nets.
-            if net.name in pwr_symbol_names:
-                continue
-            if getattr(net, "stub", False) or getattr(net, "_stub", False):
-                continue
-            elements.append(
-                hierarchical_label_to_sexp(net.name, 5.0, hlabel_y, angle=180)
-            )
-            hlabel_y += 2.54
-
     # Spread net labels off component bodies (connectivity-preserving).
     deconflict_sheet_labels(elements, node, tx)
+
+    # Labels of the nets that leave this sheet become hierarchical labels.
+    use_hierarchical_labels(node, elements)
 
     # Add all the collected elements of the schematic.
     for elem in elements:
@@ -1948,7 +1990,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
         -1
     ]  # Use the last UUID in the path for the sheet UUID.
     return (
-        [create_hierarchical_sheet_sexp(node, sheet_uuid, sheet_tx)],
+        create_hierarchical_sheet_sexp(node, sheet_uuid, sheet_tx),
         {},
         {},
         filepath,

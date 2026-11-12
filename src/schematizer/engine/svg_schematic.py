@@ -346,12 +346,13 @@ def svg_filename(node):
 def sheet_box_to_svg(node, sheet_tx):
     """Draw a child sheet as a hyperlinked rectangle on its parent's page.
 
-    The rectangle is the same ``external_bbox`` the placer reserved for the
-    child, so the box sits exactly where the parent's routing expects it. The
+    The rectangle is the ``external_bbox`` the placer reserved for the child,
+    less the room on its left for sheet-pin labels, which is where the KiCad
+    writer draws the sheet, so the box sits where the parent's routing expects it. The
     whole box is wrapped in an ``<a>`` pointing at the child's SVG file, so
     clicking it opens that sheet.
     """
-    bbox = node.bbox * node.tx * sheet_tx
+    bbox = node.sheet_rect() * node.tx * sheet_tx
     x = _round_mm(bbox.ll.x)
     y = _round_mm(bbox.ll.y)
     w = _round_mm(abs(bbox.w))

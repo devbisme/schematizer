@@ -15,13 +15,17 @@ from .route import Router
 Node subclass used for generating schematics.
 """
 
+# Estimated length (mils) of a net label: per character of its name, plus its flag's ends.
+LABEL_CHAR_W = 45
+LABEL_END = 150
+
 
 @export_to_all
 # class SchNode(Node, Placer, Router):
 class SchNode(Placer, Router):
     """Data structure for holding information about a node in the circuit hierarchy."""
 
-    filename_sz = 20
+    filename_sz = 45  # Mils per character of the 1.27 mm sheet-file text, as KiCad draws it.
     name_sz = 40
 
     def __init__(
@@ -265,20 +269,29 @@ class SchNode(Placer, Router):
 
         return [pin for pin in net.pins if pin.stub is False and pin.part in self.parts]
 
+    def subtree_parts(self):
+        """Return the parts of this node and of every node below it."""
+        parts = list(self.parts)
+        for child in self.children.values():
+            parts.extend(child.subtree_parts())
+        return parts
+
     def get_boundary_nets(self):
         """Return nets that connect parts inside this node to parts outside.
 
-        A boundary net has at least one pin on a part in this node and at
-        least one pin on a part NOT in this node. These nets need
-        hierarchical labels/pins when the node becomes a hierarchical sheet.
+        "Inside" counts the parts of every node below this one, whether they
+        are drawn on this sheet (flattened) or on sheets of their own. A
+        boundary net has at least one pin inside and at least one pin
+        outside, so it needs a hierarchical label and a sheet pin when the
+        node becomes a hierarchical sheet.
 
         Returns:
             list: List of boundary Net objects.
         """
-        node_part_ids = {id(p) for p in self.parts}
+        node_part_ids = {id(p) for p in self.subtree_parts()}
         boundary = []
         seen = set()
-        for part in self.parts:
+        for part in self.subtree_parts():
             for pin in part:
                 if not pin.is_connected():
                     continue
@@ -291,6 +304,30 @@ class SchNode(Placer, Router):
                 if ext_pins:
                     boundary.append(net)
         return boundary
+
+    def sheet_pin_margin(self):
+        """Width (mils) left of a sheet for the labels on its sheet pins.
+
+        The parent puts a label on each sheet pin, reaching left from the
+        sheet's edge, so the sheet's bounding box covers them and the placer
+        keeps other things off them. Rounded up to the 50-mil grid so the
+        sheet edge, and so its pins, stay on the grid.
+        """
+        names = [
+            net.name
+            for net in self.get_boundary_nets()
+            if not getattr(net, "stub", False)
+        ]
+        if not names:
+            return 0
+        longest = max(len(name) for name in names)
+        width = longest * LABEL_CHAR_W + LABEL_END
+        return -(-width // 50) * 50
+
+    def sheet_rect(self):
+        """The sheet symbol's rectangle, in node coordinates: its bounding box less the label margin."""
+        bbox = self.bbox
+        return BBox(Point(bbox.ll.x + self.sheet_pin_margin(), bbox.ll.y), bbox.ur)
 
     def external_bbox(self):
         """Return the bounding box of a hierarchical sheet as seen by its parent node."""
@@ -308,6 +345,9 @@ class SchNode(Placer, Router):
 
         # Pad the bounding box for extra spacing when placed.
         bbox = bbox.resize(Vector(100, 100))
+
+        # Room on the left for the labels on the sheet pins.
+        bbox.add(Point(bbox.ll.x - self.sheet_pin_margin(), bbox.ll.y))
 
         return bbox
 

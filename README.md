@@ -95,6 +95,15 @@ its parent and to the top sheet, so a hierarchical design can be clicked
 through in a browser. At `1.0` everything collapses onto one page, and values
 in between flatten only the smaller subcircuits.
 
+In the KiCad output, a net that leaves a subcircuit's page gets a
+hierarchical label at its pins there, and the subcircuit's sheet symbol gets a
+matching sheet pin with a label on it in the parent, so the connection runs
+through the hierarchy the way KiCad expects. Power nets travel by power symbol
+instead, and stubbed nets (marked `stub`, or turned into labels when routing
+fails) by global label.
+Each page uses the smallest A-size sheet whose frame holds the drawing above
+the title block.
+
 Each SVG page is sized to its drawing rather than to an A-size sheet, since an
 SVG renders at whatever size it declares.
 
