@@ -41,6 +41,10 @@ schematizer netlist.json --tool kicad9 -o out --top-name mydesign
 schematizer netlist.json --tool kicad9 -o out --top-name mydesign --format svg
 ```
 
+A large design can take a while, so on a terminal the command shows the sheet
+it's placing or routing on a status line (`--no-progress` turns it off, and
+`--progress` shows it even when the output is redirected).
+
 ## Library use
 
 ```python
@@ -55,6 +59,14 @@ render(netlist, tool="kicad9", filepath="out", format="svg")
 ```
 
 `render()` also accepts a path to the JSON file directly.
+
+`render()` is silent unless asked: `progress=True` shows the same status line
+as the command, and a function gets each message ("routing fpga") as a string:
+
+```python
+render(netlist, filepath="out", progress=True)
+render(netlist, filepath="out", progress=lambda msg: print(msg))
+```
 
 ## How it fits with SKiDL
 

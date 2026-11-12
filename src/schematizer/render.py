@@ -89,6 +89,7 @@ def render(
     mode="normal",
     seed=None,
     tries=1,
+    progress=None,
     **options,
 ):
     """Generate schematic files from a generic netlist document.
@@ -123,6 +124,9 @@ def render(
             :mod:`schematizer.quality`. Takes about ``tries`` times as long.
             The seed still makes the result reproducible. Ignored when
             ``mode="labels"``, which has no layout to vary.
+        progress: ``True`` shows the step being worked on ("routing fpga") as a
+            status line on stderr. A function is called with each message
+            instead. Off by default.
         **options: Passed through to the placement/routing/writer engine
             (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
             controls hierarchy for both formats: 0 keeps every subcircuit on
@@ -159,7 +163,17 @@ def render(
 
     if tries < 1:
         raise ValueError(f"tries must be at least 1, not {tries}.")
+    if not (progress is None or isinstance(progress, bool) or callable(progress)):
+        raise ValueError("progress must be True, False or a function taking a message.")
 
+    from .engine.progress import reporting
+
+    with reporting(progress):
+        return _render(netlist, tool, filepath, top_name, title, format, mode, seed, tries, options)
+
+
+def _render(netlist, tool, filepath, top_name, title, format, mode, seed, tries, options):
+    """Do the work of ``render()`` once its arguments are checked."""
     doc = _load_document(netlist)
     if tries > 1 and mode == "normal":
         kwargs = dict(tool=tool, top_name=top_name, title=title, format=format)
@@ -177,6 +191,7 @@ def render(
     # drive placement/routing/writing.
     from .engine import gen_schematic as gen_schematic_mod
     from .engine import sexp_schematic as sexp_mod
+    from .engine.progress import report
 
     gen_schematic_mod.TARGET_TOOL = tool
     sexp_mod.TARGET_TOOL = tool
@@ -184,6 +199,7 @@ def render(
     if mode == "labels":
         from .engine.labels import write_labels_schematic
 
+        report("writing labels-only schematic")
         write_labels_schematic(circuit, filepath, top_name, title)
         return filepath
 
@@ -213,6 +229,7 @@ def layout_cost(score):
 def _render_best_layout(doc, filepath, seed, tries, kwargs, options):
     """Render several layouts and keep the files of the one with the best score."""
     from .engine.place import PlacementFailure
+    from .engine.progress import prefixed
     from .engine.route import RoutingFailure
 
     if seed is None:
@@ -234,7 +251,8 @@ def _render_best_layout(doc, filepath, seed, tries, kwargs, options):
             trial_dir = os.path.join(work_dir, str(i))
             trial_seed = f"{seed}:{i}"
             try:
-                render(doc, filepath=trial_dir, seed=trial_seed, **trial_kwargs, **trial_options)
+                with prefixed(f"layout {i + 1}/{tries},"):
+                    render(doc, filepath=trial_dir, seed=trial_seed, **trial_kwargs, **trial_options)
             except (PlacementFailure, RoutingFailure):
                 continue
             cost = layout_cost(score_files(trial_dir))

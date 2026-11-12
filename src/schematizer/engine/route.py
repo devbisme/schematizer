@@ -16,6 +16,7 @@ from itertools import chain, zip_longest
 
 from ..ir import SchPart as Part
 from .._utils import export_to_all, rmv_attr
+from . import progress
 from .rng import rng
 from .debug_draw import (
     draw_end,
@@ -3427,13 +3428,18 @@ class Router:
         expansion_factor = options.pop("expansion_factor", 1.0)
         for attempt in range(SHEET_ROUTE_TRIES):
             try:
-                child.route(tool=tool, **options)
+                if attempt:
+                    with progress.prefixed(f"try {attempt + 1}/{SHEET_ROUTE_TRIES},"):
+                        child.route(tool=tool, **options)
+                else:
+                    child.route(tool=tool, **options)
                 return
             except RoutingFailure:
                 if child.flattened or attempt == SHEET_ROUTE_TRIES - 1:
                     raise
             expansion_factor *= SHEET_EXPANSION
-            child.place(tool=tool, expansion_factor=expansion_factor, **options)
+            with progress.prefixed(f"try {attempt + 2}/{SHEET_ROUTE_TRIES},"):
+                child.place(tool=tool, expansion_factor=expansion_factor, **options)
 
     def route(node, tool=None, **options):
         """Route the wires between part pins in this node and its children.
@@ -3475,6 +3481,8 @@ class Router:
         # Exit if no nets to route.
         if not internal_nets:
             return
+
+        progress.report(f"routing {node.name or 'top sheet'}")
 
         try:
             # Extend routing points of part pins to the edges of their bounding boxes.

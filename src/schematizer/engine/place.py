@@ -28,6 +28,7 @@ from .preplace import (
     seed_placement,
     spread_parts,
 )
+from . import progress
 from .rng import rng
 from .debug_draw import (
     draw_end,
@@ -2927,6 +2928,8 @@ class Placer:
             # TODO: Child nodes are independent, so can they be processed in parallel?
             for child in node.children.values():
                 child.place(tool=tool, **options)
+
+            progress.report(f"placing {node.name or 'top sheet'}")
 
             # Group parts into those that are connected by explicit nets and
             # those that float freely connected only by stub nets.

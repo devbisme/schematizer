@@ -9,6 +9,7 @@ Thin wrapper around the shared sexp_schematic module.
 Uses SKiDL's placement and routing infrastructure.
 """
 
+import contextlib
 import os
 import re
 import shutil
@@ -18,6 +19,7 @@ from collections import defaultdict
 from ..geometry import BBox, Point, Tx, Vector
 from ..ir import NCNet
 from .net_terminal import NetTerminal
+from . import progress
 from .rng import seed as rng_seed
 from .snap import snap_two_pin_parts as _snap_two_pin_parts
 from .._utils import get_script_name
@@ -695,6 +697,7 @@ def _write_output(circuit, node, filepath, top_name, title, options):
     Placement and routing are format-agnostic -- only this final step differs,
     so the SVG pages have exactly the layout of the KiCad sheets.
     """
+    progress.report("writing files")
     place_fields = options.get("place_fields", True)
     if options.get("output_format", "kicad") == "svg":
         return write_top_svg(
@@ -879,47 +882,50 @@ def gen_schematic(
             circuit, tool_module, filepath, top_name, title, flatness, options
         )
 
-        try:
-            _place_and_classify(node, circuit, expansion_factor, **options)
-            if options.get("auto_stub", False) and options.get(
-                "label_clearance", False
-            ):
-                # Label-clearance Pass 2: Pass 1's classifiers just froze the
-                # final stub set, but the placement they ran on reserved no room
-                # for the resulting net labels. Re-run preprocessing (recomputes
-                # each part's lbl_bbox to include the now-stubbed pins' label
-                # boxes) and rebuild the node (NetTerminals are derived from stub
-                # state, so the rebuild also clears stale terminals), then place
-                # WITHOUT reclassifying — classify=False keeps the stubs frozen.
-                # finalize first (as the ERC-regen path does before its rebuild):
-                # removes Pass-1 NetTerminals and clears force/bbox/lbl_bbox/tx so
-                # the rebuild starts clean. It does NOT touch pin.stub/net._stub,
-                # so the frozen stub set survives.
+        # Say which attempt this is once the first has failed.
+        note = f"attempt {attempt + 1}/{retries}," if attempt else ""
+        with progress.prefixed(note) if note else contextlib.nullcontext():
+            try:
+                _place_and_classify(node, circuit, expansion_factor, **options)
+                if options.get("auto_stub", False) and options.get(
+                    "label_clearance", False
+                ):
+                    # Label-clearance Pass 2: Pass 1's classifiers just froze the
+                    # final stub set, but the placement they ran on reserved no room
+                    # for the resulting net labels. Re-run preprocessing (recomputes
+                    # each part's lbl_bbox to include the now-stubbed pins' label
+                    # boxes) and rebuild the node (NetTerminals are derived from stub
+                    # state, so the rebuild also clears stale terminals), then place
+                    # WITHOUT reclassifying — classify=False keeps the stubs frozen.
+                    # finalize first (as the ERC-regen path does before its rebuild):
+                    # removes Pass-1 NetTerminals and clears force/bbox/lbl_bbox/tx so
+                    # the rebuild starts clean. It does NOT touch pin.stub/net._stub,
+                    # so the frozen stub set survives.
+                    finalize_parts_and_nets(circuit, **options)
+                    node = _new_node(
+                        circuit, tool_module, filepath, top_name, title, flatness, options
+                    )
+                    _place_and_classify(
+                        node, circuit, expansion_factor, classify=False, **options
+                    )
+                node.route(**options)
+
+            except PlacementFailure as e:
                 finalize_parts_and_nets(circuit, **options)
-                node = _new_node(
-                    circuit, tool_module, filepath, top_name, title, flatness, options
+                failure_type = e
+                active_logger.warning(
+                    f"Placement failed on attempt {attempt + 1}/{retries}: {e}"
                 )
-                _place_and_classify(
-                    node, circuit, expansion_factor, classify=False, **options
+                continue
+
+            except RoutingFailure as e:
+                finalize_parts_and_nets(circuit, **options)
+                expansion_factor *= 1.5
+                failure_type = e
+                active_logger.warning(
+                    f"Routing failed on attempt {attempt + 1}/{retries}, expanding area by 1.5x: {e}"
                 )
-            node.route(**options)
-
-        except PlacementFailure as e:
-            finalize_parts_and_nets(circuit, **options)
-            failure_type = e
-            active_logger.warning(
-                f"Placement failed on attempt {attempt + 1}/{retries}: {e}"
-            )
-            continue
-
-        except RoutingFailure as e:
-            finalize_parts_and_nets(circuit, **options)
-            expansion_factor *= 1.5
-            failure_type = e
-            active_logger.warning(
-                f"Routing failed on attempt {attempt + 1}/{retries}, expanding area by 1.5x: {e}"
-            )
-            continue
+                continue
 
         _snap_unwired_parts(node, options)
 
@@ -942,6 +948,7 @@ def gen_schematic(
             max_erc_iterations = options.get("erc_max_iterations", 3)
             prev_errors = None
             for erc_attempt in range(max_erc_iterations):
+                progress.report("checking with KiCad ERC")
                 erc_report = _run_erc(output_file)
                 errors = _parse_erc_report(erc_report)
                 fixable = [e for e in errors if e[0] in FIXABLE_ERROR_TYPES]

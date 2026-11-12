@@ -111,6 +111,20 @@ def build_parser():
         "a labels-only schematic if routing still fails.",
     )
     parser.add_argument(
+        "--progress",
+        dest="progress",
+        action="store_true",
+        default=None,
+        help="Show which sheet is being placed or routed (default: on when "
+        "stderr is a terminal).",
+    )
+    parser.add_argument(
+        "--no-progress",
+        dest="progress",
+        action="store_false",
+        help="Don't show progress.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -120,6 +134,7 @@ def build_parser():
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
+    progress = sys.stderr.isatty() if args.progress is None else args.progress
     try:
         out = render(
             args.netlist,
@@ -135,6 +150,7 @@ def main(argv=None):
             preplace=not args.no_preplace,
             power_symbols=not args.no_power_symbols,
             auto_stub=args.auto_stub,
+            progress=progress,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)
