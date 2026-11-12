@@ -8,6 +8,9 @@ import argparse
 import sys
 
 from . import __version__
+from .engine.gen_schematic import AUTO_STUB_PINS
+from .engine.place import PlacementFailure
+from .engine.route import RoutingFailure
 from .render import SUPPORTED_FORMATS, SUPPORTED_MODES, SUPPORTED_TOOLS, render
 
 
@@ -96,6 +99,18 @@ def build_parser():
         "of putting a power symbol on each of their pins.",
     )
     parser.add_argument(
+        "--auto-stub",
+        nargs="?",
+        type=int,
+        const=AUTO_STUB_PINS,
+        default=False,
+        metavar="PINS",
+        help="Draw hard-to-route nets with labels instead of wires: nets with "
+        f"more than PINS pins (default: {AUTO_STUB_PINS}) and nets whose pins are far "
+        "apart. Fixes what KiCad's ERC still finds (needs kicad-cli), and writes "
+        "a labels-only schematic if routing still fails.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -119,9 +134,19 @@ def main(argv=None):
             tries=args.tries,
             preplace=not args.no_preplace,
             power_symbols=not args.no_power_symbols,
+            auto_stub=args.auto_stub,
         )
     except (ValueError, TypeError, FileNotFoundError) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)
+        return 1
+    except (PlacementFailure, RoutingFailure) as e:
+        stage = "placed" if isinstance(e, PlacementFailure) else "routed"
+        detail = f" ({e})" if str(e) else ""
+        print(
+            f"schematizer: error: the drawing couldn't be {stage}{detail}. "
+            "Try --auto-stub, more --tries, another --seed, or --mode labels.",
+            file=sys.stderr,
+        )
         return 1
     print(f"Wrote {args.format} files to {out}")
     return 0

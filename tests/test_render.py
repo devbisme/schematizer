@@ -158,3 +158,59 @@ def test_explicit_power_symbols_not_duplicated(tmp_path):
     text = open(os.path.join(out, "and_gate.kicad_sch")).read()
     assert text.count('(lib_id "power:GND")') == 1
     assert text.count('(lib_id "power:VCC")') == 1
+
+
+def _power_symbols(text):
+    """(value, x, y) of each power symbol placed in a .kicad_sch file's text."""
+    import re
+
+    return re.findall(
+        r'\(lib_id "power:([^"]+)"\)\s+\(at ([\d.-]+) ([\d.-]+)', text
+    )
+
+
+def test_explicit_power_symbols_get_power_flag(tmp_path):
+    """A netlist's own power symbol is defined as one, so every symbol of its name connects."""
+    out = render(_doc("and_gate.json"), tool="kicad9", filepath=str(tmp_path),
+                 top_name="and_gate", seed=1, auto_stub=True, erc_max_iterations=0)
+    text = open(os.path.join(out, "and_gate.kicad_sch")).read()
+    lib = text[text.index("(lib_symbols"):]
+    for name in ("GND", "VCC"):
+        definition = lib[lib.index(f'(symbol "power:{name}"'):]
+        assert definition.split("\n", 2)[1].strip() == "(power)"
+
+
+def test_auto_stub_puts_no_power_symbol_on_a_power_symbol(tmp_path):
+    out = render(_doc("and_gate.json"), tool="kicad9", filepath=str(tmp_path),
+                 top_name="and_gate", seed=1, auto_stub=True, erc_max_iterations=0)
+    spots = [(x, y) for _, x, y in _power_symbols(open(os.path.join(out, "and_gate.kicad_sch")).read())]
+    assert len(spots) == len(set(spots))
+
+
+@pytest.mark.skipif(not __import__("shutil").which("kicad-cli"), reason="needs kicad-cli")
+@pytest.mark.parametrize("seed", [1, 2])
+def test_auto_stub_keeps_power_nets_connected(tmp_path, seed):
+    """With the netlist's own GND/VCC symbols, KiCad still joins every pin of those nets."""
+    import re
+    import subprocess
+
+    doc = _doc("and_gate.json")
+    out = render(doc, tool="kicad9", filepath=str(tmp_path / "out"),
+                 top_name="and_gate", seed=seed, auto_stub=True)
+    net_file = tmp_path / "net.net"
+    subprocess.run(
+        ["kicad-cli", "sch", "export", "netlist", "--format", "kicadsexpr",
+         "-o", str(net_file), os.path.join(out, "and_gate.kicad_sch")],
+        check=True, capture_output=True,
+    )
+    text = net_file.read_text()
+    drawn = {}
+    for block in re.split(r"\(net \(code", text[text.index("(nets"):])[1:]:
+        nodes = re.findall(r'\(node \(ref "([^"]+)"\) \(pin "([^"]+)"\)', block)
+        for node in nodes:
+            drawn[node] = block
+    for net in doc["nets"]:
+        if net["name"] not in ("GND", "VCC"):
+            continue
+        pins = [(n["ref"], str(n["pin"])) for n in net["nodes"] if not n["ref"].startswith("#")]
+        assert len({id(drawn[p]) for p in pins}) == 1, net["name"]

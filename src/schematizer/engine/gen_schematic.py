@@ -117,7 +117,8 @@ def auto_stub_nets(circuit, **options):
 
     Args:
         circuit: The Circuit object containing nets to analyze.
-        options: Dict of options. Recognizes 'auto_stub_fanout' (default 5).
+        options: Dict of options. Recognizes 'auto_stub_fanout' (default 5;
+            gen_schematic() sets it from the auto_stub pin count).
     """
     fanout_threshold = options.get("auto_stub_fanout", 5)
     deferred_fanout = []
@@ -714,6 +715,46 @@ def _write_output(circuit, node, filepath, top_name, title, options):
     )
 
 
+# Pin count above which auto_stub=True turns a net into labels.
+AUTO_STUB_PINS = 3
+
+
+def resolve_auto_stub(options):
+    """Turn an ``auto_stub`` setting into the options the engine reads.
+
+    ``auto_stub`` may be False (off), True (on, with the default threshold
+    of AUTO_STUB_PINS), or an integer N: on, and a net with more than N pins
+    becomes labels. The threshold applies to the net's pins on one sheet
+    (``auto_stub_max_wire_pins``) and to all of them (``auto_stub_fanout``,
+    which stubs nets with at least that many pins); either can still be set
+    on its own and wins.
+
+    Args:
+        options (dict): Engine options. Updated in place: ``auto_stub``
+            becomes a bool and the thresholds are filled in.
+
+    Raises:
+        ValueError: ``auto_stub`` is an integer less than 1, or not a bool or integer.
+    """
+    setting = options.get("auto_stub", False)
+    if setting is None or setting is False:
+        options["auto_stub"] = False
+        return
+    if setting is True:
+        pins = AUTO_STUB_PINS
+    elif isinstance(setting, int):
+        if setting < 1:
+            raise ValueError(
+                f"auto_stub must be True, False or a pin count of at least 1, not {setting}."
+            )
+        pins = setting
+    else:
+        raise ValueError(f"auto_stub must be True, False or a pin count, not {setting!r}.")
+    options["auto_stub"] = True
+    options.setdefault("auto_stub_max_wire_pins", pins)
+    options.setdefault("auto_stub_fanout", pins + 1)
+
+
 def gen_schematic(
     circuit,
     filepath=".",
@@ -742,13 +783,15 @@ def gen_schematic(
             layouts while the run as a whole stays reproducible.
 
     Auto-stub options (pass as keyword arguments):
-        auto_stub (bool): Enable auto-stubbing for large/complex circuits. Converts nets that
+        auto_stub (bool or int): Enable auto-stubbing for large/complex circuits. Converts nets that
             would fail routing into global labels, and runs a KiCad ERC correction loop to
             iteratively fix remaining issues. Power nets (GND, VCC, etc.) are automatically
-            emitted as proper KiCad power symbols. Default False.
-        auto_stub_fanout (int): Nets with more pins than this are stubbed pre-routing. Default 3.
-        auto_stub_max_wire_pins (int): Max pins on a net before selective routing stubs it
-            post-placement. Default 3.
+            emitted as proper KiCad power symbols. An integer N turns it on and makes a
+            net with more than N pins into labels; True means N = 3. Default False.
+        auto_stub_fanout (int): Nets with at least this many pins are stubbed once
+            placed. Default: N + 1.
+        auto_stub_max_wire_pins (int): Max pins of a net on one sheet before it's
+            stubbed after placement. Default: N.
         auto_stub_max_wire_dist (int): Max manhattan distance (mils) between pins before
             selective routing stubs the net. Default 2000.
         erc_max_iterations (int): Max ERC correction loop passes. Default 8.
@@ -797,6 +840,7 @@ def gen_schematic(
     from . import tool_module
 
     _setup_kicad_env()
+    resolve_auto_stub(options)
 
     # Part placement options that should always be turned on.
     options["use_push_pull"] = True

@@ -220,6 +220,10 @@ Retries still explore: when routing fails and the engine retries with a larger
 area, each attempt derives its own stream from your seed, so a retry is a
 genuinely different layout while the run as a whole stays reproducible.
 
+Seeding is local to this library. It uses its own generator, so it neither
+disturbs nor depends on the `random` module's global state in the calling
+program.
+
 ## When routing fails
 
 A crowded sheet doesn't always route on the first try, so the engine tries
@@ -238,9 +242,27 @@ on it, no wire runs over the end of another net's pin, and each net's wires
 are in one piece. KiCad connects a pin only to a wire that ends on it, so a
 drawing that breaks one of these would look right but be missing connections.
 
-Seeding is local to this library. It uses its own generator, so it neither
-disturbs nor depends on the `random` module's global state in the calling
-program.
+If all three levels fail, the command line reports it in one line and exits with
+status 1; `render()` raises `RoutingFailure`.
+
+### Auto-stubbing
+
+`auto_stub` (CLI: `--auto-stub [PINS]`) draws the nets that are hard to route
+with labels instead of wires. A net with more than `PINS` pins, or whose pins
+end up far apart, becomes labels. KiCad's ERC is then run on the result
+(needs `kicad-cli`) and the nets it still complains about become labels too.
+If routing fails anyway, a labels-only schematic is written instead.
+
+```bash
+schematizer netlist.json -o out --auto-stub      # more than 3 pins -> labels
+schematizer netlist.json -o out --auto-stub 6    # more than 6 pins -> labels
+```
+
+In Python, `auto_stub=True` means 3 and `auto_stub=6` sets the count. Lower
+counts give fewer wires and more labels. On the 169-part test board, total
+wire length is about 560 at 2, 1060 at 3, 1440 at 4 and 1940 at 10 (mm,
+averaged over 4 seeds), against 3180 without auto-stubbing.
+At 2, labels start to overlap on smaller boards.
 
 ## Supported KiCad versions
 

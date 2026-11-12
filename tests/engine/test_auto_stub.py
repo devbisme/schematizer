@@ -937,3 +937,35 @@ class TestErcLoopStops:
         errors = [("pin_not_connected", "R1", "2")]
         assert _stub_nets_for_erc_errors(circuit, errors) is True
         assert _stub_nets_for_erc_errors(circuit, errors) is False
+
+
+class TestResolveAutoStub:
+    """auto_stub may be a bool or a pin count."""
+
+    def test_off(self):
+        for setting in (False, None):
+            options = {"auto_stub": setting}
+            gen_schematic.resolve_auto_stub(options)
+            assert options == {"auto_stub": False}
+
+    def test_true_uses_default_pin_count(self):
+        options = {"auto_stub": True}
+        gen_schematic.resolve_auto_stub(options)
+        pins = gen_schematic.AUTO_STUB_PINS
+        assert options == {"auto_stub": True, "auto_stub_max_wire_pins": pins, "auto_stub_fanout": pins + 1}
+
+    def test_count_stubs_nets_with_more_pins(self):
+        options = {"auto_stub": 6}
+        gen_schematic.resolve_auto_stub(options)
+        assert options == {"auto_stub": True, "auto_stub_max_wire_pins": 6, "auto_stub_fanout": 7}
+
+    def test_explicit_thresholds_win(self):
+        options = {"auto_stub": 6, "auto_stub_fanout": 20}
+        gen_schematic.resolve_auto_stub(options)
+        assert options["auto_stub_fanout"] == 20
+        assert options["auto_stub_max_wire_pins"] == 6
+
+    @pytest.mark.parametrize("setting", [0, -2, "yes", 2.5])
+    def test_rejects_other_settings(self, setting):
+        with pytest.raises(ValueError):
+            gen_schematic.resolve_auto_stub({"auto_stub": setting})

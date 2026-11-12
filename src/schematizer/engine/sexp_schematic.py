@@ -912,9 +912,13 @@ def part_to_lib_symbol_definition(part):
     if style.get("hide"):
         pin_names.append("hide" if TARGET_TOOL == "kicad8" else ["hide", "yes"])
 
-    symbol_def = [
-        "symbol",
-        lib_id,
+    symbol_def = ["symbol", lib_id]
+    # A power symbol connects every pin of its net that has one by name, but
+    # only if its definition says it is one. The writer puts power symbols on
+    # pins under this same lib_id, so without the flag none of them connect.
+    if getattr(part, "is_power_symbol", False):
+        symbol_def.append(["power"])
+    symbol_def += [
         pin_numbers,
         pin_names,
         ["exclude_from_sim", "no"],
@@ -1175,6 +1179,10 @@ def net_label_to_sexp(pin, tx=Tx(), force=False):
         return None
 
     if isinstance(getattr(pin, "net", None), NCNet):
+        return None
+
+    # A power symbol already labels its net; another on its pin would sit on top of it.
+    if getattr(pin.part, "is_power_symbol", False):
         return None
 
     # Check if this net matches a known KiCad power symbol.
