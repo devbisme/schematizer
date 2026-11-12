@@ -2977,6 +2977,129 @@ class Router:
             # Return updated segments. If no segments for this net were updated, then stop is True.
             return segments, stop
 
+        def inside_part(segment, part_bbox, allowed):
+            """True if the segment enters the part's box other than along an allowed segment.
+
+            A part's box can reach past its pin tips, so the router's wire to
+            such a pin runs a little way inside the box. A new segment can
+            follow it there, but go no further in.
+            """
+            if not part_bbox.intersects(BBox(segment.p1, segment.p2)):
+                return False
+            if segment.p1.y == segment.p2.y:
+                lo = max(segment.p1.x, part_bbox.min.x)
+                hi = min(segment.p2.x, part_bbox.max.x)
+                return not any(
+                    seg.p1.y == seg.p2.y == segment.p1.y and seg.p1.x <= lo and hi <= seg.p2.x
+                    for seg in allowed
+                )
+            lo = max(segment.p1.y, part_bbox.min.y)
+            hi = min(segment.p2.y, part_bbox.max.y)
+            return not any(
+                seg.p1.x == seg.p2.x == segment.p1.x and seg.p1.y <= lo and hi <= seg.p2.y
+                for seg in allowed
+            )
+
+        def obstructed(net, segment, wires, net_bboxes, part_bboxes, allowed=()):
+            """Return true if segment obstructed by parts or segments of other nets.
+
+            `allowed` are segments of the net's existing wiring: the new
+            segment may run inside a part's box where one of them already does.
+            """
+
+            # Obstructed if segment enters one of the part bboxes.
+            for part_bbox in part_bboxes:
+                if inside_part(segment, part_bbox, allowed):
+                    return True
+
+            # A segment can run along the edge of a part without
+            # intersecting it, but not over the end of a pin that isn't
+            # on its net: it would look connected to it.
+            for pt, pin_net in pin_nets.items():
+                if pin_net is not net and contains_pt(segment, pt):
+                    return True
+
+            # BBoxes don't intersect if they line up exactly edge-to-edge.
+            # So expand the segment bbox slightly so intersections with bboxes of
+            # other segments will be detected.
+            segment_bbox = BBox(segment.p1, segment.p2).resize(Vector(2, 2))
+
+            # Look for an overlay intersection with a segment of another net.
+            for nt, nt_bbox in net_bboxes.items():
+                if nt is net:
+                    # Don't check this segment with other segments of its own net.
+                    continue
+
+                if not segment_bbox.intersects(nt_bbox):
+                    # Don't check this segment against segments of another net whose
+                    # bbox doesn't even intersect this segment.
+                    continue
+
+                # Check for overlay intersectionss between this segment and the
+                # parallel segments of the other net.
+                for seg in wires[nt]:
+                    if segment.p1.x == segment.p2.x == seg.p1.x == seg.p2.x:
+                        # Segments are both aligned vertically on the same track X coord.
+                        if segment.p1.y <= seg.p2.y and segment.p2.y >= seg.p1.y:
+                            # Segments overlap so segment is obstructed.
+                            return True
+                    elif segment.p1.y == segment.p2.y == seg.p1.y == seg.p2.y:
+                        # Segments are both aligned horizontally on the same track Y coord.
+                        if segment.p1.x <= seg.p2.x and segment.p2.x >= seg.p1.x:
+                            # Segments overlap so segment is obstructed.
+                            return True
+
+                    # KiCad joins a wire end to any wire it touches, so neither
+                    # segment may end on the other.
+                    if any(contains_pt(seg, pt) for pt in (segment.p1, segment.p2)):
+                        return True
+                    if any(contains_pt(segment, pt) for pt in (seg.p1, seg.p2)):
+                        return True
+
+            # No obstructions found, so return False.
+            return False
+
+        def snap_to_grid(net, segments, wires, net_bboxes, part_bboxes):
+            """Move the wires of a net that run off the grid onto it.
+
+            The router follows the edges of parts, which needn't be on the
+            grid, and cleanup only straightens the wires it can. Each off-grid
+            X (or Y) is moved to the nearest grid line on either side that
+            leaves the moved segments unobstructed. A coordinate shared with
+            a pin isn't moved, since the wire would come off the pin.
+            """
+
+            def coords(axis):
+                """The off-grid values of one coordinate among the segment ends, minus those of pins."""
+                pts = {p for seg in segments for p in (seg.p1, seg.p2)}
+                pinned = {getattr(p, axis) for p in pts if is_pin_pt(p)}
+                return sorted({getattr(p, axis) for p in pts if getattr(p, axis) % GRID} - pinned)
+
+            for axis in ("x", "y"):
+                for v in coords(axis):
+                    lo = v // GRID * GRID
+                    for c in sorted((lo, lo + GRID), key=lambda c: (abs(c - v), c)):
+
+                        def move(p):
+                            if getattr(p, axis) != v:
+                                return copy.copy(p)
+                            return Point(c, p.y) if axis == "x" else Point(p.x, c)
+
+                        moved = [Segment(move(seg.p1), move(seg.p2)) for seg in segments]
+                        changed = [
+                            m for m, seg in zip(moved, segments)
+                            if (m.p1, m.p2) != (seg.p1, seg.p2) and m.p1 != m.p2
+                        ]
+                        order_seg_points(changed)
+                        if not any(
+                            obstructed(net, m, wires, net_bboxes, part_bboxes, segments)
+                            for m in changed
+                        ):
+                            segments = [m for m in moved if m.p1 != m.p2]
+                            order_seg_points(segments)
+                            break
+            return segments
+
         def remove_jogs(net, segments, wires, net_bboxes, part_bboxes):
             """Remove jogs and staircases in wiring segments.
 
@@ -2987,55 +3110,6 @@ class Router:
                 net_bboxes (dict): Dict of BBoxes for wire segments indexed by nets.
                 part_bboxes (list): List of BBoxes for the placed parts.
             """
-
-            def obstructed(segment):
-                """Return true if segment obstructed by parts or segments of other nets."""
-
-                # Obstructed if segment bbox intersects one of the part bboxes.
-                segment_bbox = BBox(segment.p1, segment.p2)
-                for part_bbox in part_bboxes:
-                    if part_bbox.intersects(segment_bbox):
-                        return True
-
-                # A segment can run along the edge of a part without
-                # intersecting it, but not over the end of a pin that isn't
-                # on its net: it would look connected to it.
-                for pt, pin_net in pin_nets.items():
-                    if pin_net is not net and contains_pt(segment, pt):
-                        return True
-
-                # BBoxes don't intersect if they line up exactly edge-to-edge.
-                # So expand the segment bbox slightly so intersections with bboxes of
-                # other segments will be detected.
-                segment_bbox = segment_bbox.resize(Vector(2, 2))
-
-                # Look for an overlay intersection with a segment of another net.
-                for nt, nt_bbox in net_bboxes.items():
-                    if nt is net:
-                        # Don't check this segment with other segments of its own net.
-                        continue
-
-                    if not segment_bbox.intersects(nt_bbox):
-                        # Don't check this segment against segments of another net whose
-                        # bbox doesn't even intersect this segment.
-                        continue
-
-                    # Check for overlay intersectionss between this segment and the
-                    # parallel segments of the other net.
-                    for seg in wires[nt]:
-                        if segment.p1.x == segment.p2.x == seg.p1.x == seg.p2.x:
-                            # Segments are both aligned vertically on the same track X coord.
-                            if segment.p1.y <= seg.p2.y and segment.p2.y >= seg.p1.y:
-                                # Segments overlap so segment is obstructed.
-                                return True
-                        elif segment.p1.y == segment.p2.y == seg.p1.y == seg.p2.y:
-                            # Segments are both aligned horizontally on the same track Y coord.
-                            if segment.p1.x <= seg.p2.x and segment.p2.x >= seg.p1.x:
-                                # Segments overlap so segment is obstructed.
-                                return True
-
-                # No obstructions found, so return False.
-                return False
 
             def get_corners(segments):
                 """Return dictionary of right-angle corner points and lists of associated segments."""
@@ -3127,7 +3201,10 @@ class Router:
                     order_seg_points(new_segs)
 
                     # Check the new segments to see if they run into parts or segments of other nets.
-                    if not any((obstructed(new_seg) for new_seg in new_segs)):
+                    if not any(
+                        obstructed(net, new_seg, wires, net_bboxes, part_bboxes, segments)
+                        for new_seg in new_segs
+                    ):
                         # OK, segments are good so replace the old segments in the jog with them.
                         for seg in jog_segs:
                             segments.remove(seg)
@@ -3222,6 +3299,15 @@ class Router:
                     net_bboxes[net] = segments_bbox(segments)
 
                     keep_cleaning = True
+
+                # Put wires the router left off the grid back on it.
+                segments = snap_to_grid(net, segments, node.wires, net_bboxes, part_bboxes)
+                segments = merge_segments(segments)
+                segments = split_segments(segments, net_pin_pts[net])
+                segments = [seg for seg in segments if seg.p1 != seg.p2]
+                segments = break_cycles(segments)
+                segments = trim_stubs(segments)
+                net_bboxes[net] = segments_bbox(segments)
 
                 # Merge segments made colinear by removing jogs.
                 segments = merge_segments(segments)
