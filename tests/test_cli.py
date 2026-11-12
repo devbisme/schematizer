@@ -37,3 +37,16 @@ def test_routing_failure_is_reported_without_traceback(monkeypatch, capsys):
     err = capsys.readouterr().err
     assert "couldn't be routed" in err and "--auto-stub" in err
     assert "Traceback" not in err
+
+
+def test_no_nudge_option(monkeypatch, tmp_path):
+    seen = []
+
+    def fake_render(netlist, **kwargs):
+        seen.append(kwargs["nudge"])
+        return kwargs["filepath"]
+
+    monkeypatch.setattr(cli, "render", fake_render)
+    assert cli.main(["netlist.json", "-o", str(tmp_path)]) == 0
+    assert cli.main(["netlist.json", "-o", str(tmp_path), "--no-nudge"]) == 0
+    assert seen == [True, False]

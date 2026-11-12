@@ -3471,6 +3471,35 @@ class Router:
         for child in node.children.values():
             node.route_child(child, tool=tool, **options)
 
+        rng_state = rng.getstate()
+        node.route_parts(tool=tool, **options)
+
+        # Use the routing to improve the placement: move parts to straighten
+        # wires that step sideways, and route again.
+        if options.get("nudge", True) and node.wires:
+            from .nudge import straighten
+
+            straighten(node, tool=tool, rng_state=rng_state, **options)
+
+    def route_parts(node, tool=None, **options):
+        """Route the wires between the parts of this node, leaving its children as they are.
+
+        Any wiring the node already has is replaced.
+
+        Args:
+            node (Node): Hierarchical node containing the parts to be connected.
+            tool (str): Backend tool for schematics.
+            options (dict, optional): Dictionary of options and values.
+
+        Raises:
+            RoutingFailure: The parts couldn't be wired.
+        """
+        # Start with no wires. A node is routed again after a failed try and
+        # when its parts are nudged, and wires of the earlier try would be
+        # left among the new ones.
+        node.wires = defaultdict(list)
+        node.junctions = defaultdict(list)
+
         # Exit if no parts to route in this node.
         if not node.parts:
             return

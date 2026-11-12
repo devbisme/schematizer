@@ -100,6 +100,13 @@ def build_parser():
         "of putting a power symbol on each of their pins.",
     )
     parser.add_argument(
+        "--no-nudge",
+        action="store_true",
+        help="Leave parts where placement put them. Normally, once a sheet is "
+        "routed, parts are moved a step or two to straighten wires that jog "
+        "sideways and the sheet is routed again.",
+    )
+    parser.add_argument(
         "--auto-stub",
         nargs="?",
         type=int,
@@ -157,6 +164,7 @@ def main(argv=None):
             tries=args.tries,
             preplace=not args.no_preplace,
             power_symbols=not args.no_power_symbols,
+            nudge=not args.no_nudge,
             auto_stub=args.auto_stub,
             progress=progress,
             check_netlist=args.check_netlist,

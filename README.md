@@ -186,15 +186,25 @@ Wired parts are placed by the drafting conventions a person would follow:
 
 A part whose orientation is set in the netlist (`symtx`) keeps it.
 
+**Routing feeds back into placement.** Once a sheet is routed, a wire that
+steps sideways between two pins shows they're nearly, but not quite, in line.
+The part with the least else wired to it is moved by the size of the step (up
+to 3 grid steps) and the sheet is routed again. The new routing is kept only
+if it has fewer bends; otherwise the parts go back. On the 169-part test board
+this removes about a quarter of such steps and 8% of the bends, for about 15%
+more time.
+
 A named net that stays on one sheet is wired but its name isn't shown, since
 routing a wire to a label makes a crowded sheet harder to route. Pass
 `label_local_nets=True` to label those nets too.
 
-Two options turn parts of this off (CLI: `--no-preplace`, `--no-power-symbols`):
+Three options turn parts of this off (CLI: `--no-preplace`, `--no-power-symbols`,
+`--no-nudge`):
 
 ```python
 render(netlist, filepath="out", preplace=False)       # force-directed placement from random positions
 render(netlist, filepath="out", power_symbols=False)  # wire the power nets
+render(netlist, filepath="out", nudge=False)          # don't move parts after routing
 ```
 
 With `preplace=False`, groups of more than 20 wired parts are laid out in plain
