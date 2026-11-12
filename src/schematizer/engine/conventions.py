@@ -21,6 +21,7 @@ import re
 from ..geometry import Tx, Vector
 
 __all__ = [
+    "is_power_net",
     "is_power_net_name",
     "is_ground_net_name",
     "rail_dir",
@@ -49,6 +50,10 @@ PIN_EXIT = {"U": Vector(0, -1), "D": Vector(0, 1), "L": Vector(1, 0), "R": Vecto
 
 UP, DOWN, LEFT, RIGHT = (0, 1), (0, -1), (-1, 0), (1, 0)
 
+# Pin functions that make a net a power rail if it has at least this many pins.
+_POWER_PIN_FUNCS = ("POWER-IN", "POWER-OUT")
+RAIL_MIN_PINS = 4
+
 # Pin functions with a signal direction, and the way their wires should leave.
 _FLOW_EXIT = {"INPUT": LEFT, "OUTPUT": RIGHT}
 
@@ -73,8 +78,44 @@ def is_ground_net_name(name):
     return bool(_GROUND_NET_RE.search(name))
 
 
+def _rail_names(net):
+    """Names that say what kind of rail a net is: its own, and those of its power symbols.
+
+    A net drawn with a power symbol part (GND, VCC, ...) is that rail, whatever
+    the net itself is called.
+    """
+    names = [getattr(net, "name", "") or ""]
+    for pin in getattr(net, "pins", ()):
+        part = pin.part
+        if getattr(part, "is_power_symbol", False):
+            names.append(getattr(part, "value", "") or getattr(part, "name", "") or "")
+    return names
+
+
+def is_power_net(net):
+    """Return True if a net is a supply rail or a ground.
+
+    A net is one if it's named like one, or if it goes to a power pin and to
+    enough other pins that it's distributing power rather than, say, joining
+    a regulator to its inductor. That catches rails with names of their own
+    (VBUS_SW, VAFE_P) that the naming rule can't know about.
+
+    Args:
+        net (Net): Net with a name and pins that have their .func set.
+    """
+    if is_power_net_name(getattr(net, "name", "") or ""):
+        return True
+    pins = getattr(net, "pins", ())
+    return len(pins) >= RAIL_MIN_PINS and any(
+        getattr(pin, "func", "") in _POWER_PIN_FUNCS for pin in pins
+    )
+
+
 def rail_dir(net):
     """Return which way a net's power symbol points.
+
+    A net with a power symbol part on it points the way that symbol does,
+    whatever the net is called.
 
     Args:
         net (Net): Net attached to a pin, or None.
@@ -82,10 +123,12 @@ def rail_dir(net):
     Returns:
         tuple | None: UP for a supply rail, DOWN for a ground, None for a signal.
     """
-    name = getattr(net, "name", "") or ""
-    if is_ground_net_name(name):
+    if net is None:
+        return None
+    names = _rail_names(net)
+    if any(is_ground_net_name(name) for name in names):
         return DOWN
-    if is_power_net_name(name):
+    if is_power_net(net) or any(is_power_net_name(name) for name in names):
         return UP
     return None
 

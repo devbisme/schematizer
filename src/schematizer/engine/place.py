@@ -20,6 +20,7 @@ from .._utils import active_logger
 from .._utils import export_to_all, rmv_attr, sgn
 from .conventions import PIN_EXIT, best_orientations
 from .preplace import (
+    row_floating_parts,
     attach_satellites,
     find_satellites,
     place_terminals,
@@ -2314,8 +2315,9 @@ class Placer:
         satellites = find_satellites(real_parts, nets) if preplace else {}
         riders = {sat for sats in satellites.values() for sat, _, _ in sats}
 
-        # Use row-based placement for large groups.
-        if len(real_parts) - len(riders) > node._ROW_PLACE_THRESHOLD:
+        # Use row-based placement for large groups, which force-directed
+        # placement is too slow for. (Pre-placement isn't.)
+        if not preplace and len(real_parts) > node._ROW_PLACE_THRESHOLD:
             return node.place_connected_parts_rowbased(parts, nets, **options)
 
         # Add bboxes with surrounding area so parts are not butted against each other.
@@ -2327,9 +2329,8 @@ class Placer:
 
             # Fix satellites beside the pins they're wired to. Their hosts carry
             # them. Any that don't fit there are placed like the other parts.
-            expansion_factor = options.get("expansion_factor", 1.0)
             satellites = {
-                host: attach_satellites(host, sats, nets, expansion_factor)
+                host: attach_satellites(host, sats, nets)
                 for host, sats in satellites.items()
             }
             riders = {sat for sats in satellites.values() for sat, _, _ in sats}
@@ -2348,12 +2349,10 @@ class Placer:
                 snap_to_grid(sat)
             add_anchor_pull_pins(parts, nets, **options)
 
-            # Put each net label beside a pin of its net. Any that there's no
-            # room for are left for the forces below to place, with the ones
-            # that are down held in place.
-            net_terminals = place_terminals(
-                net_terminals, real_parts, nets, expansion_factor
-            )
+            # Put each net label beside a pin of its net. Any it can't place
+            # are left for the forces below, with the ones that are down held
+            # in place.
+            net_terminals = place_terminals(net_terminals, real_parts, nets)
             real_parts = [part for part in parts if part not in net_terminals]
 
         else:
@@ -2414,6 +2413,12 @@ class Placer:
 
         if not parts:
             # Abort if nothing to place.
+            return
+
+        if options.get("preplace", True):
+            # Put them in rows the way a person would (see preplace.py).
+            add_placement_bboxes(parts)
+            row_floating_parts(parts)
             return
 
         # For large numbers of floating parts, skip the O(n^2) similarity

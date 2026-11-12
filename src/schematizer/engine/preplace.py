@@ -20,6 +20,9 @@ stages that spread parts apart:
 * Spread: seeded parts that landed on each other are moved apart.
 
 Once the parts are down, each net label is put beside a pin of its net.
+
+Parts with no wires at all (a bank of decoupling caps whose pins all go to
+power symbols) are put in tidy rows, grouped by the rails they're on.
 """
 
 import heapq
@@ -31,7 +34,14 @@ import numpy as np
 
 from ..geometry import BBox, Point, Tx, Vector
 from .constants import GRID
-from .conventions import best_orientations, linear, orientation_cost, orientations, pin_exit
+from .conventions import (
+    best_orientations,
+    is_ground_net_name,
+    linear,
+    orientation_cost,
+    orientations,
+    pin_exit,
+)
 
 __all__ = [
     "find_satellites",
@@ -40,10 +50,24 @@ __all__ = [
     "place_terminals",
     "seed_placement",
     "spread_parts",
+    "row_floating_parts",
 ]
+
+# Gap between parts in the rows of parts with no wires, and how many times
+# wider than tall the rows are made.
+FLOAT_GAP = 2 * GRID
+FLOAT_ASPECT = 4
+
+# Size (in mils) of the reference and value text drawn beside a part: the gap
+# between it and the part, the width of a character, and the line pitch.
+FIELD_GAP = 35
+FIELD_CHAR_W = 30
+FIELD_PITCH = 50
 
 # Gap left between the placement boxes of two parts joined by a straight wire.
 SEED_GAP = 2 * GRID
+# Most pins a net can have and still have every pair of them pull together.
+SEED_MAX_CLIQUE = 10
 
 # How far (in grid steps) a part can be moved at a time to get it off of other
 # parts, and the wire length a bend is worth when choosing where it goes.
@@ -74,8 +98,17 @@ SAT_UTURN_COST = 8
 # straight wire then beats an upright one whose wire has to go a long way.
 SAT_CONVENTION_COST = 1.0
 
-# Space kept between a satellite and other parts so the router can get a wire through.
+# Space kept between a satellite and other parts so the router can get a wire
+# through. It isn't widened when routing fails and is tried again with more
+# room around the parts: wider gaps here were measured to route worse.
 SAT_CLEARANCE = GRID
+
+# Space a wire needs between it and a part, or the router has no track to put it on.
+WIRE_CLEARANCE = GRID / 2
+
+# Extra space left around a part that's put in open space because there was
+# no room for it beside a pin.
+FALLBACK_CLEARANCE = 2 * GRID
 
 # Length of the corridor kept clear where a wire leaves a part, so a satellite
 # hanging from one pin doesn't cut across the wire from another pin on the same side.
@@ -83,6 +116,11 @@ SAT_EXIT_CLEARANCE = 12 * GRID
 
 # The same for net labels, which only need to stay off the ends of other pins.
 TERMINAL_EXIT_CLEARANCE = 3 * GRID
+
+# Space left between a net label and the pin it's beside when other pins on
+# the net have to be wired to that pin too. With less, the router has no track
+# between them for those wires to come in on.
+TERMINAL_JOIN_GAP = 2 * GRID
 
 
 def _is_wired(pin, nets):
@@ -272,7 +310,7 @@ class _Keepouts:
 
     Each box has an owner (a part, or a pin for the wires from it) that's
     allowed to touch it. Parts keep their distance from other parts so the
-    router can get wires between them, but a wire can run right alongside a part.
+    router can get wires between them. A wire can run closer to a part than that.
     """
 
     def __init__(self, clearance, exit_clearance):
@@ -283,7 +321,7 @@ class _Keepouts:
 
     def add_part(self, part, box):
         self.for_parts.append((part, _grow(box, self.clearance)))
-        self.for_wires.append((part, box))
+        self.for_wires.append((part, _grow(box, WIRE_CLEARANCE)))
 
     def add_wire(self, pin, box):
         self.for_parts.append((pin, box))
@@ -308,7 +346,7 @@ class _Keepouts:
         tip = pt + out * (reach + self.exit_clearance)
         self.add_wire(pin, _grow(BBox(pt, tip), GRID / 2))
 
-    def find_spot(self, part, pin, host_pin, host_tx, lins, same_net=()):
+    def find_spot(self, part, pin, host_pin, host_tx, lins, same_net=(), min_gap=0):
         """Find the best free spot for a part beside the pin it's wired to, and take it.
 
         Args:
@@ -319,6 +357,8 @@ class _Keepouts:
             lins (list): Orientations the part can have.
             same_net (collection): Other pins whose wires the part can share
                 the way with, because they're on its net.
+            min_gap (float): Space to leave between the pin and the part, so
+                the router has a track there for other wires to join this one.
 
         Returns:
             Tx | None: Transform for the part, or None if every spot is taken.
@@ -327,8 +367,10 @@ class _Keepouts:
         out = _unit(pin_exit(host_pin, host_tx))
         for tx, corner in _spots(part, pin, host_pt, out, lins):
             box = part.lbl_bbox * tx
+            if min_gap and _gap_ahead(host_pt, out, box) < min_gap:
+                continue
             wire_pts = [host_pt, pin.pt * tx] + ([] if corner is None else [corner])
-            wire = _grow(BBox(*wire_pts), GRID / 4)
+            wire = _grow(BBox(*wire_pts), 1)
             # The wire has to touch the part it comes from and can share the
             # way with other wires from the same pin, but nothing else.
             if not any(
@@ -348,7 +390,44 @@ class _Keepouts:
         return None
 
 
-def attach_satellites(host, satellites, nets, expansion_factor=1.0):
+    def find_room(self, part, pin, near, lins):
+        """Find the nearest free spot for a part around a point, and take it.
+
+        This is for a part there's no spot for beside a pin. It only finds
+        open space; the part's wire is left for the router to work out.
+
+        Args:
+            part (Part): The part to place.
+            pin (Pin): Its wired pin, which goes on the grid point found.
+            near (Point): Where to search outward from.
+            lins (list): Orientations the part can have.
+
+        Returns:
+            Tx | None: Transform for the part, or None if no room was found.
+        """
+        near = near.snap(GRID)
+        for radius in range(1, SPREAD_MAX_RADIUS):
+            for dx, dy in _ring(radius):
+                for lin in lins:
+                    tx = lin.move(near + Vector(float(dx), float(dy)) - pin.pt * lin)
+                    box = part.lbl_bbox * tx
+                    # Leave extra room all around, and stay out of the way of
+                    # the wires leaving pins, so the router can get to it.
+                    roomy = _grow(box, FALLBACK_CLEARANCE)
+                    if not any(
+                        roomy.intersects(b) for _, b in self.for_parts + self.for_wires
+                    ):
+                        self.add_part(part, box)
+                        return tx
+        return None
+
+
+def _gap_ahead(pt, out, box):
+    """Distance from a point to a box, measured in the direction out from the point."""
+    return min((corner - pt).x * out.x + (corner - pt).y * out.y for corner in (box.min, box.max))
+
+
+def attach_satellites(host, satellites, nets):
     """Fix each satellite beside the pin it's wired to and grow the host to cover them.
 
     Each satellite gets a ``rel_tx`` that maps it into its host's coordinates,
@@ -360,8 +439,6 @@ def attach_satellites(host, satellites, nets, expansion_factor=1.0):
         host (Part): Part that will carry the satellites.
         satellites (list): Its entry from find_satellites().
         nets (list): Nets that will be wired between parts.
-        expansion_factor (float): Multiplies the space left around satellites,
-            for when routing failed and is being tried again with more room.
 
     Returns:
         list: The entries of the satellites that were attached. One that there
@@ -369,7 +446,7 @@ def attach_satellites(host, satellites, nets, expansion_factor=1.0):
             it), to be placed like any other part.
     """
     nets = set(nets)
-    keepouts = _Keepouts(SAT_CLEARANCE * expansion_factor, SAT_EXIT_CLEARANCE)
+    keepouts = _Keepouts(SAT_CLEARANCE, SAT_EXIT_CLEARANCE)
 
     # Everything is laid out around the host as it's oriented now, with the
     # host's origin at (0, 0).
@@ -409,29 +486,29 @@ def attach_satellites(host, satellites, nets, expansion_factor=1.0):
 _TERMINAL_LINS = [Tx(), Tx().flip_x(), Tx().rot_90cw(), Tx().rot_90cw().rot_90cw().rot_90cw()]
 
 
-def place_terminals(terminals, parts, nets, expansion_factor=1.0):
+def place_terminals(terminals, parts, nets):
     """Put each net label beside one of the pins of its net.
 
     The label goes straight out from a pin if there's room, so its wire is
     short and doesn't have to find a way to some open space at the edge of the
-    sheet. Pins nearer the outside of the placed parts are tried first.
+    sheet. Pins nearer the outside of the placed parts are tried first. If
+    there's no room beside any of them, it goes in the nearest open space.
 
     Args:
         terminals (list): NetTerminals to place.
         parts (list): Placed parts (no NetTerminals).
         nets (list): Nets that will be wired between parts.
-        expansion_factor (float): Multiplies the space left around labels.
 
     Returns:
-        list: The NetTerminals that there was no room for beside any pin. They
-            still need placing.
+        list: The NetTerminals that couldn't be placed (their nets have no
+            wired pins on the parts). They still need placing.
     """
     if not terminals:
         return []
 
     net_set = set(nets)
     part_set = set(parts)
-    keepouts = _Keepouts(SAT_CLEARANCE * expansion_factor, TERMINAL_EXIT_CLEARANCE)
+    keepouts = _Keepouts(SAT_CLEARANCE, TERMINAL_EXIT_CLEARANCE)
     area = BBox()
     for part in parts:
         box = part.lbl_bbox * part.tx
@@ -461,15 +538,29 @@ def place_terminals(terminals, parts, nets, expansion_factor=1.0):
         host_pins = [
             p for p in pin.net.pins if p.part in part_set and _is_wired(p, net_set)
         ]
-        for host_pin in sorted(host_pins, key=inset):
+        host_pins.sort(key=inset)
+        tx = None
+        for host_pin in host_pins:
             tx = keepouts.find_spot(
-                terminal, pin, host_pin, host_pin.part.tx, lins, same_net=host_pins
+                terminal,
+                pin,
+                host_pin,
+                host_pin.part.tx,
+                lins,
+                same_net=host_pins,
+                min_gap=TERMINAL_JOIN_GAP if len(host_pins) > 1 else 0,
             )
             if tx is not None:
-                terminal.tx = tx
                 break
-        else:
+        if tx is None and host_pins:
+            # No room beside any pin, so use the nearest open space to one.
+            tx = keepouts.find_room(
+                terminal, pin, host_pins[0].pt * host_pins[0].part.tx, lins
+            )
+        if tx is None:
             unplaced.append(terminal)
+        else:
+            terminal.tx = tx
     return unplaced
 
 
@@ -514,7 +605,14 @@ def seed_placement(parts, nets):
             continue
         # A net with many parts shouldn't pull harder than one with two.
         weight = (1.0 / (num_parts - 1)) ** 0.5
-        for pin_a, pin_b in combinations(pins, 2):
+        if len(pins) > SEED_MAX_CLIQUE:
+            # Pairing every pin with every other gets out of hand for a big
+            # net, so just pair each with the next.
+            pairs = zip(pins, pins[1:])
+            weight = 1.0
+        else:
+            pairs = combinations(pins, 2)
+        for pin_a, pin_b in pairs:
             a, b = index[pin_a.part], index[pin_b.part]
             if a == b:
                 continue
@@ -685,3 +783,51 @@ def spread_parts(parts, nets):
     for _ in range(SPREAD_PASSES):
         for part in reversed(order):
             move(part)
+
+
+def row_floating_parts(parts):
+    """Put parts that have no wires in rows, grouped by the nets on their pins.
+
+    These are mostly decoupling caps whose pins all go to power symbols, and a
+    person draws them as a row of caps with the ones on the same rail side by
+    side. The rows are kept a few times wider than they are tall.
+
+    Args:
+        parts (list): Parts with no wired pins. Their orientations are kept.
+    """
+
+    def rails(part):
+        names = {pin.net.name for pin in part.pins if pin.net is not None}
+        return sorted(name for name in names if not is_ground_net_name(name))
+
+    def key(part):
+        return (rails(part), len(part.pins), str(getattr(part, "value", "")), part.ref)
+
+    def with_text(part):
+        """Box of the part and its labels, plus room for its reference and value.
+
+        The text goes on a side with no pins: to the right of a part with
+        pins only on its top and bottom, otherwise above and below it.
+        """
+        lin = linear(part.tx)
+        box = part.lbl_bbox * lin
+        chars = max(len(str(getattr(part, "ref", ""))), len(str(getattr(part, "value", ""))))
+        if all(round(pin_exit(pin, lin).x) == 0 for pin in part.pins):
+            return BBox(box.min, box.max + Vector(FIELD_GAP + chars * FIELD_CHAR_W, 0))
+        return box.resize(Vector(0, FIELD_GAP + 2 * FIELD_PITCH))
+
+    parts = sorted(parts, key=key)
+    boxes = [with_text(part) for part in parts]
+    area = sum((box.w + FLOAT_GAP) * (box.h + FLOAT_GAP) for box in boxes)
+    width = max(max(box.w for box in boxes), (area * FLOAT_ASPECT) ** 0.5)
+
+    x = top = row_height = 0
+    for part, box in zip(parts, boxes):
+        if x and x + box.w > width:
+            # Start a new row below the last one.
+            x, top, row_height = 0, top - row_height - FLOAT_GAP, 0
+        part.tx = linear(part.tx).move(Vector(x - box.min.x, top - box.max.y))
+        pt = part.pins[0].pt * part.tx
+        part.tx = part.tx.move(pt.snap(GRID) - pt)
+        x += box.w + FLOAT_GAP
+        row_height = max(row_height, box.h)

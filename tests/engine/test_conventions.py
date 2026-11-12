@@ -11,6 +11,7 @@ import os
 import pytest
 
 from schematizer.engine.conventions import (
+    is_power_net,
     DOWN,
     UP,
     best_orientations,
@@ -109,3 +110,48 @@ def test_power_nets_become_power_symbols_unless_drawn():
     with open(os.path.join(DATA, "and_gate.json")) as f:
         circuit = load_netlist(json.load(f))
     assert stub_power_nets(circuit, keep_drawn=True) == []
+
+
+class _Pin:
+    def __init__(self, func, part=None):
+        self.func = func
+        self.part = part
+
+
+def _net(name, *funcs):
+    net = _Net(name)
+    net.pins = [_Pin(func) for func in funcs]
+    return net
+
+
+@pytest.mark.parametrize(
+    "net,is_rail",
+    [
+        # A rail with a name of its own, found by its power pins.
+        (_net("VBUS_SW", "POWER-OUT", "POWER-IN", "PASSIVE", "PASSIVE"), True),
+        # A regulator's switch node: a power pin, but too few pins to be distributing power.
+        (_net("SW_3V3", "POWER-OUT", "PASSIVE"), False),
+        # Lots of pins but no power pin.
+        (_net("ATT_A", *["PASSIVE"] * 7), False),
+        # Named like a rail.
+        (_net("+5V", "PASSIVE"), True),
+    ],
+)
+def test_rails_found_by_name_or_power_pins(net, is_rail):
+    assert is_power_net(net) == is_rail
+    assert (rail_dir(net) == UP) == is_rail
+
+
+def test_rail_points_the_way_of_its_power_symbol():
+    """opamp_circ.json draws ground with a GND symbol on a net named N$2."""
+    circuit = _circuit("opamp_circ.json")
+    nets = {net.name: net for net in circuit.nets}
+    assert rail_dir(nets["N$2"]) == DOWN  # GND symbol.
+    assert rail_dir(nets["N$1"]) == UP  # VCC symbol.
+
+
+def test_power_symbol_parts_keep_their_library_orientation():
+    circuit = _circuit("opamp_circ.json")
+    for part in circuit.parts:
+        if part.is_power_symbol:
+            assert (part.tx.a, part.tx.b, part.tx.c, part.tx.d) == (1, 0, 0, 1)

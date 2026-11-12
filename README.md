@@ -150,12 +150,18 @@ Wired parts are placed by the drafting conventions a person would follow:
   by one pin (a pull-up, a series resistor, an LED with its resistor) is fixed
   next to the pin it's wired to.
 - **Power nets get power symbols.** Nets with power names are drawn with a power
-  symbol on each pin instead of being wired across the sheet. A power net that
-  already has a power symbol part of its own in the netlist is left wired.
+  symbol on each pin instead of being wired across the sheet. So are nets with
+  names of their own (`VBUS_SW`) that go to a power pin and at least three other
+  pins; they get labels. A power net that already has a power symbol part of
+  its own in the netlist is left wired, and points the way its symbol does.
 
 - **Labels go on pins, not out in space.** A net that leaves the sheet is
   labeled at its pin if it has only one there. If it has several, they're
-  wired together and the label goes beside one of them.
+  wired together and the label goes beside one of them, far enough out that
+  the other wires have room to join it.
+- **Unwired parts go in tidy rows.** Parts with no wires at all (a bank of
+  decoupling caps whose pins all go to power symbols) are laid out in rows,
+  with each rail's caps side by side and room for their reference and value.
 
 A part whose orientation is set in the netlist (`symtx`) keeps it.
 
@@ -170,7 +176,8 @@ render(netlist, filepath="out", preplace=False)       # force-directed placement
 render(netlist, filepath="out", power_symbols=False)  # wire the power nets
 ```
 
-Groups of more than 20 wired parts are still laid out in plain rows.
+With `preplace=False`, groups of more than 20 wired parts are laid out in plain
+rows, since force-directed placement is too slow for them.
 
 With `auto_stub`, parts placed this way keep the short wires routed to them.
 Only nets with many pins or far-apart pins become labels. (With
@@ -203,6 +210,24 @@ specific bad layout, and for re-rolling a layout you don't like — try `--seed 
 Retries still explore: when routing fails and the engine retries with a larger
 area, each attempt derives its own stream from your seed, so a retry is a
 genuinely different layout while the run as a whole stays reproducible.
+
+## When routing fails
+
+A crowded sheet doesn't always route on the first try, so the engine tries
+again at three levels before giving up:
+
+1. If a net can't find a way through, the nets routed ahead of it are torn up
+   and all are routed again with that net first (up to 4 times).
+2. A sheet that still fails is placed again by itself with 25% more room
+   around its parts and routed again (up to 6 times). This doesn't touch the
+   other sheets, since its parent only shows it as a sheet symbol.
+3. If that fails too, the whole design is placed and routed again with more
+   room (`retries`, 2 by default).
+
+Routing only counts as done if every wired pin has a wire of its net ending
+on it, no wire runs over the end of another net's pin, and each net's wires
+are in one piece. KiCad connects a pin only to a wire that ends on it, so a
+drawing that breaks one of these would look right but be missing connections.
 
 Seeding is local to this library. It uses its own generator, so it neither
 disturbs nor depends on the `random` module's global state in the calling

@@ -26,7 +26,7 @@ from .._utils import export_to_all, rmv_attr
 from .sexp_schematic import write_top_schematic
 from .svg_schematic import write_top_svg
 from .bboxes import calc_hier_label_bbox, calc_symbol_bbox
-from .conventions import conventional_orientation, is_power_net_name
+from .conventions import conventional_orientation, is_power_net
 
 __all__ = []
 
@@ -70,7 +70,8 @@ def stub_power_nets(circuit, keep_drawn=False):
     """Stub the power nets so they're drawn with power symbols instead of wires.
 
     A supply rail or ground usually goes to most of the parts on a sheet.
-    People don't wire those together; they put a power symbol on each pin.
+    People don't wire those together; they put a power symbol on each pin
+    (or a label, for a rail whose name has no power symbol).
     Nets whose stubbing was set explicitly by the user are left alone.
 
     Args:
@@ -87,7 +88,7 @@ def stub_power_nets(circuit, keep_drawn=False):
             continue
         if not net.valid or len(net.pins) == 0:
             continue
-        if not is_power_net_name(net.name):
+        if not is_power_net(net):
             continue
         if keep_drawn and any(
             getattr(pin.part, "is_power_symbol", False) for pin in net.pins
@@ -600,6 +601,12 @@ def preprocess_circuit(circuit, **options):
 
         if getattr(part, "symtx", ""):
             # The user set this part's orientation, so leave it alone.
+            return
+
+        if getattr(part, "is_power_symbol", False):
+            # A power symbol is drawn the way its library draws it. (Its pin's
+            # wire leaves toward the circuit, the opposite of a part's pin on
+            # the same rail.)
             return
 
         dont_rotate_pin_cnt = options.get("dont_rotate_pin_count", 10000)

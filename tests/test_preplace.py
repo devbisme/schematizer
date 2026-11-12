@@ -6,6 +6,9 @@
 
 import json
 import os
+import re
+import shutil
+import subprocess
 
 import pytest
 
@@ -244,3 +247,146 @@ def test_preplace_is_reproducible(esp32, tmp_path):
     _render(esp32, tmp_path / "a", seed=1, auto_stub=True)
     _render(esp32, tmp_path / "b", seed=1, auto_stub=True)
     assert files(tmp_path / "a") == files(tmp_path / "b")
+
+
+def test_large_groups_are_preplaced_not_put_in_rows(monkeypatch):
+    """Only force-directed placement is too slow for big groups."""
+    from schematizer.engine.place import Placer
+
+    calls = []
+    monkeypatch.setattr(Placer, "_ROW_PLACE_THRESHOLD", 2)
+    monkeypatch.setattr(
+        Placer, "place_connected_parts_rowbased", lambda *a, **k: calls.append(1)
+    )
+    _placed_tree(_doc("span_hier.json"))
+    assert calls == []
+    _placed_tree(_doc("span_hier.json"), preplace=False)
+    assert calls
+
+
+def _kicad_nets(sch_file, net_file):
+    """Groups of (ref, pin) that KiCad finds connected in a schematic, leaving out power symbols."""
+    subprocess.run(
+        ["kicad-cli", "sch", "export", "netlist", "--format", "kicadsexpr",
+         "-o", str(net_file), str(sch_file)],
+        check=True, capture_output=True,
+    )
+    text = net_file.read_text()
+    drawn = set()
+    for block in re.split(r"\(net \(code", text[text.index("(nets"):])[1:]:
+        nodes = re.findall(r'\(node \(ref "([^"]+)"\) \(pin "([^"]+)"\)', block)
+        nodes = frozenset(n for n in nodes if not n[0].startswith("#"))
+        if len(nodes) > 1:
+            drawn.add(nodes)
+    return drawn
+
+
+def _source_nets(doc):
+    """Groups of (ref, pin) that the netlist connects, leaving out power symbols."""
+    wanted = {
+        frozenset((n["ref"], str(n["pin"])) for n in net["nodes"] if not n["ref"].startswith("#"))
+        for net in doc["nets"]
+        if not net.get("nc")
+    }
+    return {nodes for nodes in wanted if len(nodes) > 1}
+
+
+@pytest.mark.skipif(not shutil.which("kicad-cli"), reason="needs kicad-cli")
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_kicad_sees_every_wired_connection(tmp_path, seed):
+    """A wire that runs over a pin of its net has to end there, or KiCad won't connect it."""
+    doc = _doc("and_gate.json")
+    render(doc, filepath=str(tmp_path), top_name="sch", seed=seed)
+    drawn = _kicad_nets(tmp_path / "sch.kicad_sch", tmp_path / "sch.net")
+    assert drawn == _source_nets(doc)
+
+
+@pytest.mark.skipif(not shutil.which("kicad-cli"), reason="needs kicad-cli")
+def test_crowded_board_is_wired_on_every_sheet(tmp_path):
+    """The dual ADC board (169 parts, 9 sheets) is drawn with all its connections.
+
+    Its analog front-end sheets rarely route on the first try, so this needs
+    the router to try the nets again in a new order and each sheet to be placed
+    again by itself, and it needs the checks that catch a pin left unwired.
+    """
+    doc = _doc("dual_adc_usb.json")
+    _render(doc, tmp_path, seed=1)
+    drawn = _kicad_nets(tmp_path / "sch.kicad_sch", tmp_path / "sch.net")
+    assert drawn == _source_nets(doc)
+
+
+@pytest.mark.parametrize("seed", [4, 5, 6])
+def test_auto_stub_wires_pins_beside_a_merged_routing_box(tmp_path, seed):
+    """A pin on a face of a merged routing box doesn't cost its net the wire leaving that face.
+
+    The opamp's inverting input was left unwired, which made routing fail
+    here, because trimming repeated terminals took the pin for one.
+    """
+    _render(_doc("opamp_circ.json"), tmp_path, seed=seed, auto_stub=True)
+
+
+def _pin(x, y, label=False):
+    """A stand-in pin at a point, on a net label if label is True."""
+    from types import SimpleNamespace
+
+    from schematizer.geometry import Point, Tx
+
+    part = NetTerminal.__new__(NetTerminal) if label else SimpleNamespace()
+    part.tx = Tx()
+    return SimpleNamespace(pt=Point(x, y), part=part)
+
+
+def _seg(x1, y1, x2, y2):
+    from schematizer.geometry import Point, Segment
+
+    return Segment(Point(x1, y1), Point(x2, y2))
+
+
+def test_wires_join_where_kicad_connects_them():
+    from schematizer.engine.route import wires_join
+
+    pins = [_pin(0, 0), _pin(100, 100), _pin(100, -100)]
+    # An L to one pin, with a T off its side to the other.
+    tee = [_seg(0, 0, 100, 0), _seg(100, 0, 100, 100), _seg(50, 0, 50, -100), _seg(50, -100, 100, -100)]
+    assert wires_join(tee, pins)
+    # Wires that only cross don't connect.
+    crossing = [_seg(0, 0, 100, 0), _seg(50, 50, 50, -50)]
+    assert not wires_join(crossing, [_pin(0, 0), _pin(50, 50)])
+    # Two pieces aren't joined, unless each has a label for the net on it.
+    apart = [_seg(0, 0, 100, 0), _seg(0, 100, 100, 100)]
+    assert not wires_join(apart, [_pin(0, 0), _pin(100, 100)])
+    labeled = [_pin(0, 0), _pin(100, 0, label=True), _pin(0, 100), _pin(100, 100, label=True)]
+    assert wires_join(apart, labeled)
+    # A pin with no wire ending on it isn't joined.
+    assert not wires_join([_seg(0, 0, 100, 0)], [_pin(0, 0), _pin(50, 0)])
+
+
+def test_parts_with_no_wires_go_in_rows_by_rail():
+    """A bank of decoupling caps is laid out in rows, with each rail's caps together."""
+    from schematizer.engine.preplace import row_floating_parts
+    from schematizer.geometry import Vector
+
+    parts, nets = _sheet(_doc("dual_adc_usb.json"), "fpga")
+    wired = {pin.part for net in nets for pin in net.pins}
+    caps = [part for ref, part in parts.items() if ref.startswith("C") and part not in wired]
+    assert len(caps) > 10
+    row_floating_parts(caps)
+
+    boxes = [part.lbl_bbox * part.tx for part in caps]
+    for i, box in enumerate(boxes):
+        assert not any(box.intersects(other) for other in boxes[i + 1 :])
+    for part in caps:
+        pt = part.pins[0].pt * part.tx
+        assert pt == pt.snap(constants.GRID)
+
+    # Read the caps row by row, top to bottom and left to right.
+    order = sorted(caps, key=lambda part: (-round((part.lbl_bbox * part.tx).max.y), (part.lbl_bbox * part.tx).min.x))
+    rails = [
+        min(pin.net.name for pin in part.pins if "GND" not in pin.net.name) for part in order
+    ]
+    # Each rail's caps are side by side: once a rail is left, it doesn't come back.
+    seen = []
+    for rail in rails:
+        if not seen or seen[-1] != rail:
+            assert rail not in seen
+            seen.append(rail)

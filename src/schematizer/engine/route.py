@@ -145,8 +145,71 @@ class TerminalClashException(RoutingFailure):
     pass
 
 
+# Times a child sheet is placed and routed before giving up, and how much
+# more room its parts get each time.
+SHEET_ROUTE_TRIES = 6
+SHEET_EXPANSION = 1.25
+
+# Times global routing is tried, each with the nets that failed before routed first.
+GLOBAL_ROUTE_TRIES = 4
+
+
 class GlobalRoutingFailure(RoutingFailure):
     """Failure during global routing phase."""
+
+    pass
+
+
+def wires_join(segments, pins):
+    """Return True if wire segments join all the pins they're for.
+
+    Segments are joined where they share an end or the end of one lands on
+    another, which is how KiCad connects them. Net labels for the same net
+    join each other, so pieces with a label on them count as joined.
+
+    Args:
+        segments (list): Wire Segments of one net.
+        pins (list): The net's pins that the wires are meant to join.
+    """
+    from .net_terminal import NetTerminal
+
+    segments = [(seg.p1.round(), seg.p2.round()) for seg in segments]
+    parent = list(range(len(segments) + 1))  # The last one stands for the labels.
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def on(pt, seg):
+        (p1, p2) = seg
+        return min(p1.x, p2.x) <= pt.x <= max(p1.x, p2.x) and min(
+            p1.y, p2.y
+        ) <= pt.y <= max(p1.y, p2.y)
+
+    for i, seg in enumerate(segments):
+        for j, other in enumerate(segments[:i]):
+            if any(on(pt, other) for pt in seg) or any(on(pt, seg) for pt in other):
+                parent[find(i)] = find(j)
+
+    labels = len(segments)
+    pieces = set()
+    for pin in pins:
+        pt = (pin.pt * pin.part.tx).round()
+        touching = [i for i, seg in enumerate(segments) if pt in seg]
+        if isinstance(pin.part, NetTerminal):
+            touching.append(labels)
+        if not touching:
+            return False
+        for i in touching[1:]:
+            parent[find(i)] = find(touching[0])
+        pieces.add(find(touching[0]))
+    return len({find(piece) for piece in pieces}) <= 1
+
+
+class PinWiringFailure(RoutingFailure):
+    """Routing finished but left a pin unconnected or with another net's wire over it."""
 
     pass
 
@@ -568,6 +631,10 @@ class Face(Interval):
             # Make a dict with nets and the terminals on each one.
             net_term_dict = defaultdict(list)
             for terminal in self.terminals:
+                if getattr(terminal, "on_part", False):
+                    # A pin a coalesced face picked up from a part. The net
+                    # still needs any terminal it crosses this face with.
+                    continue
                 if intersection.beg.coord <= terminal.coord <= intersection.end.coord:
                     net_term_dict[terminal.net].append(terminal)
             if None in net_term_dict.keys():
@@ -1416,6 +1483,9 @@ class SwitchBox:
                 for terminal in face.terminals:
                     if terminal.net:
                         total_face.add_terminal(terminal.net, terminal.coord)
+                        # The new face has no part, so remember which terminals
+                        # are pins. They aren't extra ways for a net to cross.
+                        total_face.terminals[-1].on_part = bool(face.part)
 
             # Set the routing capacity of the new face.
             total_face.set_capacity()
@@ -2277,10 +2347,12 @@ class Router:
         #        d. Add the faces on the new route to the stop_faces list.
 
         # Core routing function.
-        def rt_srch(start_face, stop_faces):
+        def rt_srch(net, net_pin_faces, start_face, stop_faces):
             """Return a minimal-distance path from the start face to one of the stop faces.
 
             Args:
+                net (Net): Net being routed.
+                net_pin_faces (set): Faces with the net's pins on them.
                 start_face (Face): Face from which path search begins
                 stop_faces (List): List of Faces at which search will end.
 
@@ -2386,13 +2458,8 @@ class Router:
                 bbox.add(pin.route_pt)
             return (bbox.w + bbox.h, len(net.pins))
 
-        # Set order in which nets will be routed.
-        nets.sort(key=rank_net)
-
-        # Globally route each net.
-        global_routes = []
-
-        for net in nets:
+        def route_net(net):
+            """Return the GlobalRoute that connects the faces with the net's pins."""
             # List for storing GlobalWires connecting pins on net.
             global_route = GlobalRoute()
 
@@ -2407,7 +2474,7 @@ class Router:
             start_face = rng.choice(start_faces)
             start_faces.remove(start_face)
             stop_faces = set(start_faces)
-            initial_route = rt_srch(start_face, stop_faces)
+            initial_route = rt_srch(net, net_pin_faces, start_face, stop_faces)
             global_route.append(initial_route)
 
             # The faces on the route that was found now become the stopping faces for any further routing.
@@ -2415,16 +2482,40 @@ class Router:
 
             # Go thru the other start faces looking for a connection to any existing route.
             for start_face in start_faces:
-                next_route = rt_srch(start_face, stop_faces)
+                next_route = rt_srch(net, net_pin_faces, start_face, stop_faces)
                 global_route.append(next_route)
 
                 # Update the set of stopping faces with the faces on the newest route.
                 stop_faces |= set(next_route)
 
-            # Add the complete global route for this net to the list of global routes.
-            global_routes.append(global_route)
+            return global_route
 
-        return global_routes
+        # Set order in which nets will be routed.
+        nets.sort(key=rank_net)
+
+        # A net that can't get through was blocked by nets routed before it.
+        # Clear the routes, move it to the front, and route them all again.
+        faces = set()
+        frontier = [pin.face for net in nets for pin in node.get_internal_pins(net)]
+        while frontier:
+            face = frontier.pop()
+            if face not in faces:
+                faces.add(face)
+                frontier.extend(adj.face for adj in face.adjacent)
+        capacities = {face: face.capacity for face in faces}
+        first = []
+        for attempt in range(GLOBAL_ROUTE_TRIES):
+            global_routes = []
+            try:
+                for net in first + [net for net in nets if net not in first]:
+                    global_routes.append(route_net(net))
+                return global_routes
+            except GlobalRoutingFailure:
+                if attempt == GLOBAL_ROUTE_TRIES - 1:
+                    raise
+                first = [net] + [other for other in first if other is not net]
+                for face, capacity in capacities.items():
+                    face.capacity = capacity
 
     def create_switchboxes(node, h_tracks, v_tracks, **options):
         """Create routing switchboxes from the faces in the horz/vert tracks.
@@ -2906,6 +2997,13 @@ class Router:
                     if part_bbox.intersects(segment_bbox):
                         return True
 
+                # A segment can run along the edge of a part without
+                # intersecting it, but not over the end of a pin that isn't
+                # on its net: it would look connected to it.
+                for pt, pin_net in pin_nets.items():
+                    if pin_net is not net and contains_pt(segment, pt):
+                        return True
+
                 # BBoxes don't intersect if they line up exactly edge-to-edge.
                 # So expand the segment bbox slightly so intersections with bboxes of
                 # other segments will be detected.
@@ -3041,6 +3139,13 @@ class Router:
         # Get part bounding boxes so parts can be avoided when modifying net segments.
         part_bboxes = [p.bbox * p.tx for p in node.parts]
 
+        # The net (or None) of the pin at each pin location.
+        pin_nets = {
+            (pin.pt * part.tx).round(): pin.net
+            for part in node.parts
+            for pin in part.pins
+        }
+
         # Get dict of bounding boxes for the nets in this node.
         net_bboxes = {net: segments_bbox(segs) for net, segs in node.wires.items()}
 
@@ -3121,8 +3226,49 @@ class Router:
                 # Merge segments made colinear by removing jogs.
                 segments = merge_segments(segments)
 
+                # Merging also rejoins segments that were split where they
+                # cross a pin of the net. KiCad only connects a pin to a wire
+                # that ends on it, so split them there again.
+                segments = split_segments(segments, net_pin_pts[net])
+
                 # Update the node net's wire with the cleaned version.
                 node.wires[net] = segments
+
+    def check_pin_wires(node, nets):
+        """Make sure each wired pin is connected and no other net's wire runs over it.
+
+        KiCad connects a pin only to a wire that ends on it, so a wire that
+        stops short of a pin or another net's wire across its end leaves the
+        drawing with connections missing even though the routing seemed to
+        succeed.
+
+        Args:
+            nets (list): Nets that were routed.
+
+        Raises:
+            PinWiringFailure: A pin isn't wired as it should be.
+        """
+        def covers(seg, pt):
+            p1, p2 = seg.p1.round(), seg.p2.round()
+            return min(p1.x, p2.x) <= pt.x <= max(p1.x, p2.x) and min(
+                p1.y, p2.y
+            ) <= pt.y <= max(p1.y, p2.y)
+
+        for net in nets:
+            ends = {pt for seg in node.wires.get(net, ()) for pt in (seg.p1.round(), seg.p2.round())}
+            for pin in node.get_internal_pins(net):
+                pt = (pin.pt * pin.part.tx).round()
+                if pt not in ends:
+                    raise PinWiringFailure(
+                        f"No wire of {net.name} ends on pin {pin.part.ref}.{pin.num}"
+                    )
+                for other, segments in node.wires.items():
+                    if other is not net and any(covers(seg, pt) for seg in segments):
+                        raise PinWiringFailure(
+                            f"{other.name} wire runs over pin {pin.part.ref}.{pin.num} of {net.name}"
+                        )
+            if not wires_join(node.wires.get(net, ()), node.get_internal_pins(net)):
+                raise PinWiringFailure(f"Wires of {net.name} are in separate pieces")
 
     def add_junctions(node):
         """Add X & T-junctions where wire segments in the same net meet."""
@@ -3179,6 +3325,30 @@ class Router:
         for part in node.parts:
             rmv_attr(part.pins, ("route_pt", "face"))
 
+    def route_child(node, child, tool=None, **options):
+        """Route a child node, placing it again with more room if that fails.
+
+        A child on a sheet of its own appears in this node as a sheet symbol
+        whose size doesn't depend on how its insides are placed, so it can be
+        placed and routed again by itself. That beats starting the whole
+        design over, where every sheet has to route on the same try.
+
+        Args:
+            child (Node): Child node to route.
+            tool (str): Backend tool for schematics.
+            options (dict): Placement and routing options.
+        """
+        expansion_factor = options.pop("expansion_factor", 1.0)
+        for attempt in range(SHEET_ROUTE_TRIES):
+            try:
+                child.route(tool=tool, **options)
+                return
+            except RoutingFailure:
+                if child.flattened or attempt == SHEET_ROUTE_TRIES - 1:
+                    raise
+            expansion_factor *= SHEET_EXPANSION
+            child.place(tool=tool, expansion_factor=expansion_factor, **options)
+
     def route(node, tool=None, **options):
         """Route the wires between part pins in this node and its children.
 
@@ -3207,7 +3377,7 @@ class Router:
         # First, recursively route any children of this node.
         # TODO: Child nodes are independent so could they be processed in parallel?
         for child in node.children.values():
-            child.route(tool=tool, **options)
+            node.route_child(child, tool=tool, **options)
 
         # Exit if no parts to route in this node.
         if not node.parts:
@@ -3291,6 +3461,7 @@ class Router:
             # Now clean-up the wires and add junctions.
             node.cleanup_wires()
             node.add_junctions()
+            node.check_pin_wires(internal_nets)
 
             # If enabled, draw the global and detailed routing for debug purposes.
             if options.get("draw_switchbox_routing"):
