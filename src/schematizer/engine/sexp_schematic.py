@@ -2012,7 +2012,7 @@ def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):
 
 @export_to_all
 def write_top_schematic(
-    circuit, node, filepath, top_name, title, version=None, validate=True, place_fields=True
+    circuit, node, filepath, top_name, title, version=None, place_fields=True
 ):
     """Generate and write the complete schematic from a placed+routed node tree.
 
@@ -2025,7 +2025,6 @@ def write_top_schematic(
         top_name: Base filename (without extension).
         title: Schematic title.
         version: S-expression version number.
-        validate: Run kicad-cli ERC on the result, if kicad-cli is available.
         place_fields: Move Reference and Value text off whatever it collides with.
     """
 
@@ -2060,41 +2059,7 @@ def write_top_schematic(
         node, uuid_path=uuid_path, version=version
     )
 
-    # Optional: validate with kicad-cli if available.
-    if validate:
-        _validate_with_kicad_cli(output_file)
-
     return output_file
-
-
-# ---------------------------------------------------------------------------
-# Optional KiCad CLI validation
-# ---------------------------------------------------------------------------
-
-
-def _validate_with_kicad_cli(filepath):
-    """Run kicad-cli ERC on generated schematic if available."""
-    import shutil
-    import subprocess
-
-    kicad_cli = shutil.which("kicad-cli")
-    if not kicad_cli:
-        return  # Silent skip if not installed.
-    try:
-        result = subprocess.run(
-            [kicad_cli, "sch", "erc", "--exit-code-violations", filepath],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode != 0:
-            from .._utils import active_logger
-
-            active_logger.warning(
-                f"KiCad ERC found issues in {filepath}:\n{result.stderr}"
-            )
-    except (subprocess.TimeoutExpired, OSError):
-        pass  # Don't fail generation if CLI has issues.
 
 
 # ---------------------------------------------------------------------------

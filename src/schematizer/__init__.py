@@ -14,5 +14,6 @@ from .render import render  # noqa: E402
 # or routing can't complete. Exported so callers (e.g. SKiDL) can catch them.
 from .engine.place import PlacementFailure  # noqa: E402
 from .engine.route import RoutingFailure  # noqa: E402
+from .netcheck import NetlistMismatch  # noqa: E402
 
-__all__ = ["render", "PlacementFailure", "RoutingFailure", "__version__"]
+__all__ = ["render", "PlacementFailure", "RoutingFailure", "NetlistMismatch", "__version__"]

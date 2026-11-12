@@ -11,6 +11,7 @@ from . import __version__
 from .engine.gen_schematic import AUTO_STUB_PINS
 from .engine.place import PlacementFailure
 from .engine.route import RoutingFailure
+from .netcheck import NetlistMismatch
 from .render import SUPPORTED_FORMATS, SUPPORTED_MODES, SUPPORTED_TOOLS, render
 
 
@@ -111,6 +112,13 @@ def build_parser():
         "a labels-only schematic if routing still fails.",
     )
     parser.add_argument(
+        "--check-netlist",
+        action="store_true",
+        help="After writing, have KiCad export the schematic's netlist and "
+        "compare it with the input. Exits with status 1 if they differ "
+        "(needs kicad-cli; KiCad format only).",
+    )
+    parser.add_argument(
         "--progress",
         dest="progress",
         action="store_true",
@@ -151,8 +159,9 @@ def main(argv=None):
             power_symbols=not args.no_power_symbols,
             auto_stub=args.auto_stub,
             progress=progress,
+            check_netlist=args.check_netlist,
         )
-    except (ValueError, TypeError, FileNotFoundError) as e:
+    except (ValueError, TypeError, FileNotFoundError, RuntimeError, NetlistMismatch) as e:
         print(f"schematizer: error: {e}", file=sys.stderr)
         return 1
     except (PlacementFailure, RoutingFailure) as e:

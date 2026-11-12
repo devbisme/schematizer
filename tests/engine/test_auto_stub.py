@@ -889,11 +889,10 @@ class TestErcLoopStops:
     """Regenerating is expensive, so the loop only runs while it can help."""
 
     def _render(self, monkeypatch, tmp_path, report):
-        """Render with a stubbed-out ERC; return (sheets written, validations run)."""
+        """Render with a stubbed-out ERC; return (sheets written, ERC runs)."""
         from schematizer import render
-        from schematizer.engine import sexp_schematic
 
-        writes, validations = [], []
+        writes, erc_runs = [], []
         write_output = gen_schematic._write_output
 
         def counting_write(*args):
@@ -902,11 +901,8 @@ class TestErcLoopStops:
 
         monkeypatch.setattr(gen_schematic, "_write_output", counting_write)
         monkeypatch.setattr(gen_schematic.shutil, "which", lambda name: "/bin/true")
-        monkeypatch.setattr(gen_schematic, "_run_erc", lambda path: "report")
+        monkeypatch.setattr(gen_schematic, "_run_erc", lambda path: erc_runs.append(path) or "report")
         monkeypatch.setattr(gen_schematic, "_parse_erc_report", report)
-        monkeypatch.setattr(
-            sexp_schematic, "_validate_with_kicad_cli", validations.append
-        )
         path = os.path.join(os.path.dirname(__file__), "..", "data", "and_gate_nopwr.json")
         with open(path) as f:
             doc = json.load(f)
@@ -914,7 +910,7 @@ class TestErcLoopStops:
             doc, tool="kicad9", filepath=str(tmp_path), seed=1, auto_stub=True,
             erc_max_iterations=8,
         )
-        return len(writes), len(validations)
+        return len(writes), len(erc_runs)
 
     def test_nothing_left_to_stub_stops_regeneration(self, monkeypatch, tmp_path):
         errors = [("pin_not_connected", "R1", "1")]
@@ -929,8 +925,8 @@ class TestErcLoopStops:
         assert writes == 2  # The first attempt, then one to see stubbing not help.
 
     def test_erc_runs_once_per_sheet_written(self, monkeypatch, tmp_path):
-        _, validations = self._render(monkeypatch, tmp_path, lambda path: [])
-        assert validations == 0
+        writes, erc_runs = self._render(monkeypatch, tmp_path, lambda path: [])
+        assert erc_runs == writes == 1
 
     def test_already_stubbed_nets_are_not_reported_as_new(self):
         circuit = TestStubNetsForErcErrors()._make_circuit_with_parts()[0]

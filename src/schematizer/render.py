@@ -90,6 +90,7 @@ def render(
     seed=None,
     tries=1,
     progress=None,
+    check_netlist=False,
     **options,
 ):
     """Generate schematic files from a generic netlist document.
@@ -127,6 +128,11 @@ def render(
         progress: ``True`` shows the step being worked on ("routing fpga") as a
             status line on stderr. A function is called with each message
             instead. Off by default.
+        check_netlist (bool): After writing, have KiCad export the netlist of
+            the schematic and compare it with ``netlist``. Raises
+            :class:`~schematizer.netcheck.NetlistMismatch` if they differ; the
+            files are left in place. Needs ``kicad-cli``, and ``format="kicad"``.
+            With ``tries``, only the layout that's kept is checked.
         **options: Passed through to the placement/routing/writer engine
             (e.g. ``flatness``, ``retries``, ``auto_stub``). ``flatness``
             controls hierarchy for both formats: 0 keeps every subcircuit on
@@ -166,15 +172,25 @@ def render(
     if not (progress is None or isinstance(progress, bool) or callable(progress)):
         raise ValueError("progress must be True, False or a function taking a message.")
 
-    from .engine.progress import reporting
+    if check_netlist and format != "kicad":
+        raise ValueError("check_netlist needs KiCad files (format='kicad').")
+
+    from .engine.progress import report, reporting
 
     with reporting(progress):
-        return _render(netlist, tool, filepath, top_name, title, format, mode, seed, tries, options)
+        doc = _load_document(netlist)
+        out = _render(doc, tool, filepath, top_name, title, format, mode, seed, tries, options)
+        if check_netlist:
+            from .netcheck import check_netlist as check
+
+            report("checking the netlist")
+            name = top_name or doc.get("top_name") or "schematic"
+            check(doc, os.path.join(out, f"{name}.kicad_sch"))
+        return out
 
 
-def _render(netlist, tool, filepath, top_name, title, format, mode, seed, tries, options):
+def _render(doc, tool, filepath, top_name, title, format, mode, seed, tries, options):
     """Do the work of ``render()`` once its arguments are checked."""
-    doc = _load_document(netlist)
     if tries > 1 and mode == "normal":
         kwargs = dict(tool=tool, top_name=top_name, title=title, format=format)
         return _render_best_layout(doc, filepath, seed, tries, kwargs, options)

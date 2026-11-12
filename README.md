@@ -276,6 +276,35 @@ wire length is about 560 at 2, 1060 at 3, 1440 at 4 and 1940 at 10 (mm,
 averaged over 4 seeds), against 3180 without auto-stubbing.
 At 2, labels start to overlap on smaller boards.
 
+## Checking the result
+
+`check_netlist=True` (CLI: `--check-netlist`) has KiCad read back the schematic
+that was written and compares its connections with the input netlist:
+
+```bash
+schematizer netlist.json -o out --check-netlist
+```
+
+```python
+from schematizer import NetlistMismatch, render
+
+try:
+    render(netlist, filepath="out", check_netlist=True)
+except NetlistMismatch as e:
+    print(e.problems)   # e.g. ["SDA is shorted to SCL", "EN is in 2 pieces (R4.1 not connected to the rest)"]
+```
+
+If they differ, `render()` raises `NetlistMismatch` and the command line prints
+the nets that differ and exits with status 1. The files are left in place so
+you can look at them. The check needs `kicad-cli` and KiCad output, and takes
+about as long as KiCad needs to open the design (around a second for 170
+parts). It's off by default. With `tries`, only the layout that's kept is
+checked.
+
+It ignores `#` references (power symbols, flags), which KiCad leaves out of its
+netlists, and nets with fewer than two pins. Nothing else runs KiCad on the
+output, apart from the ERC that auto-stubbing uses to find nets to label.
+
 ## Supported KiCad versions
 
 `--tool` accepts `kicad6` … `kicad10`, which share one modern S-expression
