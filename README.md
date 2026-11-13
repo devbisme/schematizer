@@ -206,11 +206,13 @@ parts have the same symbols and are wired the same; values and net names can
 differ.
 
 **A sheet can be laid out several times.** With `sheet_tries=3` (CLI:
-`--sheet-tries 3`), each sheet is placed and routed three times and the layout
-with the fewest bends and wire crossings is kept. Where `tries` keeps the best
-whole drawing, this keeps the best of each sheet. On the 169-part test board,
-three tries remove 7% of the bends and 10% of the crossings and take about
-twice as long.
+`--sheet-tries 3`), each sheet is placed and routed three times and the best
+layout is kept. Layouts are compared the way `tries` compares whole drawings:
+by wire length, with each bend and wire crossing counted as 5 mm of wire and
+each overlap of parts or text as 10 mm. Where `tries` keeps the best whole
+drawing, this keeps the best of each sheet. On the 169-part test board, three
+tries remove 8% of the bends, 40% of the crossings and 6% of the wire, and take
+about twice as long.
 
 A named net that stays on one sheet is wired but its name isn't shown, since
 routing a wire to a label makes a crowded sheet harder to route. Pass

@@ -22,11 +22,14 @@ inside it, so its insides can change without disturbing the sheet it's on.
 import copy
 from collections import defaultdict
 
+from .. import quality as _quality
 from ..geometry import Segment
 from . import progress
 from .net_terminal import NetTerminal
 
-__all__ = ["Layout", "match_nodes", "reuse_layout", "best_layout", "layout_cost"]
+__all__ = ["Layout", "match_nodes", "reuse_layout", "best_layout", "layout_cost", "layout_score"]
+
+MILS_TO_MM = 0.0254
 
 
 # What placement leaves on a part: where it is, and the room it was given
@@ -255,12 +258,34 @@ def reuse_layout(node, routed):
     return False
 
 
-def layout_cost(node):
-    """Return (bends plus crossings, wire length) of the wiring on a node's sheet."""
+def layout_score(node):
+    """Score the drawing of a placed and routed node's sheet, as ``score_files()`` would its file.
+
+    Returns:
+        dict: bends (which here include wire crossings), wirelength (mm),
+            part_overlaps and text_overlaps.
+    """
     from .nudge import wiring_cost
+    from .sexp_schematic import sheet_overlaps
 
     costs = [wiring_cost(n) for n in _sheet_nodes(node)]
-    return sum(c[0] for c in costs), sum(c[1] for c in costs)
+    part_overlaps, text_overlaps = sheet_overlaps(node)
+    return {
+        "bends": sum(c[0] for c in costs),
+        "wirelength": sum(c[1] for c in costs) * MILS_TO_MM,
+        "part_overlaps": part_overlaps,
+        "text_overlaps": text_overlaps,
+    }
+
+
+def layout_cost(node):
+    """Return the cost of the drawing of a node's sheet: lower is better.
+
+    It's the cost ``render(tries=...)`` compares whole drawings by: wire
+    length, with bends, crossings and overlapping parts and text charged as
+    extra length.
+    """
+    return _quality.layout_cost(layout_score(node))
 
 
 def best_layout(node, tries, tool=None, **options):
@@ -291,17 +316,20 @@ def best_layout(node, tries, tool=None, **options):
 
     best, best_cost, best_try = Layout(node), layout_cost(node), 0
     for i in range(1, tries):
-        try:
-            with progress.prefixed(f"layout {i + 1}/{tries},"):
-                node.place(tool=tool, **options)
-                # Placing the node places the sheets below it again too.
-                for layout in kept:
-                    layout.apply()
-                node.route(tool=tool, route_sheets=False, **route_options)
-        except (PlacementFailure, RoutingFailure):
-            continue
-        cost = layout_cost(node)
-        if cost < best_cost:
-            best, best_cost, best_try = Layout(node), cost, i
+        # A crowded sheet often fails to route, so each try gets a second go.
+        for _ in range(2):
+            try:
+                with progress.prefixed(f"layout {i + 1}/{tries},"):
+                    node.place(tool=tool, **options)
+                    # Placing the node places the sheets below it again too.
+                    for layout in kept:
+                        layout.apply()
+                    node.route(tool=tool, route_sheets=False, **route_options)
+            except (PlacementFailure, RoutingFailure):
+                continue
+            cost = layout_cost(node)
+            if cost < best_cost:
+                best, best_cost, best_try = Layout(node), cost, i
+            break
     best.apply()
     return best_try

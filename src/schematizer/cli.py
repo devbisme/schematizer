@@ -91,8 +91,9 @@ def build_parser():
         type=int,
         default=1,
         metavar="N",
-        help="Lay out each sheet this many times and keep its best layout. "
-        "Unlike --tries, each sheet gets the best of its own tries.",
+        help="Lay out each sheet this many times and keep its best layout, "
+        "scored like --tries scores a drawing. Unlike --tries, each sheet "
+        "gets the best of its own tries.",
     )
     parser.add_argument(
         "--no-reuse",

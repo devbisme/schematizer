@@ -539,24 +539,39 @@ def _field_candidates(part, sheet_tx):
 
 
 def _sheet_obstacles(elements):
-    """Get the boxes and wires that field text should stay off, from a sheet's elements."""
+    """Get the boxes and wires that field text should stay off, from a sheet's elements.
+
+    Returns:
+        tuple: The boxes, the wires, those of the boxes that outline power
+            symbols, and (box, outline of its own symbol or None) for each
+            box that holds text: a label or a power symbol's name.
+    """
     q = _quality
-    boxes = [q._label_box(label) for label in q._fields(elements, "global_label")]
+    texts = [(q._label_box(label), None) for label in q._fields(elements, "global_label")]
+    symbols = []
     for symbol in q._fields(elements, "symbol"):  # Only power symbols are listed.
         to_sheet = q._instance_map(symbol)
-        for field in q._fields(symbol, "property"):
-            if field[1] in ("Reference", "Value"):
-                boxes.append(q._field_box(symbol, field, to_sheet))
         name = q._field(symbol, "lib_id")[1].split(":", 1)[1]
         pts = q._symbol_points(pwr_symbol_sexp_dict.get(name, []), 1)
+        outline = None
         if pts:
             xs, ys = zip(*(to_sheet(x, y) for x, y in pts))
-            boxes.append((min(xs), min(ys), max(xs), max(ys)))
+            outline = (min(xs), min(ys), max(xs), max(ys))
+            symbols.append(outline)
+        for field in q._fields(symbol, "property"):
+            if field[1] in ("Reference", "Value"):
+                hidden = q._field(q._field(field, "effects"), "hide")
+                box = q._field_box(symbol, field, to_sheet)
+                texts.append((box, outline) if field[2] and not hidden else None)
+                texts[-1] = texts[-1] or (box, False)
+    # A hidden field (a power symbol's reference) is still kept clear of, as before.
+    boxes = [box for box, _ in texts] + symbols
+    texts = [(box, own) for box, own in texts if own is not False]
     wires = []
     for wire in q._fields(elements, "wire"):
         (_, x1, y1), (_, x2, y2) = q._fields(q._field(wire, "pts"), "xy")
         wires.append((min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)))
-    return boxes, wires
+    return boxes, wires, symbols, texts
 
 
 def _choose_field_layouts(placed, elements, sheet_boxes):
@@ -566,9 +581,13 @@ def _choose_field_layouts(placed, elements, sheet_boxes):
         placed (list): (part, sheet transform) of the real parts on a sheet.
         elements (list): The sheet's connectivity elements.
         sheet_boxes (list): Boxes of the child sheets drawn on this sheet.
+
+    Returns:
+        tuple: How many pairs of symbols overlap on the sheet, and how many
+            collisions its text is left with.
     """
     q = _quality
-    fixed, wires = _sheet_obstacles(elements)
+    fixed, wires, power_symbols, fixed_texts = _sheet_obstacles(elements)
     fixed += sheet_boxes
 
     def box_of(bbox):
@@ -646,41 +665,94 @@ def _choose_field_layouts(placed, elements, sheet_boxes):
                 best = (layout, text_boxes(part, layout))
             part.field_layout, chosen[i] = best
 
+    symbols = bodies + power_symbols
+    part_overlaps = sum(
+        q._overlap(box, other) for i, box in enumerate(symbols) for other in symbols[i + 1 :]
+    )
+    # Text that isn't a part's to move: labels and the names of power symbols.
+    text_overlaps = sum(
+        q._overlap(box, other)
+        for i, (box, _) in enumerate(fixed_texts)
+        for other, _ in fixed_texts[i + 1 :]
+    ) + sum(
+        q._overlap(box, symbol)
+        for box, own in fixed_texts
+        for symbol in symbols
+        if symbol is not own
+    )
+    return part_overlaps, text_overlaps + sum(collisions(i, boxes) for i, boxes in chosen.items())
 
-def plan_field_layouts(node, sheet_tx=Tx()):
-    """Choose where each part's Reference and Value go, on every sheet of a tree.
 
-    This walks the tree the way the writers do, so the text can avoid the labels
-    and wires they'll draw. calc_field_layout() then hands the results to both.
+def _gather_sheet(node, tx, plan_below):
+    """Collect what's drawn on a node's sheet: by the node and the flattened nodes below it.
+
+    Args:
+        node (SchNode): The node.
+        tx (Tx): Transformation from the node's coordinates to its sheet's.
+        plan_below (bool): Also plan the text of the sheets below this one.
 
     Returns:
-        tuple: For a flattened node, its elements and (part, sheet transform)
-            pairs for its parent's sheet. Empty otherwise.
+        tuple: The sheet's connectivity elements, its (part, sheet transform)
+            pairs, and the boxes of the child sheets drawn on it.
     """
-    if node.flattened:
-        tx = node.tx * sheet_tx
-    else:
-        tx = _calc_sheet_tx(node.internal_bbox())[0]
-
     elements, placed, sheet_boxes = [], [], []
     for child in node.children.values():
-        child_elements, child_placed = plan_field_layouts(child, tx)
-        elements.extend(child_elements)
-        placed.extend(child_placed)
-        if not child.flattened:
+        if child.flattened:
+            child_elements, child_placed, child_boxes = _gather_sheet(
+                child, child.tx * tx, plan_below
+            )
+            elements.extend(child_elements)
+            placed.extend(child_placed)
+            sheet_boxes.extend(child_boxes)
+        else:
+            if plan_below:
+                plan_field_layouts(child)
             bbox = child.bbox * child.tx * tx
             sheet_boxes.append((bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y))
 
     placed += [(p, tx) for p in node.parts if not isinstance(p, NetTerminal)]
     for part, _ in placed:
         part.field_layout = None
-    elements = sheet_connectivity(node, elements, tx)
-    if node.flattened:
-        return elements, placed
+    return sheet_connectivity(node, elements, tx), placed, sheet_boxes
 
+
+def plan_field_layouts(node, plan_below=True):
+    """Choose where each part's Reference and Value go on a node's sheet.
+
+    This gathers the sheet the way the writers do, so the text can avoid the
+    labels and wires they'll draw. calc_field_layout() then hands the results
+    to both.
+
+    Args:
+        node (SchNode): A node that's drawn on a sheet of its own.
+        plan_below (bool): Do the same for every sheet below this one.
+
+    Returns:
+        tuple: How many pairs of symbols overlap on the sheet, and how many
+            collisions its text is left with.
+    """
+    tx = _calc_sheet_tx(node.internal_bbox())[0]
+    elements, placed, sheet_boxes = _gather_sheet(node, tx, plan_below)
     deconflict_sheet_labels(elements, node, tx)
-    _choose_field_layouts(placed, elements, sheet_boxes)
-    return [], []
+    return _choose_field_layouts(placed, elements, sheet_boxes)
+
+
+def sheet_overlaps(node):
+    """Count the overlaps a placed and routed sheet would be drawn with.
+
+    This is for comparing layouts of a sheet before any is written, so it
+    counts what :func:`schematizer.quality.score_overlaps` would find in the
+    file without writing one.
+
+    Args:
+        node (SchNode): A node that's drawn on a sheet of its own.
+
+    Returns:
+        tuple: (part overlaps, text overlaps) on the node's own sheet.
+    """
+    # Nets with power names are drawn as power symbols, which have to be known.
+    init_power_symbol_data()
+    return plan_field_layouts(node, plan_below=False)
 
 
 def _kicad_field_orient(part_tx, sheet_tx, justify):

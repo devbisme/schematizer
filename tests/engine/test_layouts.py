@@ -193,3 +193,60 @@ def test_sheet_tries_keeps_a_seed_reproducible(tmp_path):
         out, _ = _render("span_hier", tmp_path / run, seed=7, sheet_tries=3)
         outs.append({os.path.basename(f): open(f).read() for f in glob.glob(out + "/*.kicad_sch")})
     assert outs[0] == outs[1]
+
+
+def test_a_sheet_is_scored_as_its_file_will_be(tmp_path, monkeypatch):
+    """Overlaps are counted from a routed sheet before it's written, so layouts can be compared."""
+    from schematizer.engine import gen_schematic
+    from schematizer.quality import score_overlaps
+
+    scores = {}
+    real = layouts.best_layout
+
+    def best_layout(node, tries, tool=None, **options):
+        kept = real(node, tries, tool=tool, **options)
+        scores[node.name] = layouts.layout_score(node)
+        return kept
+
+    monkeypatch.setattr(layouts, "best_layout", best_layout)
+    monkeypatch.setattr(gen_schematic, "best_layout", best_layout)
+    out, _ = _render("esp32_audio_board", tmp_path, seed=1)
+
+    written = {"part_overlaps": 0, "text_overlaps": 0}
+    for path in glob.glob(out + "/*.kicad_sch"):
+        with open(path) as f:
+            for key, value in score_overlaps(f.read()).items():
+                written[key] += value
+    assert written["text_overlaps"] == 1  # So there's something to find.
+    for key in written:
+        assert sum(score[key] for score in scores.values()) == written[key]
+    assert all(score["wirelength"] >= 0 and score["bends"] >= 0 for score in scores.values())
+
+
+def test_overlaps_raise_a_sheets_cost(monkeypatch):
+    score = {"bends": 2, "wirelength": 100.0, "part_overlaps": 0, "text_overlaps": 0}
+    scores = iter([score, {**score, "text_overlaps": 1}, {**score, "part_overlaps": 1}])
+    monkeypatch.setattr(layouts, "layout_score", lambda node: next(scores))
+    clean, text, part = (layouts.layout_cost(None) for _ in range(3))
+    assert text > clean and part > clean
+
+
+def test_a_try_that_fails_to_route_gets_a_second_go(monkeypatch):
+    from schematizer.engine.route import RoutingFailure
+
+    node, _, (_, mid, _) = _divider("")
+    calls = {"place": 0, "route": 0}
+
+    def place(tool=None, **options):
+        calls["place"] += 1
+
+    def route(tool=None, **options):
+        calls["route"] += 1
+        if calls["route"] == 1:
+            raise RoutingFailure
+
+    node.place, node.route, node.name = place, route, "sheet"
+    costs = iter([10, 5])
+    monkeypatch.setattr(layouts, "layout_cost", lambda n: next(costs))
+    assert layouts.best_layout(node, 2) == 1
+    assert calls == {"place": 2, "route": 2}

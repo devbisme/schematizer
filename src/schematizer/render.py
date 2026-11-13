@@ -17,12 +17,8 @@ import shutil
 import tempfile
 
 from .loader import load_netlist
-from .quality import score_files
+from .quality import layout_cost, score_files  # noqa: F401 (layout_cost is re-exported)
 
-# Wire length (mm) a bend, a crossing or an overlap is worth when comparing layouts for ``tries``.
-LAYOUT_BEND_COST = 5
-LAYOUT_CROSSING_COST = 5
-LAYOUT_OVERLAP_COST = 10
 
 # KiCad versions this tool can target. The engine is one modern writer plus a
 # small KiCad-8 format toggle; every version routes through it.
@@ -237,17 +233,6 @@ def _render(doc, tool, filepath, top_name, title, format, mode, seed, tries, opt
     )
 
     return filepath
-
-
-def layout_cost(score):
-    """Combine the scores of a layout from ``score_files()`` into one number."""
-    overlaps = score["part_overlaps"] + score["text_overlaps"]
-    return (
-        score["wirelength"]
-        + LAYOUT_BEND_COST * score["bends"]
-        + LAYOUT_CROSSING_COST * score.get("crossings", 0)
-        + LAYOUT_OVERLAP_COST * overlaps
-    )
 
 
 def _render_best_layout(doc, filepath, seed, tries, kwargs, options):

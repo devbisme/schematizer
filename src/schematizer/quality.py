@@ -34,7 +34,7 @@ from collections import defaultdict
 
 from simp_sexp import Sexp
 
-__all__ = ["score_schematic", "score_overlaps", "score_files", "count_crossings"]
+__all__ = ["score_schematic", "score_overlaps", "score_files", "count_crossings", "layout_cost"]
 
 # Text size as fractions of the font size, measured from KiCad 9's own plots:
 # its default font advances 0.99 of the size per character on average, less
@@ -353,6 +353,23 @@ def score_files(*paths):
                     total[key] += value
     total["wirelength"] = round(total["wirelength"], 2)
     return total
+
+
+# Wire length (mm) a bend, a crossing or an overlap is worth when comparing layouts.
+LAYOUT_BEND_COST = 5
+LAYOUT_CROSSING_COST = 5
+LAYOUT_OVERLAP_COST = 10
+
+
+def layout_cost(score):
+    """Combine the scores of a layout, as from ``score_files()``, into one number."""
+    overlaps = score["part_overlaps"] + score["text_overlaps"]
+    return (
+        score["wirelength"]
+        + LAYOUT_BEND_COST * score["bends"]
+        + LAYOUT_CROSSING_COST * score.get("crossings", 0)
+        + LAYOUT_OVERLAP_COST * overlaps
+    )
 
 
 if __name__ == "__main__":
