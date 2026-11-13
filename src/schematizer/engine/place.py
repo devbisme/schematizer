@@ -76,6 +76,10 @@ __all__ = [
 ###################################################################
 
 
+# The largest a placed sheet can be (mils). The largest paper, A0, is 47 inches wide.
+MAX_SHEET_SIZE = 1_000_000
+
+
 class PlacementFailure(Exception):
     """Exception raised when parts or blocks could not be placed."""
 
@@ -2964,6 +2968,12 @@ class Placer:
 
             # Calculate the bounding box for the node after placement of parts and children.
             node.calc_bbox()
+
+            # Forces that don't settle can throw groups of parts billions of
+            # mils apart, which the router would then try to cover with tracks.
+            extent = node.internal_bbox()
+            if max(extent.w, extent.h) > MAX_SHEET_SIZE:
+                raise PlacementFailure(f"Placement of {node.name} didn't settle")
 
         except PlacementFailure:
             node.rmv_placement_stuff()

@@ -85,6 +85,15 @@ def test_wiring_cost_counts_bends_and_length():
     assert wiring_cost(node) == (2, 450)
 
 
+def test_wiring_cost_counts_a_crossing_like_a_bend():
+    other = _Obj(name="OTHER")
+    parts = [_part("R1", 0, 0, NET), _part("R2", 400, 0, NET)]
+    crossed = _node(parts, {NET: [_seg(0, 0, 400, 0)], other: [_seg(200, -100, 200, 100)]})
+    apart = _node(parts, {NET: [_seg(0, 0, 400, 0)], other: [_seg(500, -100, 500, 100)]})
+    assert wiring_cost(crossed) == (1, 600)
+    assert wiring_cost(apart) == (0, 600)
+
+
 class TestPlanAndApply:
     def test_moves_one_part_by_the_step(self):
         node, r1, r2 = _staircase_node()

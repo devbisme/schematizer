@@ -11,6 +11,7 @@ on any schematic, whatever produced it. Lower is better for every count:
 
     segments    wire segments drawn
     bends       corners where exactly two perpendicular segments meet
+    crossings   places where two wires cross without joining
     wirelength  total wire length (mm)
     part_overlaps  pairs of symbols whose drawings overlap
     text_overlaps  text items overlapping each other, another symbol or a wire
@@ -33,9 +34,13 @@ from collections import defaultdict
 
 from simp_sexp import Sexp
 
-__all__ = ["score_schematic", "score_overlaps", "score_files"]
+__all__ = ["score_schematic", "score_overlaps", "score_files", "count_crossings"]
 
-_CHAR_W = 0.6  # Text width per character, as a fraction of the font size.
+# Text size as fractions of the font size, measured from KiCad 9's own plots:
+# its default font advances 0.99 of the size per character on average, less
+# the gap after the last one, and its capitals stand 1.2 of the size tall.
+_CHAR_W = 0.95
+_CHAR_H = 1.25
 _FONT_SIZE = 1.27  # mm.
 _LABEL_H = 2.0  # Height of a global label's flag, mm.
 _LABEL_END = 2.0  # Extra length of a global label's flag beyond its text, mm.
@@ -57,6 +62,32 @@ def _wires(sch_text):
     ]
 
 
+_JUNCTION_RE = re.compile(r"\(junction\s*\(at\s+([-\d.]+)\s+([-\d.]+)")
+
+
+def count_crossings(segs, junctions=()):
+    """Count the places where a horizontal and a vertical segment cross.
+
+    Args:
+        segs (list): Segments as ((x1, y1), (x2, y2)) tuples.
+        junctions (collection): Points where crossing segments are joined,
+            which aren't counted.
+
+    Returns:
+        int: The number of points that lie inside both of two segments. Where
+            one segment ends on another they meet (a corner or a tee) and
+            don't cross.
+    """
+    horz = [(min(a[0], b[0]), max(a[0], b[0]), a[1]) for a, b in segs if a[1] == b[1]]
+    vert = [(min(a[1], b[1]), max(a[1], b[1]), a[0]) for a, b in segs if a[0] == b[0]]
+    return sum(
+        1
+        for x1, x2, y in horz
+        for y1, y2, x in vert
+        if x1 < x < x2 and y1 < y < y2 and (x, y) not in junctions
+    )
+
+
 def score_schematic(sch_text):
     """Score the wiring in the text of one schematic file.
 
@@ -64,7 +95,7 @@ def score_schematic(sch_text):
         sch_text (str): Contents of a .kicad_sch or .svg file.
 
     Returns:
-        dict: Counts of segments and bends, plus wirelength in mm.
+        dict: Counts of segments, bends and crossings, plus wirelength in mm.
     """
     segs = [s for s in _wires(sch_text) if s[0] != s[1]]
 
@@ -84,6 +115,10 @@ def score_schematic(sch_text):
     return {
         "segments": len(segs),
         "bends": sum(1 for pt in ends if is_bend(pt)),
+        "crossings": count_crossings(
+            segs,
+            {(round(float(x), 2), round(float(y), 2)) for x, y in _JUNCTION_RE.findall(sch_text)},
+        ),
         "wirelength": round(
             sum(abs(p1[0] - p2[0]) + abs(p1[1] - p2[1]) for p1, p2 in segs), 2
         ),
@@ -177,12 +212,17 @@ def _crosses(box, wire):
 
 
 def _field_box(symbol, field, to_sheet):
-    """Sheet box of a visible Reference/Value field, which reads horizontally."""
+    """Sheet box of a visible Reference/Value field."""
     _, x, y, angle = _field(field, "at")[:4]
     w = len(field[2]) * _FONT_SIZE * _CHAR_W
-    h = _FONT_SIZE
+    h = _FONT_SIZE * _CHAR_H
     justify = _field(_field(field, "effects"), "justify")
     justify = next((j for j in (justify or [])[1:] if j in ("left", "right")), None)
+
+    # KiCad turns a field with its symbol, so a field at 90 degrees on an
+    # upright symbol reads up the sheet. (Only centered ones are written.)
+    if (angle + _field(symbol, "at")[3]) % 180:
+        return x - h / 2, y - w / 2, x + h / 2, y + w / 2
 
     # The justification is relative to the symbol: see if the text's reading
     # direction comes out reversed on the sheet.
@@ -294,6 +334,7 @@ def score_files(*paths):
     total = {
         "segments": 0,
         "bends": 0,
+        "crossings": 0,
         "wirelength": 0.0,
         "part_overlaps": 0,
         "text_overlaps": 0,

@@ -416,7 +416,7 @@ def _pick_paper_size(bbox):
 
 
 FIELD_GAP_MM = 0.9  # Clearance between a symbol body and its Ref/Value text.
-FIELD_PITCH_MM = 1.27  # Center-to-center spacing of stacked Ref/Value text.
+FIELD_PITCH_MM = 1.905  # Center-to-center spacing of stacked Ref/Value text.
 
 
 def reference_is_hidden(ref):
@@ -503,7 +503,7 @@ def calc_field_layout(part, sheet_tx):
 def _field_box(text, x, y, justify):
     """Sheet box of one line of horizontal field text."""
     w = len(text) * _quality._FONT_SIZE * _quality._CHAR_W
-    h = _quality._FONT_SIZE
+    h = _quality._FONT_SIZE * _quality._CHAR_H
     x1 = {"left": x, "right": x - w}.get(justify, x - w / 2)
     return x1, y - h / 2, x1 + w, y + h / 2
 
@@ -576,10 +576,13 @@ def _choose_field_layouts(placed, elements, sheet_boxes):
 
     bodies = [box_of(_field_body(part, tx)[1]) for part, tx in placed]
 
-    def text_boxes(part, layout):
+    def field_texts(part):
+        """The Reference and Value text a part shows; "" for one it doesn't."""
         ref = str(getattr(getattr(part, "parent", None), "ref", None) or part.ref)
-        texts = ("" if reference_is_hidden(ref) else ref, str(getattr(part, "value", "") or ""))
-        return [_field_box(t, *pos) for t, pos in zip(texts, layout) if t]
+        return "" if reference_is_hidden(ref) else ref, str(getattr(part, "value", "") or "")
+
+    def text_boxes(part, layout):
+        return [_field_box(t, *pos) for t, pos in zip(field_texts(part), layout) if t]
 
     chosen = {}
     for i, (part, tx) in enumerate(placed):
@@ -593,17 +596,54 @@ def _choose_field_layouts(placed, elements, sheet_boxes):
             for box in boxes
         )
 
+    def place_separately(i, part, layout, candidates):
+        """Move whichever of a part's two texts still collides to a spot of its own.
+
+        The candidates keep Reference and Value together. Where a neighbor
+        leaves no room for both, one of them can often still fit by itself.
+        """
+        texts = field_texts(part)
+        layout = list(layout)
+        spots = list(dict.fromkeys(spot for pair in candidates for spot in pair))
+        for k, text in enumerate(texts):
+            if not text:
+                continue
+            cost = collisions(i, [_field_box(text, *layout[k])])
+            if not cost:
+                continue
+            other = 1 - k
+            sibling = _field_box(texts[other], *layout[other]) if texts[other] else None
+            for spot in spots:
+                box = _field_box(text, *spot)
+                if sibling and q._overlap(box, sibling):
+                    continue
+                if texts[other] and spot[0::2] == layout[other][0::2]:
+                    # In one column, the reference stays above the value.
+                    ref_y, val_y = (spot[1], layout[1][1]) if k == 0 else (layout[0][1], spot[1])
+                    if ref_y > val_y:
+                        continue
+                spot_cost = collisions(i, [box])
+                if spot_cost < cost:
+                    cost, layout[k] = spot_cost, spot
+                if not cost:
+                    break
+        return tuple(layout)
+
     # A part's move can free up a better spot for one placed earlier.
     for _ in range(2):
         for i, (part, tx) in enumerate(placed):
             best_cost, best = float("inf"), None
-            for layout in _field_candidates(part, tx):
+            candidates = _field_candidates(part, tx)
+            for layout in candidates:
                 boxes = text_boxes(part, layout)
                 cost = collisions(i, boxes)
                 if cost < best_cost:
                     best_cost, best = cost, (layout, boxes)
                 if not cost:
                     break
+            if best_cost:
+                layout = place_separately(i, part, best[0], candidates)
+                best = (layout, text_boxes(part, layout))
             part.field_layout, chosen[i] = best
 
 
@@ -1852,6 +1892,71 @@ def sheet_connectivity(node, elements, tx, emit_part=None):
     return elements
 
 
+POWER_VALUE_START_MM = 3.2  # Distance from a power symbol's pin to where its upright Value text starts.
+
+
+def turn_crowded_power_values(elements):
+    """Turn the names of power symbols on neighboring pins upright so they don't run together.
+
+    A power symbol's name is wider than the 100 mils between two pins of an
+    IC, so the names of rails on pins side by side overlap each other and the
+    labels on the pins next to them. A name that would do so is turned to
+    read up the sheet, like the labels, where it's only one line wide.
+
+    Args:
+        elements (list): A sheet's elements. The Value fields of its power
+            symbols are changed in place.
+    """
+    q = _quality
+    labels = [
+        q._label_box(label)
+        for kind in ("global_label", "hierarchical_label")
+        for label in q._fields(elements, kind)
+    ]
+    values = []
+    for symbol in q._fields(elements, "symbol"):
+        lib_id = q._field(symbol, "lib_id")
+        if not lib_id or not str(lib_id[1]).startswith("power:"):
+            continue
+        value = next((f for f in q._fields(symbol, "property") if f[1] == "Value"), None)
+        if value is None or q._field(q._field(value, "effects"), "hide"):
+            continue
+        values.append((symbol, value, q._field_box(symbol, value, q._instance_map(symbol))))
+
+    def hits(box, value):
+        return sum(q._overlap(box, other) for other in labels) + sum(
+            q._overlap(box, other) for v, other in boxes.items() if v != value
+        )
+
+    boxes = {id(value): box for _, value, box in values}
+    crowded = []
+    for symbol, value, box in values:
+        _, x, y, angle = q._field(symbol, "at")[:4]
+        at = q._field(value, "at")
+        # Only a name above or below its symbol can be turned to stand clear of it.
+        level_hits = hits(box, id(value))
+        if angle % 180 or at[1] != x or at[2] == y or not level_hits:
+            continue
+        length = len(value[2]) * q._FONT_SIZE * q._CHAR_W
+        height = q._FONT_SIZE * q._CHAR_H
+        mid = _round_mm(y + math.copysign(POWER_VALUE_START_MM + length / 2, at[2] - y))
+        upright = (x - height / 2, mid - length / 2, x + height / 2, mid + length / 2)
+        crowded.append((value, box, upright, mid, level_hits))
+
+    # Turn all the crowded names, so a row of them stays alike, then turn
+    # back any that still overlap as much as they did (a label, say).
+    for value, _, upright, _, _ in crowded:
+        boxes[id(value)] = upright
+    for value, box, upright, mid, level_hits in crowded:
+        if hits(upright, id(value)) >= level_hits:
+            boxes[id(value)] = box
+            continue
+        at = q._field(value, "at")
+        at[2], at[3] = mid, 90
+        effects = q._field(value, "effects")
+        effects[:] = [e for e in effects if not (isinstance(e, list) and e and e[0] == "justify")]
+
+
 def deconflict_sheet_labels(elements, node, tx):
     """Spread net labels off component bodies once a sheet's elements are complete.
 
@@ -1859,6 +1964,7 @@ def deconflict_sheet_labels(elements, node, tx):
     backend reads/mutates the label Sexps and appends connecting wires.
     """
     _sheet_backend().apply_label_deconfliction(elements, node, tx)
+    turn_crowded_power_values(elements)
 
 
 def node_to_sexp_schematic(node, uuid_path, sheet_tx=Tx(), version=None):

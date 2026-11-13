@@ -50,3 +50,16 @@ def test_no_nudge_option(monkeypatch, tmp_path):
     assert cli.main(["netlist.json", "-o", str(tmp_path)]) == 0
     assert cli.main(["netlist.json", "-o", str(tmp_path), "--no-nudge"]) == 0
     assert seen == [True, False]
+
+
+def test_sheet_layout_options(monkeypatch, tmp_path):
+    seen = []
+
+    def fake_render(netlist, **kwargs):
+        seen.append((kwargs["sheet_tries"], kwargs["reuse_layouts"]))
+        return kwargs["filepath"]
+
+    monkeypatch.setattr(cli, "render", fake_render)
+    assert cli.main(["netlist.json", "-o", str(tmp_path)]) == 0
+    assert cli.main(["netlist.json", "-o", str(tmp_path), "--sheet-tries", "3", "--no-reuse"]) == 0
+    assert seen == [(1, True), (3, False)]

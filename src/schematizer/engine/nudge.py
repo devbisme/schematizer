@@ -11,12 +11,14 @@ size of the step can: the pins line up and the wire runs straight.
 
 After a sheet is routed, :func:`straighten` looks for such staircases, moves
 the lighter part of each, and routes the sheet again. The new routing is
-kept only if it has fewer bends; otherwise the parts go back where they were.
+kept only if it has fewer bends and crossings; otherwise the parts go back
+where they were.
 """
 
 from collections import defaultdict
 
 from ..geometry import BBox, Vector
+from ..quality import count_crossings
 from . import progress
 from .rng import rng
 
@@ -67,7 +69,11 @@ def _pin_points(node):
 
 
 def wiring_cost(node):
-    """Return (bends, wire length) of a node's wiring, for comparing two routings of it."""
+    """Return (bends plus crossings, wire length) of a node's wiring, for comparing two routings of it.
+
+    A wire crossing another counts the same as a bend: either makes a wire
+    harder to follow.
+    """
     pin_pts = _pin_points(node)
     bends, length = 0, 0
     for segments in node.wires.values():
@@ -76,7 +82,14 @@ def wiring_cost(node):
                 bends += 1
         for seg in segments:
             length += abs(seg.p2.x - seg.p1.x) + abs(seg.p2.y - seg.p1.y)
-    return bends, length
+    crossings = count_crossings(
+        [
+            ((seg.p1.x, seg.p1.y), (seg.p2.x, seg.p2.y))
+            for segments in node.wires.values()
+            for seg in segments
+        ]
+    )
+    return bends + crossings, length
 
 
 def find_staircases(node):
@@ -186,7 +199,7 @@ def _apply_moves(node, moves):
 
 
 def _try_moves(node, moves, tool, rng_state, options):
-    """Move parts and route again. Keep the result if it has fewer bends, else undo it."""
+    """Move parts and route again. Keep the result if it has fewer bends and crossings, else undo it."""
     from .route import RoutingFailure
 
     saved_tx = {part: part.tx for part in node.parts}

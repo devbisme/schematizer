@@ -24,7 +24,7 @@ def _wire(x1, y1, x2, y2):
 
 def test_an_l_shaped_wire_has_one_bend():
     sch = _wire(0, 0, 5.08, 0) + _wire(5.08, 0, 5.08, 2.54)
-    assert score_schematic(sch) == {"segments": 2, "bends": 1, "wirelength": 7.62}
+    assert score_schematic(sch) == {"segments": 2, "bends": 1, "crossings": 0, "wirelength": 7.62}
 
 
 def test_collinear_and_t_joins_are_not_bends():
@@ -35,6 +35,25 @@ def test_collinear_and_t_joins_are_not_bends():
 
 def test_zero_length_wires_are_ignored():
     assert score_schematic(_wire(1, 1, 1, 1))["segments"] == 0
+
+
+def test_wires_that_cross_are_counted():
+    sch = _wire(0, 2.54, 5.08, 2.54) + _wire(2.54, 0, 2.54, 5.08)
+    assert score_schematic(sch)["crossings"] == 1
+
+
+def test_wires_that_meet_or_join_dont_cross():
+    # A tee: the branch ends on the run instead of passing through it.
+    tee = _wire(0, 2.54, 5.08, 2.54) + _wire(2.54, 2.54, 2.54, 5.08)
+    assert score_schematic(tee)["crossings"] == 0
+    # A junction dot joins two wires that would otherwise cross.
+    joined = _wire(0, 2.54, 5.08, 2.54) + _wire(2.54, 0, 2.54, 5.08) + "(junction (at 2.54 2.54))"
+    assert score_schematic(joined)["crossings"] == 0
+
+
+def test_crossings_raise_the_layout_cost():
+    score = {"wirelength": 10, "bends": 1, "part_overlaps": 0, "text_overlaps": 0}
+    assert layout_cost({**score, "crossings": 1}) > layout_cost({**score, "crossings": 0})
 
 
 def _bends(doc, tmp_path, align):
@@ -64,7 +83,7 @@ def test_alignment_straightens_wires(tmp_path):
 
 def test_svg_wires_score_like_kicad_wires():
     svg = '<line x1="0" y1="0" x2="5.08" y2="0" /><line x1="5.08" y1="0" x2="5.08" y2="2.54" />'
-    assert score_schematic(svg) == {"segments": 2, "bends": 1, "wirelength": 7.62}
+    assert score_schematic(svg) == {"segments": 2, "bends": 1, "crossings": 0, "wirelength": 7.62}
 
 
 def _cost(path):
@@ -176,7 +195,8 @@ def test_a_rotated_part_uses_its_rotated_outline():
 
 
 def test_text_over_another_part_is_counted():
-    sch = _sch(_resistor("R1", 0, 0), _resistor("R2", 50, 0, value_at=(0, 0)))
+    # R2's value lies across R1's body and stops short of R1's own text.
+    sch = _sch(_resistor("R1", 0, 0), _resistor("R2", 50, 0, value_at=(-3, 0)))
     assert score_overlaps(sch)["text_overlaps"] == 1
 
 
@@ -186,9 +206,9 @@ def test_text_against_its_own_part_is_not_counted():
 
 def test_labels_extend_away_from_their_anchors():
     part = _resistor("R1", 0, 0)
-    # A label anchored 5 mm left of the body reaches it when pointing right, not left.
-    assert score_overlaps(_sch(part, _label("LONG_NET", -6, 0, 0)))["text_overlaps"] == 1
-    assert score_overlaps(_sch(part, _label("LONG_NET", -6, 0, 180)))["text_overlaps"] == 0
+    # A label anchored 9 mm left of the body reaches it when pointing right, not left.
+    assert score_overlaps(_sch(part, _label("LONG_NET", -10, 0, 0)))["text_overlaps"] == 1
+    assert score_overlaps(_sch(part, _label("LONG_NET", -10, 0, 180)))["text_overlaps"] == 0
 
 
 def test_hidden_fields_are_ignored():

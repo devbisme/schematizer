@@ -183,6 +183,11 @@ Wired parts are placed by the drafting conventions a person would follow:
 - **Unwired parts go in tidy rows.** Parts with no wires at all (a bank of
   decoupling caps whose pins all go to power symbols) are laid out in rows,
   with each rail's caps side by side and room for their reference and value.
+- **Text stays clear.** A part's reference and value go together on a side of
+  the part with no pins, wherever they don't cover another part, a wire or
+  other text. If a neighbor leaves no room for both, they're placed
+  separately. The names of power symbols on neighboring pins of an IC are
+  turned to read up the sheet, since side by side they'd run together.
 
 A part whose orientation is set in the netlist (`symtx`) keeps it.
 
@@ -190,21 +195,35 @@ A part whose orientation is set in the netlist (`symtx`) keeps it.
 steps sideways between two pins shows they're nearly, but not quite, in line.
 The part with the least else wired to it is moved by the size of the step (up
 to 3 grid steps) and the sheet is routed again. The new routing is kept only
-if it has fewer bends; otherwise the parts go back. On the 169-part test board
+if it has fewer bends and wire crossings; otherwise the parts go back. On the 169-part test board
 this removes about a quarter of such steps and 8% of the bends, for about 15%
 more time.
+
+**The same circuit is drawn the same way.** When a subcircuit is used more
+than once (the two channels of an amplifier), the sheet of the first one is
+placed and routed and the others are given its layout. Sheets match if their
+parts have the same symbols and are wired the same; values and net names can
+differ.
+
+**A sheet can be laid out several times.** With `sheet_tries=3` (CLI:
+`--sheet-tries 3`), each sheet is placed and routed three times and the layout
+with the fewest bends and wire crossings is kept. Where `tries` keeps the best
+whole drawing, this keeps the best of each sheet. On the 169-part test board,
+three tries remove 7% of the bends and 10% of the crossings and take about
+twice as long.
 
 A named net that stays on one sheet is wired but its name isn't shown, since
 routing a wire to a label makes a crowded sheet harder to route. Pass
 `label_local_nets=True` to label those nets too.
 
-Three options turn parts of this off (CLI: `--no-preplace`, `--no-power-symbols`,
-`--no-nudge`):
+Four options turn parts of this off (CLI: `--no-preplace`, `--no-power-symbols`,
+`--no-nudge`, `--no-reuse`):
 
 ```python
 render(netlist, filepath="out", preplace=False)       # force-directed placement from random positions
 render(netlist, filepath="out", power_symbols=False)  # wire the power nets
 render(netlist, filepath="out", nudge=False)          # don't move parts after routing
+render(netlist, filepath="out", reuse_layouts=False)  # lay out identical sheets separately
 ```
 
 With `preplace=False`, groups of more than 20 wired parts are laid out in plain

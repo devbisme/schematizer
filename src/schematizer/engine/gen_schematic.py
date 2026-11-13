@@ -28,6 +28,7 @@ from .._utils import export_to_all, rmv_attr
 from .sexp_schematic import write_top_schematic
 from .svg_schematic import write_top_svg
 from .bboxes import calc_hier_label_bbox, calc_symbol_bbox
+from .layouts import best_layout
 from .conventions import conventional_orientation, is_power_net
 
 __all__ = []
@@ -906,6 +907,15 @@ def gen_schematic(
                         node, circuit, expansion_factor, classify=False, **options
                     )
                 node.route(**options)
+
+                # Each sheet below was laid out sheet_tries times as it was
+                # routed. Do the same for the top sheet.
+                best_layout(
+                    node,
+                    options.get("sheet_tries", 1),
+                    expansion_factor=expansion_factor,
+                    **options,
+                )
 
             except PlacementFailure as e:
                 finalize_parts_and_nets(circuit, **options)

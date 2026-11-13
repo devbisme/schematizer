@@ -3425,21 +3425,35 @@ class Router:
             tool (str): Backend tool for schematics.
             options (dict): Placement and routing options.
         """
+        from .layouts import best_layout
+
+        from .place import PlacementFailure
+
         expansion_factor = options.pop("expansion_factor", 1.0)
         for attempt in range(SHEET_ROUTE_TRIES):
             try:
                 if attempt:
                     with progress.prefixed(f"try {attempt + 1}/{SHEET_ROUTE_TRIES},"):
+                        child.place(tool=tool, expansion_factor=expansion_factor, **options)
                         child.route(tool=tool, **options)
                 else:
                     child.route(tool=tool, **options)
-                return
-            except RoutingFailure:
+                break
+            except (RoutingFailure, PlacementFailure):
+                # (A placement can fail too: see MAX_SHEET_SIZE in place.py.)
                 if child.flattened or attempt == SHEET_ROUTE_TRIES - 1:
                     raise
             expansion_factor *= SHEET_EXPANSION
-            with progress.prefixed(f"try {attempt + 2}/{SHEET_ROUTE_TRIES},"):
-                child.place(tool=tool, expansion_factor=expansion_factor, **options)
+
+        # Lay the sheet out some more times, with the room it took to route
+        # it, and keep the best.
+        best_layout(
+            child,
+            options.get("sheet_tries", 1),
+            tool=tool,
+            expansion_factor=expansion_factor,
+            **options,
+        )
 
     def route(node, tool=None, **options):
         """Route the wires between part pins in this node and its children.
@@ -3468,8 +3482,17 @@ class Router:
 
         # First, recursively route any children of this node.
         # TODO: Child nodes are independent so could they be processed in parallel?
+        # A child that holds the same circuit as one already routed is drawn the same way.
+        from .layouts import reuse_layout
+
+        routed = []
         for child in node.children.values():
-            node.route_child(child, tool=tool, **options)
+            if child.flattened:
+                node.route_child(child, tool=tool, **options)
+            elif options.get("route_sheets", True):
+                if not (options.get("reuse_layouts", True) and reuse_layout(child, routed)):
+                    node.route_child(child, tool=tool, **options)
+                routed.append(child)
 
         rng_state = rng.getstate()
         node.route_parts(tool=tool, **options)

@@ -225,8 +225,12 @@ def part_to_svg(part, sheet_tx):
     return "".join(svg), bbox
 
 
-def power_symbol_to_svg(net_name, x, y, angle):
-    """Draw a power symbol (GND, +3V3, ...) at (x, y). Returns ``(svg, bbox)``."""
+def power_symbol_to_svg(net_name, x, y, angle, upright_value_at=None):
+    """Draw a power symbol (GND, +3V3, ...) at (x, y). Returns ``(svg, bbox)``.
+
+    Its name goes where the library symbol has it, or reads up the sheet
+    centered on ``upright_value_at`` if that's given.
+    """
     sym = _sexp.pwr_symbol_sexp_dict.get(net_name)
     if sym is None:
         return "", BBox()
@@ -238,10 +242,14 @@ def power_symbol_to_svg(net_name, x, y, angle):
     for cmd in _collect_draw_cmds(sym):
         # The power symbol's own Value property carries the net name; its
         # Reference is a hidden "#PWR" designator that KiCad never shows.
-        s, bb = draw_cmd_to_svg(cmd, tx, field_text={"value": net_name})
+        field_text = {} if upright_value_at else {"value": net_name}
+        s, bb = draw_cmd_to_svg(cmd, tx, field_text=field_text)
         if s:
             svg.append(s)
             bbox.add(bb)
+    if upright_value_at:
+        svg.append(_field_svg(net_name, *upright_value_at, rotate=-90))
+        bbox.add(_text_extent(net_name, *upright_value_at, 1.27, rotate=-90))
     svg.append("</g>\n")
     return "".join(svg), bbox
 
@@ -326,8 +334,15 @@ def element_to_svg(element):
         return net_label_to_svg(element[1], *_field(element, "at")[1:4])
     if kind == "symbol":
         lib_id = _field(element, "lib_id")[1]
+        # A name turned upright to clear its neighbors is drawn where the
+        # KiCad writer put it rather than where the library symbol has it.
+        value_at = next(
+            (_field(p, "at") for p in element if isinstance(p, list) and p[:2] == ["property", "Value"]),
+            None,
+        )
+        upright = value_at[1:3] if value_at and value_at[3] == 90 else None
         return power_symbol_to_svg(
-            lib_id.split(":", 1)[1], *_field(element, "at")[1:4]
+            lib_id.split(":", 1)[1], *_field(element, "at")[1:4], upright_value_at=upright
         )
     return "", BBox()
 

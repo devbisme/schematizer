@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from schematizer import quality
 from schematizer.geometry import BBox, Point, Tx
 from schematizer.engine import decisions
 from schematizer.engine import sexp_schematic as sx
@@ -174,3 +175,66 @@ def test_power_symbol_value_beyond_body(angle, expected, monkeypatch):
     effects = next(el for el in val if isinstance(el, list) and el and el[0] == "effects")
     just = next((el[1] for el in effects if isinstance(el, list) and el[0] == "justify"), None)
     assert (at[1], at[2], just) == expected
+
+
+def _power_values(xs, monkeypatch, name="GND", angle=0):
+    """Power symbols at the given X positions, after crowded names are turned."""
+    monkeypatch.setattr(sx, "pwr_symbol_sexp_dict", {}, raising=False)
+    symbols = [
+        sx.power_symbol_instance_sexp(name, x, 50.0, angle, f"#PWR{i}", "/", f"t{i}")
+        for i, x in enumerate(xs)
+    ]
+    sx.turn_crowded_power_values(symbols)
+    return [
+        (sym, next(el for el in sym if isinstance(el, list) and el[:2] == ["property", "Value"]))
+        for sym in symbols
+    ]
+
+
+def _value_box(symbol, value):
+    return quality._field_box(symbol, value, quality._instance_map(symbol))
+
+
+def test_power_names_on_neighboring_pins_are_turned_upright(monkeypatch):
+    """Rail names are wider than the 100 mils between IC pins, so side by side they'd overlap."""
+    values = _power_values([100.0, 102.54, 105.08], monkeypatch)
+    for symbol, value in values:
+        at = quality._field(value, "at")
+        assert at[3] == 90 and at[1] == quality._field(symbol, "at")[1]
+        assert quality._field(quality._field(value, "effects"), "justify") is None
+        # The name starts beyond the symbol's body, which is 2.54 mm long.
+        _, top, _, bottom = _value_box(symbol, value)
+        assert min(abs(top - 50.0), abs(bottom - 50.0)) >= 2.54
+    boxes = [_value_box(symbol, value) for symbol, value in values]
+    assert not any(quality._overlap(a, b) for i, a in enumerate(boxes) for b in boxes[i + 1 :])
+
+
+def test_power_names_with_room_stay_level(monkeypatch):
+    for _, value in _power_values([100.0, 120.0], monkeypatch):
+        assert quality._field(value, "at")[3] == 0
+
+
+def test_power_names_beside_their_symbols_stay_level(monkeypatch):
+    """Names of symbols lying on their sides are a line apart and are left alone."""
+    monkeypatch.setattr(sx, "pwr_symbol_sexp_dict", {}, raising=False)
+    symbols = [
+        sx.power_symbol_instance_sexp("GND", 100.0, y, 90, f"#PWR{i}", "/", f"t{i}")
+        for i, y in enumerate((50.0, 51.0))
+    ]
+    sx.turn_crowded_power_values(symbols)
+    for sym in symbols:
+        value = next(el for el in sym if isinstance(el, list) and el[:2] == ["property", "Value"])
+        assert quality._field(value, "at")[3] == 0
+
+
+def test_upright_power_name_is_drawn_upright_in_svg():
+    from schematizer.engine import svg_schematic
+
+    sx.init_power_symbol_data()
+    if "GND" not in sx.pwr_symbol_sexp_dict:
+        pytest.skip("KiCad power library not found")
+    svg, bbox = svg_schematic.power_symbol_to_svg("GND", 100.0, 50.0, 0, upright_value_at=(100.0, 55.0))
+    assert svg.count("rotate(-90 100.000 55.000)") == 2  # The text and its white backing.
+    assert bbox.max.y > 55.0
+    level, _ = svg_schematic.power_symbol_to_svg("GND", 100.0, 50.0, 0)
+    assert "rotate(-90" not in level and ">GND<" in level

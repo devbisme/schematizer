@@ -87,6 +87,20 @@ def build_parser():
         "score. Takes about this many times as long.",
     )
     parser.add_argument(
+        "--sheet-tries",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Lay out each sheet this many times and keep its best layout. "
+        "Unlike --tries, each sheet gets the best of its own tries.",
+    )
+    parser.add_argument(
+        "--no-reuse",
+        action="store_true",
+        help="Lay out every sheet separately. Normally a sheet holding the same "
+        "circuit as an earlier one is drawn the same way.",
+    )
+    parser.add_argument(
         "--no-preplace",
         action="store_true",
         help="Place connected parts with force-directed placement from random "
@@ -162,6 +176,8 @@ def main(argv=None):
             flatness=args.flatness,
             seed=args.seed,
             tries=args.tries,
+            sheet_tries=args.sheet_tries,
+            reuse_layouts=not args.no_reuse,
             preplace=not args.no_preplace,
             power_symbols=not args.no_power_symbols,
             nudge=not args.no_nudge,

@@ -19,8 +19,9 @@ import tempfile
 from .loader import load_netlist
 from .quality import score_files
 
-# Wire length (mm) a bend or an overlap is worth when comparing layouts for ``tries``.
+# Wire length (mm) a bend, a crossing or an overlap is worth when comparing layouts for ``tries``.
 LAYOUT_BEND_COST = 5
+LAYOUT_CROSSING_COST = 5
 LAYOUT_OVERLAP_COST = 10
 
 # KiCad versions this tool can target. The engine is one modern writer plus a
@@ -142,7 +143,11 @@ def render(
             ``power_symbols=False`` wires power nets instead of putting a
             power symbol on each of their pins. ``nudge=False`` leaves parts
             where placement put them instead of moving them to straighten
-            routed wires (see :mod:`schematizer.engine.nudge`). ``auto_stub=True`` draws nets that
+            routed wires (see :mod:`schematizer.engine.nudge`).
+            ``sheet_tries=N`` lays each sheet out N times and keeps its best
+            layout, and ``reuse_layouts=False`` lays out sheets that hold the
+            same circuit separately instead of drawing them alike (see
+            :mod:`schematizer.engine.layouts`). ``auto_stub=True`` draws nets that
             are hard to route with labels; an integer N does too, with nets of
             more than N pins counted as hard (True means 3). ``label_local_nets=True``
             also labels the named nets that stay on one sheet.
@@ -240,6 +245,7 @@ def layout_cost(score):
     return (
         score["wirelength"]
         + LAYOUT_BEND_COST * score["bends"]
+        + LAYOUT_CROSSING_COST * score.get("crossings", 0)
         + LAYOUT_OVERLAP_COST * overlaps
     )
 
