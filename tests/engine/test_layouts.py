@@ -149,6 +149,7 @@ def test_each_sheet_is_laid_out_sheet_tries_times(tmp_path):
     assert not any(m.startswith("layout 4") for m in messages)
 
 
+@pytest.mark.python_engine
 def test_the_cheapest_layout_is_kept(tmp_path, monkeypatch):
     """Whatever the tries cost, a sheet ends up with the layout that cost least."""
     costs = iter([(5, 100), (3, 100), (4, 100)] * 50)
@@ -195,6 +196,7 @@ def test_sheet_tries_keeps_a_seed_reproducible(tmp_path):
     assert outs[0] == outs[1]
 
 
+@pytest.mark.python_engine
 def test_a_sheet_is_scored_as_its_file_will_be(tmp_path, monkeypatch):
     """Overlaps are counted from a routed sheet before it's written, so layouts can be compared."""
     from schematizer.engine import gen_schematic

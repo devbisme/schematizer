@@ -102,6 +102,7 @@ def test_a_removed_wire_is_caught(tmp_path):
     pytest.fail("removing a wire never changed the netlist")
 
 
+@pytest.mark.python_engine
 def test_tries_check_only_the_kept_layout(monkeypatch, tmp_path):
     checked = []
     monkeypatch.setattr(netcheck, "check_netlist", lambda doc, path: checked.append(path))
@@ -123,6 +124,7 @@ def test_svg_cannot_be_checked(tmp_path):
         render(_load("and_gate"), filepath=str(tmp_path), format="svg", check_netlist=True)
 
 
+@pytest.mark.python_engine
 def test_missing_kicad_cli_is_an_error(monkeypatch, tmp_path):
     monkeypatch.setattr(netcheck.shutil, "which", lambda name: None)
     with pytest.raises(RuntimeError, match="kicad-cli"):

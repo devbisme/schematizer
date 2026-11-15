@@ -749,6 +749,7 @@ class TestHierarchicalLabels:
         assert "bidirectional" in label_str
 
 
+@pytest.mark.python_engine
 @requires_kicad_libs
 class TestSharedIcPinFan:
     """Two 2-pin parts sharing ONE IC pin must fan out as a T-junction.
@@ -885,6 +886,7 @@ class TestSharedIcPinFan:
 # ===========================================================================
 
 
+@pytest.mark.python_engine
 class TestErcLoopStops:
     """Regenerating is expensive, so the loop only runs while it can help."""
 

@@ -196,6 +196,7 @@ def _layout_bends(doc, seed, **options):
     return seen["stairs"], seen["bends"]
 
 
+@pytest.mark.python_engine
 def test_nudging_never_adds_bends_and_removes_some():
     """Each nudge is kept only if it lowers the bends, so no layout gets worse."""
     doc = _load("opamp_circ")

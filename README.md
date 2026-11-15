@@ -40,6 +40,18 @@ stub (`stub`/`netio`).
 pip install schematizer
 ```
 
+The package comes with a compiled engine (written in Rust) for Linux (x86-64 and ARM),
+Windows and macOS, and Python 3.8 or later. It draws the same schematics as the Python
+engine about ten times faster: the 169-part test board takes 0.6 seconds instead of 5.7
+(both counting the half second KiCad needs to check the netlist).
+
+`render()` uses the compiled engine whenever it's installed and understands all the
+options it's given. Otherwise it quietly uses the Python engine, which is still in the
+package. To pick one yourself, set `SCHEMATIZER_ENGINE` to `rust` or `python`.
+
+If you don't use Python at all, there's also a standalone `schematizer` executable
+(`schematizer.exe` on Windows) that takes the same options as the command below.
+
 ## Command-line use
 
 ```bash
@@ -50,7 +62,7 @@ schematizer netlist.json --tool kicad9 -o out --top-name mydesign
 schematizer netlist.json --tool kicad9 -o out --top-name mydesign --format svg
 ```
 
-A big design takes a while (200 parts in 10 seconds). So you're not left staring at a dead terminal, the command
+A big design can still take a while with the Python engine. So you're not left staring at a dead terminal, the command
 shows which sheet it's placing or routing on a status line. `--no-progress` turns that
 off, and `--progress` shows it even when the output is redirected.
 
@@ -92,6 +104,10 @@ representation (`schematizer.ir`: `SchPart`/`SchPin`/`SchNet`) that the engine c
 directly. That means no `.kicad_sym` re-parse, no KiCad library access, and **no runtime
 dependency on SKiDL**.
 The KiCad power-symbol library (for `GND` and the supply rails) is kept in `schematizer/data`.
+
+The compiled engine is a port of the Python one, in `rust/`. It reads the same netlist
+JSON, takes the same options and writes the same files, and it's built into the package
+as `schematizer._engine`.
 
 ## Output formats
 
@@ -274,6 +290,9 @@ Retries still explore. When routing fails and the engine tries again with a larg
 area, each attempt derives its own random stream from your seed. A retry is a different
 layout, but the run as a whole stays reproducible.
 
+The two engines use different random number generators, so the same seed gives a
+different (but equally valid) drawing on each. Each one is reproducible on its own.
+
 Seeding is local to this library. It uses its own generator, so it neither disturbs nor
 depends on the global state of the `random` module in your program.
 
@@ -357,6 +376,20 @@ A few things to know about the check:
 
 Nothing else runs KiCad on the output, apart from the ERC that auto-stubbing uses to
 find nets to label.
+
+## Building from source
+
+`pip install .` in a copy of the repository builds the compiled engine, so it needs
+[Rust](https://rustup.rs) 1.85 or later. (If yours is older, `rustup update` fixes
+that.) The standalone executable is built with:
+
+```bash
+cargo build --release --manifest-path rust/Cargo.toml
+```
+
+which puts it in `rust/target/release/`. `cargo test --manifest-path rust/Cargo.toml`
+runs the engine's own tests, and `pytest tests` runs the Python ones against whichever
+engine `render()` picks.
 
 ## Supported KiCad versions
 

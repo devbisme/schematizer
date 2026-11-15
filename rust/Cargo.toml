@@ -1,0 +1,31 @@
+[package]
+name = "schematizer"
+version = "0.2.0"
+edition = "2021"
+license = "MIT"
+description = "Turn a generic hierarchical netlist (JSON) into a KiCad schematic or SVG drawing."
+rust-version = "1.85"
+
+[lib]
+name = "schematizer"
+path = "src/lib.rs"
+# The cdylib is the Python extension module (built by maturin with the "python" feature).
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "schematizer"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+sha1 = "0.10"
+indexmap = "2"
+pyo3 = { version = "0.23.5", features = ["abi3-py38"], optional = true }
+
+[features]
+# Build the Python extension module, schematizer._engine.
+python = ["dep:pyo3", "pyo3/extension-module"]
+
+[profile.release]
+opt-level = 3
+strip = true

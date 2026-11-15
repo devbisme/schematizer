@@ -10,3 +10,6 @@ dist/
 *.log
 .tox/
 outputs/
+# Compiled engine built in place by an editable install
+src/schematizer/_engine*.so
+src/schematizer/_engine*.pyd

@@ -34,6 +34,7 @@ def test_top_sheet_keeps_wires_of_flattened_children(doc, tmp_path):
     assert _count(tmp_path, "*.kicad_sch", "(wire") > 0
 
 
+@pytest.mark.python_engine
 def test_auto_stub_keeps_wires_in_flattened_small_subcircuits(doc, tmp_path, monkeypatch):
     # Snapping two-pin parts onto their neighbors stubs nets on its own account.
     monkeypatch.setattr(gen_schematic, "_snap_two_pin_parts", lambda node: None)

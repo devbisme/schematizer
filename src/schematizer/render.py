@@ -181,6 +181,11 @@ def render(
     from .engine.progress import report, reporting
 
     with reporting(progress):
+        if _use_compiled_engine(options):
+            return _render_compiled(
+                netlist, tool, filepath, top_name, title, format, mode, seed, tries,
+                check_netlist, options, report,
+            )
         doc = _load_document(netlist)
         out = _render(doc, tool, filepath, top_name, title, format, mode, seed, tries, options)
         if check_netlist:
@@ -190,6 +195,118 @@ def render(
             name = top_name or doc.get("top_name") or "schematic"
             check(doc, os.path.join(out, f"{name}.kicad_sch"))
         return out
+
+
+# The options the compiled engine understands. render() falls back to the
+# Python engine when it's given any other.
+COMPILED_OPTIONS = frozenset(
+    {
+        "flatness",
+        "retries",
+        "auto_stub",
+        "auto_stub_fanout",
+        "auto_stub_max_wire_pins",
+        "auto_stub_max_wire_dist",
+        "auto_stub_fallback",
+        "erc_max_iterations",
+        "power_symbols",
+        "preplace",
+        "nudge",
+        "sheet_tries",
+        "reuse_layouts",
+        "label_local_nets",
+        "label_clearance",
+        "place_fields",
+        "svg_fit",
+        "orientation_pin_limit",
+        "dont_rotate_pin_count",
+    }
+)
+
+
+def compiled_engine():
+    """The compiled (Rust) engine module, or None if it isn't installed."""
+    try:
+        from . import _engine
+    except ImportError:
+        return None
+    return _engine
+
+
+def _use_compiled_engine(options):
+    """Decide which engine renders: the compiled one unless it can't or isn't wanted.
+
+    The SCHEMATIZER_ENGINE environment variable picks one: "python", or
+    "rust" (an error if it isn't installed). Otherwise the compiled engine is
+    used when it's installed and understands all the options.
+    """
+    choice = os.environ.get("SCHEMATIZER_ENGINE", "").lower()
+    if choice == "python":
+        return False
+    if choice == "rust":
+        if compiled_engine() is None:
+            raise RuntimeError("SCHEMATIZER_ENGINE=rust, but the compiled engine isn't installed.")
+        unknown = set(options) - COMPILED_OPTIONS
+        if unknown:
+            raise ValueError(f"The compiled engine doesn't take these options: {', '.join(sorted(unknown))}.")
+        return True
+    return compiled_engine() is not None and set(options) <= COMPILED_OPTIONS
+
+
+def _render_compiled(
+    netlist, tool, filepath, top_name, title, format, mode, seed, tries, check_netlist, options, report
+):
+    """Do the work of ``render()`` with the compiled engine."""
+    from .engine.place import PlacementFailure
+    from .engine.route import RoutingFailure
+    from .netcheck import NetlistMismatch
+
+    if isinstance(netlist, dict):
+        doc_json = json.dumps(netlist)
+    elif isinstance(netlist, (str, bytes, os.PathLike)):
+        with open(netlist) as f:
+            doc_json = f.read()
+    else:
+        raise TypeError(
+            "netlist must be a document dict or a path to a JSON file, "
+            f"got {type(netlist).__name__}."
+        )
+    auto_stub = options.get("auto_stub")
+    if auto_stub is not None and not isinstance(auto_stub, (bool, int)):
+        raise ValueError(f"auto_stub must be True, False or a pin count, not {auto_stub!r}.")
+
+    # Point KiCad at its footprints, as the Python engine does, so a front end
+    # like SKiDL that goes on to make a PCB finds them.
+    from .engine import gen_schematic
+
+    gen_schematic.TARGET_TOOL = tool
+    gen_schematic._setup_kicad_env()
+
+    kind, message, problems = compiled_engine().render(
+        doc_json,
+        os.fspath(filepath),
+        top_name,
+        title or "",
+        tool,
+        format,
+        mode,
+        None if seed is None else str(seed),
+        tries,
+        bool(check_netlist),
+        json.dumps(options),
+        report,
+    )
+    if not kind:
+        return filepath
+    if kind == "value":
+        raise ValueError(message)
+    if kind == "placement":
+        raise PlacementFailure(message)
+    if kind == "routing":
+        raise RoutingFailure(message)
+    if kind == "netlist":
+        raise NetlistMismatch(problems)
+    raise RuntimeError(message)
 
 
 def _render(doc, tool, filepath, top_name, title, format, mode, seed, tries, options):

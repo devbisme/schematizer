@@ -1,0 +1,116 @@
+# Build the Python wheels (with the compiled engine) and the standalone
+# executables for Linux, Windows and macOS, and run the tests.
+#
+# Everything ends up as workflow artifacts. Nothing is published: upload the
+# wheels and sdist to PyPI by hand (or add a publishing job) once they're checked.
+
+name: build
+
+on:
+  push:
+    branches: [master, development]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  rust-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The runner's stable Rust (rust-version in Cargo.toml sets the minimum).
+      - run: cargo test --release --manifest-path rust/Cargo.toml
+
+  wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64, manylinux: auto }
+          - { os: ubuntu-latest, target: aarch64, manylinux: auto }
+          - { os: windows-latest, target: x64 }
+          - { os: macos-13, target: x86_64 }
+          - { os: macos-14, target: aarch64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # One abi3 wheel per platform serves Python 3.8 and later.
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}-${{ matrix.target }}
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+  python-tests:
+    needs: wheels
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, artifact: wheel-ubuntu-latest-x86_64 }
+          - { os: windows-latest, artifact: wheel-windows-latest-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist
+      - shell: bash
+        run: pip install dist/*.whl pytest skidl
+      # Run from the tests folder so the installed package (with the compiled
+      # engine) is imported, not the sources. Then again on the Python engine.
+      - shell: bash
+        working-directory: tests
+        run: |
+          python -m pytest -q .
+          SCHEMATIZER_ENGINE=python python -m pytest -q .
+        env:
+          SKIDL_TOOL: KICAD9
+
+  executables:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, exe: schematizer }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, exe: schematizer.exe }
+          - { os: macos-14, target: aarch64-apple-darwin, exe: schematizer }
+          - { os: macos-13, target: x86_64-apple-darwin, exe: schematizer }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - if: contains(matrix.target, 'musl')
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      # A static executable with no Python needed.
+      - shell: bash
+        run: |
+          rustup target add ${{ matrix.target }}
+          cargo build --release --manifest-path rust/Cargo.toml --bin schematizer --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: schematizer-${{ matrix.target }}
+          path: rust/target/${{ matrix.target }}/release/${{ matrix.exe }}

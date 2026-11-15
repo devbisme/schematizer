@@ -120,6 +120,7 @@ def test_tries_must_be_positive(and_gate, tmp_path):
         render(and_gate, filepath=str(tmp_path), tries=0)
 
 
+@pytest.mark.python_engine
 def test_labels_only_fallback_doesnt_beat_a_routed_layout(and_gate, tmp_path, monkeypatch):
     """A layout with no wires would score best, so it's only used as a last resort."""
     render(and_gate, filepath=str(tmp_path / "routed"), top_name="sch", seed="1:1", auto_stub=True)

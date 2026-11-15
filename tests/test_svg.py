@@ -155,6 +155,7 @@ def test_svg_pin_graphics_land_on_the_routed_wire_ends(tmp_path):
     assert on_pin, "no wire endpoint coincides with any drawn pin"
 
 
+@pytest.mark.python_engine
 def test_svg_and_kicad_agree_on_part_placement(tmp_path):
     """The SVG page has the same layout as the .kicad_sch for the same input.
 
@@ -230,6 +231,7 @@ def _wires_from_svg(text):
 @pytest.mark.parametrize(
     "fixture, flatness", [("and_gate_nopwr", 0.0), ("span_hier", 1.0)]
 )
+@pytest.mark.python_engine
 def test_svg_and_kicad_draw_the_same_connectivity(
     tmp_path, monkeypatch, fixture, flatness, auto_stub
 ):
@@ -278,6 +280,7 @@ def _field_positions(monkeypatch, tmp_path, format):
     return layouts
 
 
+@pytest.mark.python_engine
 def test_svg_and_kicad_put_field_text_in_the_same_place(tmp_path, monkeypatch):
     kicad = _field_positions(monkeypatch, tmp_path / "kicad", "kicad")
     svg = _field_positions(monkeypatch, tmp_path / "svg", "svg")

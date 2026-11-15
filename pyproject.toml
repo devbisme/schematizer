@@ -1,6 +1,8 @@
+# The package is pure Python plus a compiled engine (Rust, in rust/) that
+# render() uses when it's installed. maturin builds both into one wheel.
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
 
 [project]
 name = "schematizer"
@@ -51,13 +53,19 @@ Issues = "https://github.com/devbisme/schematizer/issues"
 [project.scripts]
 schematizer = "schematizer.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-# The vendored KiCad power-symbol library (GND, +3V3, …) used when a net name
-# matches a power symbol. Keeps the tool self-contained.
-schematizer = ["data/*.kicad_sym"]
+[tool.maturin]
+# The Python package is in src/schematizer; the engine is built from rust/
+# as schematizer._engine. With the stable ABI (abi3), one wheel per platform
+# serves every Python version from 3.8 on.
+python-source = "src"
+module-name = "schematizer._engine"
+manifest-path = "rust/Cargo.toml"
+bindings = "pyo3"
+features = ["python"]
+# The vendored KiCad power-symbol library (GND, +3V3, …) the Python engine
+# uses. (The compiled engine has its own copy built in.)
+# (Building from source needs Rust 1.85 or later: rust-version in rust/Cargo.toml.)
+include = [{ path = "src/schematizer/data/*.kicad_sym", format = "wheel" }]
 
 [tool.black]
 line-length = 88
